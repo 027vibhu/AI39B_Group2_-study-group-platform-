@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>LOREVIA Chat</title>
+
+<!-- FONT -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- FONT AWESOME -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+<!-- APP CSS (served from Flask static) -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/test.css') }}">
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+  <div class="logo">
+    <div class="logo-box">L</div>
+    <h2>LOREVIA</h2>
+  </div>
+
+  <div class="nav">
+
+    <div class="nav-item">
+      <i class="fa-solid fa-house"></i>
+      Dashboard
+    </div>
+
+    <div class="nav-item">
+      <i class="fa-solid fa-plus"></i>
+      Create Room
+    </div>
+
+    <div class="nav-item active">
+      <i class="fa-solid fa-comments"></i>
+      Join Room
+    </div>
+
+    <div class="nav-item">
+      <i class="fa-solid fa-compass"></i>
+      Browse Rooms
+    </div>
+
+  </div>
+
+  <!-- ROOMS -->
+
+  <div class="rooms">
+
+    <div class="room">
+      <div class="room-number">1</div>
+      chat1
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="main">
+
+  <!-- TOPBAR -->
+
+  <div class="topbar">
+
+    <h1>chat1</h1>
+
+    <div class="profile">
+      U
+    </div>
+
+  </div>
+
+  <!-- CHAT -->
+
+  <div class="chat-wrapper">
+
+    <!-- HEADER -->
+
+    <div class="chat-header">
+
+      <div class="chat-user">
+
+        <div class="chat-avatar">
+          C
+        </div>
+
+        <div class="chat-info">
+          <h2>chat1</h2>
+          <p>4 members online</p>
+        </div>
+
+      </div>
+
+      <div class="chat-actions">
+
+        <button class="action-btn">
+          <i class="fa-solid fa-phone"></i>
+        </button>
+
+        <button class="action-btn">
+          <i class="fa-solid fa-video"></i>
+        </button>
+
+        <button class="action-btn">
+          <i class="fa-solid fa-ellipsis"></i>
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- BODY -->
+
+    <div class="chat-body" id="chatBody">
+
+      <!-- RECEIVED -->
+
+      <div class="message received">
+
+        <div class="message-bubble">
+
+          Hey everyone 👋
+
+          <div class="message-time">
+            9:41 AM
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- SENT -->
+
+      <div class="message sent">
+
+        <div class="message-bubble">
+
+          Ready for today's study session?
+
+          <div class="message-time">
+            9:42 AM
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- INPUT -->
+
+    <div class="chat-input-area">
+
+      <!-- EMOJI -->
+
+      <button class="input-icon" id="emojiBtn">
+        <i class="fa-regular fa-face-smile"></i>
+      </button>
+
+      <!-- IMAGE -->
+
+      <label class="input-icon">
+
+        <i class="fa-solid fa-image"></i>
+
+        <input
+          type="file"
+          hidden
+          accept="image/*"
+          id="imageInput"
+        />
+
+      </label>
+
+      <!-- TEXT -->
+
+      <input
+        type="text"
+        class="chat-input"
+        placeholder="Type your message..."
+        id="messageInput"
+      />
+
+      <!-- SEND -->
+
+      <button class="send-btn" id="sendBtn">
+        <i class="fa-solid fa-paper-plane"></i>
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+const sendBtn = document.getElementById('sendBtn');
+const messageInput = document.getElementById('messageInput');
+const chatBody = document.getElementById('chatBody');
+const imageInput = document.getElementById('imageInput');
+const emojiBtn = document.getElementById('emojiBtn');
+
+/* SEND MESSAGE */
+
+function sendMessage(){
+
+  const text = messageInput.value.trim();
+
+  if(text === '') return;
+
+  const message = document.createElement('div');
+
+  message.classList.add('message','sent');
+
+  message.innerHTML = `
+  
+    <div class="message-bubble">
+
+      ${text}
+
+      <div class="message-time">
+        ${getTime()}
+      </div>
+
+    </div>
+
+  `;
+
+  chatBody.appendChild(message);
+
+  messageInput.value = '';
+
+  scrollBottom();
+
+}
+
+/* SEND BUTTON */
+
+sendBtn.addEventListener('click', sendMessage);
+
+/* ENTER KEY */
+
+messageInput.addEventListener('keypress', function(e){
+
+  if(e.key === 'Enter'){
+    sendMessage();
+  }
+
+});
+
+/* IMAGE UPLOAD */
+
+imageInput.addEventListener('change', function(){
+
+  const file = this.files[0];
+
+  if(!file) return;
+
+  const imageURL = URL.createObjectURL(file);
+
+  const message = document.createElement('div');
+
+  message.classList.add('message','sent');
+
+  message.innerHTML = `
+
+    <div class="message-bubble">
+
+      <img src="${imageURL}" class="message-image">
+
+      <div class="message-time">
+        ${getTime()}
+      </div>
+
+    </div>
+
+  `;
+
+  chatBody.appendChild(message);
+
+  scrollBottom();
+
+});
+
+/* EMOJI QUICK INSERT */
+
+emojiBtn.addEventListener('click', () => {
+
+  messageInput.value += '😊';
+
+  messageInput.focus();
+
+});
+
+/* TIME */
+
+function getTime(){
+
+  const now = new Date();
+
+  return now.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+}
+
+/* AUTO SCROLL */
+
+function scrollBottom(){
+
+  chatBody.scrollTop = chatBody.scrollHeight;
+
+}
+
+</script>
+
+</body>
+</html>
