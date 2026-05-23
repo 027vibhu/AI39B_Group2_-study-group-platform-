@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Password - Lorevia</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='reset.css') }}">
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="logo-container">
+      <div class="logo-wrapper">
+        <span class="logo-icon">L</span>
+      </div>
+      <span class="logo-text">LOREVIA</span>
+    </div>
+    <nav class="nav-links">
+      <a href="#">Home</a>
+      <a href="#">Features</a>
+      <a href="#">About</a>
+    </nav>
+    <button class="nav-btn">Get Started</button>
+  </header>
+
+  <main class="auth-container">
+    <div class="auth-card">
+      
+      <div class="info-sidebar">
+        <div class="sidebar-content">
+          <h2>Reset Password</h2>
+          <p>Secure your learning space. Follow the steps to quickly recover access back to your study group dashboard.</p>
+        </div>
+      </div>
+
+      <div class="form-content">
+        
+        <div class="step-container" id="step-email">
+          <h3>Forgot Password?</h3>
+          <p class="step-subtitle">Enter your email address below to receive a 6-digit verification code.</p>
+          
+          <form class="auth-form" id="email-form">
+            <div class="input-field">
+              <span class="field-icon">📧</span>
+              <input type="email" placeholder="Email Address" required>
+            </div>
+            <button type="submit" class="auth-btn">Send Code</button>
+          </form>
+        </div>
+
+        <div class="step-container" id="step-verify" style="display: none;">
+          <h3>Verify Identity</h3>
+          <p class="step-subtitle">Type your 6-digit verification code below</p>
+          
+          <form class="auth-form" id="verify-form">
+            <div class="digit-code-inputs">
+              <input type="text" maxlength="1" required pattern="[0-9]">
+              <input type="text" maxlength="1" required pattern="[0-9]">
+              <input type="text" maxlength="1" required pattern="[0-9]">
+              <input type="text" maxlength="1" required pattern="[0-9]">
+              <input type="text" maxlength="1" required pattern="[0-9]">
+              <input type="text" maxlength="1" required pattern="[0-9]">
+            </div>
+            <button type="submit" class="auth-btn">Verify Code</button>
+          </form>
+        </div>
+
+        <div class="step-container" id="step-new-password" style="display: none;">
+          <h3>New Password</h3>
+          <p class="step-subtitle">Choose a strong, secure new password for your account.</p>
+          
+          <form class="auth-form" id="password-form">
+            <div class="input-field">
+              <span class="field-icon">🔒</span>
+              <input type="password" placeholder="New Password" required>
+            </div>
+
+            <div class="input-field">
+              <span class="field-icon">🔒</span>
+              <input type="password" placeholder="Confirm New Password" required>
+            </div>
+
+            <button type="submit" class="auth-btn">Reset Password</button>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    const emailForm = document.getElementById('email-form');
+    const verifyForm = document.getElementById('verify-form');
+    const passwordForm = document.getElementById('password-form');
+
+    const stepEmail = document.getElementById('step-email');
+    const stepVerify = document.getElementById('step-verify');
+    const stepNewPassword = document.getElementById('step-new-password');
+
+    // Handle Email Form Submission
+    emailForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      stepEmail.style.display = 'none';
+      stepVerify.style.display = 'block';
+    });
+
+    // Handle Code Verification Submission (Simulating right/correct code entry)
+    verifyForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      // Once verified, hide verification block and explicitly present the password fields
+      stepVerify.style.display = 'none';
+      stepNewPassword.style.display = 'block';
+    });
+
+    // Handle Code Grid Input auto-focus shifting
+    const inputs = document.querySelectorAll('.digit-code-inputs input');
+    inputs.forEach((input, index) => {
+      input.addEventListener('input', (e) => {
+        if (e.target.value.length === 1 && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+          inputs[index - 1].focus();
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
