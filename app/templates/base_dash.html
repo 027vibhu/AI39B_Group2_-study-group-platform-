@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>{% block title %}LOREVIA{% endblock %}</title>
+
+    <!-- FONT -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+    <!-- DASHBOARD CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-box">L</div>
+    <h2>LOREVIA</h2>
+  </div>
+
+  <div class="nav">
+    {% block nav %}
+    <div class="nav-item">
+      <i class="fa-solid fa-house"></i>
+      Dashboard
+    </div>
+    <div class="nav-item">
+      <i class="fa-solid fa-plus"></i>
+      Create Room
+    </div>
+    <div class="nav-item active">
+      <i class="fa-solid fa-comments"></i>
+      Join Room
+    </div>
+    <div class="nav-item">
+      <i class="fa-solid fa-compass"></i>
+      Browse Rooms
+    </div>
+    {% endblock %}
+  </div>
+
+  <!-- ROOMS -->
+  <div class="rooms">
+    {% block rooms %}
+    <div class="room">
+      <div class="room-number">1</div>
+      chat1
+    </div>
+    {% endblock %}
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <h1>{% block topbar_title %}Dashboard{% endblock %}</h1>
+    <div class="profile" id="userProfile">
+      G
+    </div>
+  </div>
+
+  {% block content %}{% endblock %}
+</div>
+
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

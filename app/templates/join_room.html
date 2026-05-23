@@ -1,0 +1,112 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Lorevia - Join Room{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/join_room.css') }}">
+{% endblock %}
+
+{% block topbar_title %}Join Workspace{% endblock %}
+
+{% block nav %}
+    <a href="#" class="nav-item">
+      <i class="fa-solid fa-house"></i>
+      Dashboard
+    </a>
+    <a href="#" class="nav-item">
+      <i class="fa-solid fa-plus"></i>
+      Create Room
+    </a>
+    <a href="#" class="nav-item active">
+      <i class="fa-solid fa-comments"></i>
+      Join Room
+    </a>
+    <a href="#" class="nav-item">
+      <i class="fa-solid fa-compass"></i>
+      Browse Rooms
+    </a>
+{% endblock %}
+
+{% block rooms %}
+    <a href="#" class="room">
+      <div class="room-number">1</div>
+      test1
+    </a>
+    <a href="#" class="room">
+      <div class="room-number">2</div>
+      test2
+    </a>
+    <a href="#" class="room">
+      <div class="room-number">3</div>
+      test3
+    </a>
+{% endblock %}
+
+{% block content %}
+    <!-- MAIN CARD -->
+    <div class="card">
+      <!-- LEFT SIDE -->
+      <div class="left">
+        <div class="left-content">
+          <h1>Join a Room</h1>
+          <p>
+            Enter your 6 digit room code and instantly
+            connect with your study team.
+          </p>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDE -->
+      <div class="right">
+        <div class="join-box">
+          <h2>Join</h2>
+          <p>Type your 6 digit room code below</p>
+          <div class="code-inputs">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+          </div>
+          <button class="join-btn" id="joinBtn">
+            Join Room
+          </button>
+        </div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    const inputs = document.querySelectorAll('.code-inputs input');
+    const joinBtn = document.getElementById('joinBtn');
+
+    inputs.forEach((input, index) => {
+      input.addEventListener('input', () => {
+        if(input.value.length === 1 && index < inputs.length - 1){
+          inputs[index + 1].focus();
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if(e.key === 'Backspace' && input.value === '' && index > 0){
+          inputs[index - 1].focus();
+        }
+      });
+    });
+
+    joinBtn.addEventListener('click', () => {
+        let code = "";
+        inputs.forEach(input => {
+            code += input.value;
+        });
+
+        if (code.length === 6) {
+            window.location.href = `/chat/${code}`;
+        } else {
+            alert("Please enter a 6-digit room code.");
+        }
+    });
+  </script>
+{% endblock %}
