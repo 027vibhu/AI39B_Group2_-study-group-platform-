@@ -1,0 +1,251 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: #fcfbfa;
+  color: #1f1f23;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 80px;
+  background-color: #fcfbfa;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-wrapper {
+  background-color: #ffffff;
+  border: 1px solid #e3e2dc;
+  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+}
+
+.logo-icon {
+  color: #4b527a;
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.logo-text {
+  color: #3b4066;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 32px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #44444a;
+  font-size: 15px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.nav-links a:hover {
+  color: #1f1f23;
+}
+
+.nav-btn {
+  background-color: #4b527a;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.nav-btn:hover {
+  background-color: #3b4066;
+}
+
+.auth-container {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+.auth-card {
+  background-color: #ffffff;
+  border-radius: 28px;
+  width: 1000px;
+  min-height: 520px;
+  display: flex;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f0efea;
+}
+
+.info-sidebar {
+  width: 45%;
+  background-color: #43496a;
+  padding: 60px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.info-sidebar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 130%;
+  height: 100%;
+  background-color: #3b4160;
+  border-bottom-left-radius: 600px 700px;
+  z-index: 1;
+}
+
+.sidebar-content {
+  position: relative;
+  z-index: 2;
+  color: #ffffff;
+}
+
+.sidebar-content h2 {
+  font-size: 38px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  line-height: 1.2;
+}
+
+.sidebar-content p {
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+.form-content {
+  width: 55%;
+  padding: 60px 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.step-container {
+  width: 100%;
+}
+
+.step-container h3 {
+  font-size: 42px;
+  font-weight: 800;
+  color: #202024;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+
+.step-subtitle {
+  font-size: 15px;
+  color: #707078;
+  margin-bottom: 36px;
+  line-height: 1.4;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.input-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field-icon {
+  position: absolute;
+  left: 18px;
+  font-size: 16px;
+  color: #8a8a93;
+}
+
+.input-field input {
+  width: 100%;
+  padding: 16px 16px 16px 52px;
+  background-color: #f4f4f7;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  color: #1f1f23;
+  outline: none;
+  transition: background-color 0.2s ease;
+}
+
+.input-field input:focus {
+  background-color: #eaeaf0;
+}
+
+.digit-code-inputs {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.digit-code-inputs input {
+  width: 52px;
+  height: 56px;
+  background-color: #f4f4f7;
+  border: none;
+  border-radius: 14px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f1f23;
+  outline: none;
+}
+
+.digit-code-inputs input:focus {
+  background-color: #eaeaf0;
+  box-shadow: 0 0 0 2px #4b527a;
+}
+
+.auth-btn {
+  background-color: #4b527a;
+  color: #ffffff;
+  padding: 16px;
+  border: none;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 12px;
+  box-shadow: 0 6px 20px rgba(75, 82, 122, 0.15);
+  transition: background-color 0.2s ease;
+}
+
+.auth-btn:hover {
+  background-color: #3b4066;
+}
