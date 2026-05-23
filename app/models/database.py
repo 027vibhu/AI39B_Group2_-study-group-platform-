@@ -1,14 +1,29 @@
-from flask_sqlalchemy import SQLAlchemy
+import pymysql
 
-db = SQLAlchemy()
+def get_db_connection():
+    return pymysql.connect(
+        host='localhost',
+        user='username',
+        password='password',
+        database='lorevia_db',
+        cursorclass=pymysql.cursors.DictCursor
+    )
 
-class UserProfile(db.Model):
-    __tablename__ = 'user_profiles'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(50), nullable=False)
-    last_name = db.Column(db.String(50), nullable=False)
-    bio = db.Column(db.Text, nullable=True)
-    school = db.Column(db.String(100), nullable=True)
-    address = db.Column(db.String(200), nullable=True)
-    profile_picture_url = db.Column(db.String(500), nullable=True)
+def init_db():
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS user_profiles (
+                    id INT PRIMARY KEY,
+                    first_name VARCHAR(50) NOT NULL,
+                    last_name VARCHAR(50) NOT NULL,
+                    bio TEXT,
+                    school VARCHAR(100),
+                    address VARCHAR(200),
+                    profile_picture_url VARCHAR(500)
+                )
+            """)
+        connection.commit()
+    finally:
+        connection.close()
