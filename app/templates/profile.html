@@ -1,0 +1,99 @@
+avatarInput.addEventListener('change', function () {
+{% extends 'base.html' %}
+
+{% block title %}Profile - LOREVIA{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+  <section class="profile-wrapper">
+
+    <div class="profile-card">
+
+      <!-- LEFT -->
+      <div class="left-panel">
+
+        <div class="avatar-box">
+           <img id="profilePreview" src="{{ url_for('static', filename='images/logo.jpg') }}" alt="avatar">
+        </div>
+
+        <input type="file" id="avatarInput" hidden>
+
+        <button class="upload-btn" onclick="document.getElementById('avatarInput').click()">
+           Upload Avatar
+        </button>
+
+        <h2>Your Profile</h2>
+
+        <p>
+          Manage your personal information and keep your student profile updated.
+        </p>
+
+      </div>
+
+      <!-- RIGHT -->
+      <div class="right-panel">
+
+        <h1>Manage Profile</h1>
+
+        <div class="form-grid">
+
+          <div class="input-group">
+            <label>First Name</label>
+            <input type="text" placeholder="Enter first name">
+          </div>
+
+          <div class="input-group">
+            <label>Last Name</label>
+            <input type="text" placeholder="Enter last name">
+          </div>
+
+          <div class="input-group">
+            <label>School</label>
+            <input type="text" placeholder="Your school name">
+          </div>
+
+          <div class="input-group">
+            <label>Address</label>
+            <input type="text" placeholder="Your address">
+          </div>
+
+          <div class="input-group bio">
+            <label>Bio</label>
+            <textarea placeholder="Write something about yourself..."></textarea>
+          </div>
+
+        </div>
+
+        <button class="save-btn">Save Changes</button>
+
+      </div>
+
+    </div>
+
+  </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const avatarInput = document.getElementById('avatarInput');
+const profilePreview = document.getElementById('profilePreview');
+
+avatarInput.addEventListener('change', function () {
+
+    const file = this.files[0];
+
+    if(file){
+        const reader = new FileReader();
+
+        reader.onload = function(e){
+            profilePreview.src = e.target.result;
+        }
+
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}
