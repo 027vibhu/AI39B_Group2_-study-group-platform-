@@ -1,117 +1,79 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Workspace - Lorevia</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='createroom.css') }}">
-</head>
-<body>
+{% extends "base_dash.html" %}
 
-  <aside class="sidebar">
-    <div class="logo-section">
-      <div class="logo-box">L</div>
-      <span class="logo-text">LOREVIA</span>
-    </div>
-    
-    <nav class="nav-menu">
-      <a href="#" class="nav-item">Dashboard</a>
-      <a href="#" class="nav-item active">Create Room</a>
-      <a href="#" class="nav-item">Join Room</a>
-      <a href="#" class="nav-item">Browse Rooms</a>
-    </nav>
-  </aside>
+{% block title %}Create Workspace - Lorevia{% endblock %}
 
-  <main class="main-container">
-    <header class="top-bar">
-      <h1>Create Workspace</h1>
-      <div class="user-avatar">
-        U
-        <div class="status-indicator"></div>
-      </div>
-    </header>
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/createroom.css') }}">
+{% endblock %}
 
-    <div class="content-card">
-      <div class="panel-left">
-        <div class="circle-graphic-1"></div>
-        <div class="circle-graphic-2"></div>
-        <div class="panel-left-content">
-          <h2>Create a Room</h2>
-          <p>Launch your private or public study workspace instantly. Invite your classmates using the auto-generated room code and collaborate in real-time.</p>
+{% block topbar_title %}Create Workspace{% endblock %}
+
+{% block content %}
+    <div class="auth-box create-box">
+      <div class="left-panel">
+        <div class="left-content">
+          <h1>Create Room</h1>
+          <p>Launch a private or public study workspace instantly, then share the room code with your classmates.</p>
         </div>
       </div>
 
-      <div class="panel-right">
-        <form onsubmit="event.preventDefault();">
-          <h3>Create</h3>
-          <p class="form-subtitle">Setup your study workspace below</p>
-          
-          <div class="form-group">
-            <label for="room-name">Room Name</label>
-            <input type="text" id="room-name" placeholder="e.g Calculus Grind Session" required>
-          </div>
+      <div class="right-panel">
+        <div class="form-box">
+          <h2 class="title">Create</h2>
+          <p class="sub">Setup your study workspace below</p>
 
-          <div class="form-group">
-            <label>Auto Generated Room Code</label>
-            <div class="code-grid">
-              <input type="text" maxlength="1" value="3" required pattern="[0-9A-Za-z]">
-              <input type="text" maxlength="1" value="9" required pattern="[0-9A-Za-z]">
-              <input type="text" maxlength="1" value="1" required pattern="[0-9A-Za-z]">
-              <input type="text" maxlength="1" value="2" required pattern="[0-9A-Za-z]">
-              <input type="text" maxlength="1" value="4" required pattern="[0-9A-Za-z]">
-              <input type="text" maxlength="1" value="7" required pattern="[0-9A-Za-z]">
+          <form method="post" action="{{ url_for('home.create_room') }}">
+            <input type="hidden" name="room_code" id="room-code-value" value="{{ room_code }}">
+            <input type="hidden" name="is_private" id="is-private-value" value="0">
+            <div class="input-box">
+              <span>🏷️</span>
+              <input type="text" name="room_name" placeholder="Room name" required>
             </div>
-          </div>
-
-          <div class="toggle-container">
-            <div class="toggle-text">
-              <span class="toggle-title" id="toggle-label">Public Room</span>
-              <span class="toggle-desc" id="toggle-sublabel">Anyone with the link can find and join this room</span>
+            <div class="input-group">
+              <label>Your Room Code</label>
+              <div class="code-grid">
+                {% for char in room_code %}
+                <input type="text" maxlength="1" value="{{ char }}" readonly>
+                {% endfor %}
+              </div>
             </div>
-            <label class="switch">
-              <input type="checkbox" id="public-toggle" checked>
-              <span class="slider"></span>
-            </label>
-          </div>
 
-          <button type="submit" class="btn-submit">Create Room</button>
-        </form>
+            <div class="toggle-container">
+              <div class="toggle-text">
+                <span class="toggle-title" id="toggle-label">Public Room</span>
+                <span class="toggle-desc" id="toggle-sublabel">Listed in Browse Rooms and open to anyone</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="public-toggle" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <button type="submit" class="main-btn">Create Room</button>
+          </form>
+        </div>
       </div>
     </div>
-  </main>
+{% endblock %}
 
+{% block scripts %}
   <script>
     // Handle switching text content based on toggle interaction dynamically
     const toggleInput = document.getElementById('public-toggle');
     const toggleLabel = document.getElementById('toggle-label');
     const toggleSublabel = document.getElementById('toggle-sublabel');
+    const isPrivateValue = document.getElementById('is-private-value');
 
     toggleInput.addEventListener('change', () => {
       if (toggleInput.checked) {
         toggleLabel.textContent = 'Public Room';
-        toggleSublabel.textContent = 'Anyone with the link can find and join this room';
+        toggleSublabel.textContent = 'Listed in Browse Rooms and open to anyone';
+        isPrivateValue.value = '0';
       } else {
         toggleLabel.textContent = 'Private Room';
-        toggleSublabel.textContent = 'Only users with the room code can join';
+        toggleSublabel.textContent = 'Listed in Browse Rooms but requires the room code to join';
+        isPrivateValue.value = '1';
       }
     });
-
-    // Handle automatically shifting keyboard focus across sequential typing fields
-    const inputs = document.querySelectorAll('.code-grid input');
-    inputs.forEach((input, index) => {
-      input.addEventListener('input', (e) => {
-        if (e.target.value.length === 1 && index < inputs.length - 1) {
-          inputs[index + 1].focus();
-        }
-      });
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !e.target.value && index > 0) {
-          inputs[index - 1].focus();
-        }
-      });
-    });
   </script>
-
-</body>
-</html>
+{% endblock %}

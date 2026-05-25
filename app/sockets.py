@@ -1,6 +1,6 @@
-from flask_socketio import join_room, leave_room, emit
-from app import socketio, db
-from app.models import Room, Message
+from flask_socketio import join_room, emit
+from app import socketio
+from app.models import create_message, get_room_by_code
 
 @socketio.on('join')
 def handle_join(data):
@@ -18,12 +18,10 @@ def handle_send_message(data):
     username = data.get('username', 'Guest')
     
     if room_code and message_content:
-        room = Room.query.filter_by(code=room_code).first()
+        room = get_room_by_code(room_code)
         if room:
             # Save message to database
-            new_message = Message(room_id=room.id, username=username, content=message_content)
-            db.session.add(new_message)
-            db.session.commit()
+            create_message(room['id'], username, message_content)
             
             print(f"Message from {username} to room {room_code}: {message_content}")
             emit('receive_message', {'message': message_content, 'username': username}, room=room_code)

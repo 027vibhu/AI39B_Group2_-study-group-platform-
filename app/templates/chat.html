@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 {% endblock %}
 
-{% block topbar_title %}Room: {{ room_code }}{% endblock %}
+{% block topbar_title %}{{ room.name if room.name else 'Room ' ~ room_code }}{% endblock %}
 
 {% block content %}
   <!-- CHAT -->
@@ -17,7 +17,7 @@
       <div class="chat-user">
         <div class="chat-avatar">C</div>
         <div class="chat-info">
-          <h2>Room #{{ room_code }}</h2>
+          <h2>{{ room.name if room.name else 'Room ' ~ room_code }}</h2>
           <p id="memberStatus">Connecting...</p>
         </div>
       </div>
@@ -25,7 +25,16 @@
       <div class="chat-actions">
         <button class="action-btn"><i class="fa-solid fa-phone"></i></button>
         <button class="action-btn"><i class="fa-solid fa-video"></i></button>
-        <button class="action-btn"><i class="fa-solid fa-ellipsis"></i></button>
+        <div class="chat-menu">
+          <button class="action-btn" id="chatMenuButton" aria-label="Open chat menu" aria-expanded="false" type="button">
+            <i class="fa-solid fa-ellipsis"></i>
+          </button>
+          <div class="chat-dropdown" id="chatMenu" aria-hidden="true">
+            <form method="POST" action="{{ url_for('home.delete_chat', room_code=room_code) }}">
+              <button type="submit" class="chat-menu-item danger">Delete chat room</button>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -37,7 +46,7 @@
         <div class="message-bubble">
           <div style="font-size: 0.7rem; color: #888; margin-bottom: 2px;">{{ msg.username }}</div>
           {{ msg.content }}
-          <div class="message-time">{{ msg.timestamp.strftime('%I:%M %p') }}</div>
+          <div class="message-time">{{ msg.time_label }}</div>
         </div>
       </div>
       {% endfor %}
@@ -60,14 +69,20 @@
 <!-- Socket.IO Client -->
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
-// Generate Guest Username
-const guestName = "guest_user_" + Math.floor(100000 + Math.random() * 900000);
-document.getElementById('userProfile').innerText = guestName.charAt(11); // Last digit or initial
-document.getElementById('userProfile').title = guestName;
+// Use logged-in username only
+const displayName = "{{ current_user.username if current_user else '' }}";
+const userProfile = document.getElementById('userProfile');
+if (userProfile) {
+  const hasImage = userProfile.querySelector('img');
+  if (!hasImage) {
+    userProfile.innerText = displayName.charAt(0).toUpperCase();
+  }
+  userProfile.title = displayName;
+}
 
 // Update initial messages style
 document.querySelectorAll('.message').forEach(msg => {
-    if (msg.getAttribute('data-sender') === guestName) {
+  if (msg.getAttribute('data-sender') === displayName) {
         msg.classList.remove('received');
         msg.classList.add('sent');
         // Hide sender name for own messages
@@ -85,11 +100,13 @@ const chatBody = document.getElementById('chatBody');
 const imageInput = document.getElementById('imageInput');
 const emojiBtn = document.getElementById('emojiBtn');
 const memberStatus = document.getElementById('memberStatus');
+const chatMenuButton = document.getElementById('chatMenuButton');
+const chatMenu = document.getElementById('chatMenu');
 
 /* SOCKET CONNECTION */
 socket.on('connect', () => {
-    console.log('Connected as ' + guestName);
-    socket.emit('join', { room: roomCode, username: guestName });
+  console.log('Connected as ' + displayName);
+  socket.emit('join', { room: roomCode, username: displayName });
 });
 
 socket.on('status', (data) => {
@@ -98,17 +115,39 @@ socket.on('status', (data) => {
 });
 
 socket.on('receive_message', (data) => {
-    if (data.username !== guestName) {
+  if (data.username !== displayName) {
         addMessageToUI(data.message, 'received', data.username);
     }
 });
+
+if (chatMenuButton && chatMenu) {
+  const closeChatMenu = () => {
+    chatMenuButton.setAttribute('aria-expanded', 'false');
+    chatMenu.setAttribute('aria-hidden', 'true');
+  };
+
+  chatMenuButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const isOpen = chatMenuButton.getAttribute('aria-expanded') === 'true';
+    chatMenuButton.setAttribute('aria-expanded', String(!isOpen));
+    chatMenu.setAttribute('aria-hidden', String(isOpen));
+  });
+
+  document.addEventListener('click', closeChatMenu);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeChatMenu();
+    }
+  });
+}
 
 /* SEND MESSAGE */
 function sendMessage(){
   const text = messageInput.value.trim();
   if(text === '') return;
-  socket.emit('send_message', { room: roomCode, message: text, username: guestName });
-  addMessageToUI(text, 'sent', guestName);
+  socket.emit('send_message', { room: roomCode, message: text, username: displayName });
+  addMessageToUI(text, 'sent', displayName);
   messageInput.value = '';
 }
 

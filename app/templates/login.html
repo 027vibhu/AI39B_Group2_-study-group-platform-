@@ -8,6 +8,7 @@
   <!-- Google Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/nav_bar.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
 
 </head>
@@ -37,7 +38,7 @@
 
   <!-- AUTH CONTAINER -->
 
-  <div class="container">
+  <div class="container {% if active_form == 'sign-up' %}sign-up-mode{% endif %}">
 
     <div class="forms-container">
 
@@ -45,46 +46,56 @@
 
         <!-- LOGIN -->
 
-        <form class="sign-in-form">
+        <form class="sign-in-form" method="post" action="{{ url_for('auth.login_post') }}">
 
           <h2 class="title">Sign in</h2>
 
+          {% if login_error %}
+          <div class="auth-error">{{ login_error }}</div>
+          {% endif %}
+
           <div class="input-field">
             <span>📧</span>
-            <input type="text" placeholder="Email or Username" required>
+            <input type="text" name="identifier" placeholder="Email or Username" required>
           </div>
 
           <div class="input-field">
             <span>🔒</span>
-            <input type="password" placeholder="Password" required>
+            <input type="password" name="password" placeholder="Password" required>
           </div>
 
-          <button class="btn">Login</button>
+          <a class="forgot-password" href="{{ url_for('auth.reset_password') }}">Forgot your password?</a>
+
+          <button class="btn" type="submit">Login</button>
 
         </form>
 
         <!-- SIGNUP -->
 
-        <form class="sign-up-form">
+        <form class="sign-up-form" method="post" action="{{ url_for('auth.register') }}">
 
           <h2 class="title">Sign up</h2>
 
+          {% if register_error %}
+          <div class="auth-error">{{ register_error }}</div>
+          {% endif %}
+
           <div class="input-field">
             <span>👤</span>
-            <input type="text" placeholder="Username" required>
+            <input type="text" name="username" placeholder="Username" required>
           </div>
 
           <div class="input-field">
             <span>📧</span>
-            <input type="email" placeholder="Email" required>
+            <input type="email" name="email" placeholder="Email" required>
           </div>
 
           <div class="input-field">
             <span>🔒</span>
-            <input type="password" placeholder="Password" required>
+            <input type="password" name="password" placeholder="Password" required>
           </div>
 
-          <button class="btn">Sign Up</button>
+          <button class="btn" type="submit">Sign Up</button>
 
         </form>
 
