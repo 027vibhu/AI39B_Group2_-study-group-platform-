@@ -1,5 +1,4 @@
-avatarInput.addEventListener('change', function () {
-{% extends 'base.html' %}
+{% extends 'base_dash.html' %}
 
 {% block title %}Profile - LOREVIA{% endblock %}
 
@@ -7,68 +6,82 @@ avatarInput.addEventListener('change', function () {
   <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
 {% endblock %}
 
+{% block topbar_title %}Profile{% endblock %}
+
 {% block content %}
   <section class="profile-wrapper">
 
     <div class="profile-card">
-
-      <!-- LEFT -->
       <div class="left-panel">
+        <form class="avatar-form" id="avatarForm" action="{{ url_for('home.update_avatar') }}" method="POST" enctype="multipart/form-data">
+          <div class="avatar-box">
+            {% set avatar_path = user.get('avatar_url') if user and user.get('avatar_url') else 'images/default_user_icon.jpg' %}
+            <img id="profilePreview" src="{{ url_for('static', filename=avatar_path) }}" alt="avatar">
+          </div>
 
-        <div class="avatar-box">
-           <img id="profilePreview" src="{{ url_for('static', filename='images/logo.jpg') }}" alt="avatar">
+          <input type="file" id="avatarInput" name="avatar" hidden accept="image/*">
+
+          <button type="button" class="upload-btn" onclick="document.getElementById('avatarInput').click()">
+            Upload Avatar
+          </button>
+        </form>
+
+        <div class="profile-details">
+          <div class="detail-item">
+            <span class="detail-label">Username</span>
+            <span class="detail-value">{{ user.username }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Email</span>
+            <span class="detail-value">{{ user.email }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Member Since</span>
+            <span class="detail-value">{{ user.created_at.strftime('%b %d, %Y') }}</span>
+          </div>
         </div>
-
-        <input type="file" id="avatarInput" hidden>
-
-        <button class="upload-btn" onclick="document.getElementById('avatarInput').click()">
-           Upload Avatar
-        </button>
-
-        <h2>Your Profile</h2>
-
-        <p>
-          Manage your personal information and keep your student profile updated.
-        </p>
-
       </div>
 
-      <!-- RIGHT -->
       <div class="right-panel">
-
         <h1>Manage Profile</h1>
 
-        <div class="form-grid">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        <form class="profile-form" method="POST" action="{{ url_for('home.update_profile') }}">
+          <div class="form-grid">
+            <div class="input-group">
+              <label>First Name</label>
+              <input type="text" name="first_name" value="{{ user.first_name or '' }}" placeholder="Enter first name">
+            </div>
 
-          <div class="input-group">
-            <label>First Name</label>
-            <input type="text" placeholder="Enter first name">
+            <div class="input-group">
+              <label>Last Name</label>
+              <input type="text" name="last_name" value="{{ user.last_name or '' }}" placeholder="Enter last name">
+            </div>
+
+            <div class="input-group">
+              <label>School</label>
+              <input type="text" name="school" value="{{ user.school or '' }}" placeholder="Your school name">
+            </div>
+
+            <div class="input-group">
+              <label>Address</label>
+              <input type="text" name="address" value="{{ user.address or '' }}" placeholder="Your address">
+            </div>
+
+            <div class="input-group bio">
+              <label>Bio</label>
+              <textarea name="bio" placeholder="Write something about yourself...">{{ user.bio or '' }}</textarea>
+            </div>
           </div>
 
-          <div class="input-group">
-            <label>Last Name</label>
-            <input type="text" placeholder="Enter last name">
-          </div>
-
-          <div class="input-group">
-            <label>School</label>
-            <input type="text" placeholder="Your school name">
-          </div>
-
-          <div class="input-group">
-            <label>Address</label>
-            <input type="text" placeholder="Your address">
-          </div>
-
-          <div class="input-group bio">
-            <label>Bio</label>
-            <textarea placeholder="Write something about yourself..."></textarea>
-          </div>
-
-        </div>
-
-        <button class="save-btn">Save Changes</button>
-
+          <button type="submit" class="save-btn">Save Changes</button>
+        </form>
       </div>
 
     </div>
@@ -80,20 +93,22 @@ avatarInput.addEventListener('change', function () {
 <script>
 const avatarInput = document.getElementById('avatarInput');
 const profilePreview = document.getElementById('profilePreview');
+const avatarForm = document.getElementById('avatarForm');
 
 avatarInput.addEventListener('change', function () {
 
-    const file = this.files[0];
+  const file = this.files[0];
 
-    if(file){
-        const reader = new FileReader();
+  if(file){
+    const reader = new FileReader();
 
-        reader.onload = function(e){
-            profilePreview.src = e.target.result;
-        }
-
-        reader.readAsDataURL(file);
+    reader.onload = function(e){
+      profilePreview.src = e.target.result;
     }
+
+    reader.readAsDataURL(file);
+    avatarForm.submit();
+  }
 });
 </script>
 {% endblock %}

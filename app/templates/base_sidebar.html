@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>{% block title %}LOREVIA{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/nav_bar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+  <div class="sidebar">
+    <div class="logo">
+        <div class="logo-box">
+          <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="LOREVIA logo">
+        </div>
+      <h2 class="sr-only">LOREVIA</h2>
+    </div>
+
+    <div class="nav">
+      {% block nav %}{% endblock %}
+    </div>
+
+    <div class="rooms">
+      {% block rooms %}
+        <div class="rooms-title">Browse Rooms</div>
+        {% block browse_rooms %}{% endblock %}
+
+        {% if joined_rooms %}
+          <div class="rooms-title rooms-title-spaced">Joined Rooms</div>
+          {% for room in joined_rooms %}
+            <a href="{{ url_for('home.chat', room_code=room.code) }}" class="room {% if current_room_code == room.code %}active{% endif %}">
+                <div class="room-number">{{ (room.name[:1] if room.name else room.code[:1]) | upper }}</div>
+              <div>
+                <div>{{ room.name if room.name else 'Room ' ~ room.code }}</div>
+                <small>#{{ room.code }}</small>
+              </div>
+            </a>
+          {% endfor %}
+        {% endif %}
+      {% endblock %}
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <h1>{% block topbar_title %}Dashboard{% endblock %}</h1>
+      <div class="profile-menu" id="profileMenu">
+        <button class="profile" id="userProfile" aria-label="Open profile menu" aria-expanded="false" type="button">
+          {% block profile_initial %}
+            {% set avatar_path = current_user.get('avatar_url') if current_user and current_user.get('avatar_url') else 'images/default_user_icon.jpg' %}
+            <img src="{{ url_for('static', filename=avatar_path) }}" alt="User profile">
+          {% endblock %}
+        </button>
+        <div class="profile-dropdown" id="profileDropdown" aria-hidden="true">
+          <a href="{{ url_for('home.profile') }}" class="profile-item">Profile</a>
+          <a href="{{ url_for('auth.logout') }}" class="profile-item danger">Sign out</a>
+        </div>
+      </div>
+    </div>
+
+    {% block content %}{% endblock %}
+  </div>
+
+  {% block scripts %}{% endblock %}
+  <script>
+    const profileMenu = document.getElementById('profileMenu');
+    const profileButton = document.getElementById('userProfile');
+    const profileDropdown = document.getElementById('profileDropdown');
+
+    if (profileMenu && profileButton && profileDropdown) {
+      const closeMenu = () => {
+        profileButton.setAttribute('aria-expanded', 'false');
+        profileDropdown.setAttribute('aria-hidden', 'true');
+      };
+
+      profileButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const isOpen = profileButton.getAttribute('aria-expanded') === 'true';
+        profileButton.setAttribute('aria-expanded', String(!isOpen));
+        profileDropdown.setAttribute('aria-hidden', String(isOpen));
+      });
+
+      document.addEventListener('click', closeMenu);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          closeMenu();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

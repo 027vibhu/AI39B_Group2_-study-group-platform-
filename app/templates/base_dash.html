@@ -1,0 +1,24 @@
+{% extends "base_sidebar.html" %}
+
+{% block nav %}
+  <a href="#" class="nav-item">
+    <i class="fa-solid fa-house"></i>
+    Dashboard
+  </a>
+  <a href="{{ url_for('home.create_room') }}" class="nav-item">
+    <i class="fa-solid fa-plus"></i>
+    Create Room
+  </a>
+  <a href="{{ url_for('home.join_room') }}" class="nav-item">
+    <i class="fa-solid fa-comments"></i>
+    Join Room
+  </a>
+  <a href="#" class="nav-item">
+    <i class="fa-solid fa-compass"></i>
+    Browse Rooms
+  </a>
+{% endblock %}
+
+{% block rooms %}
+  {{ super() }}
+{% endblock %}

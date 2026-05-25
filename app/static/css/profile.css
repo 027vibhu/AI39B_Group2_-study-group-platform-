@@ -5,77 +5,7 @@
   font-family:'Poppins',sans-serif;
 }
 
-body{
-  background:#f6f4ef;
-  min-height:100vh;
-  color:#333;
-}
-
-/* NAVBAR */
-.navbar{
-  width:100%;
-  height:80px;
-  background:#f6f4ef;
-  border-bottom:1px solid #e8e5de;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 60px;
-}
-
-.logo{
-  display:flex;
-  align-items:center;
-  gap:14px;
-}
-
-.logo-box{
-  width:48px;
-  height:48px;
-  border-radius:14px;
-  background:white;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 4px 12px rgba(0,0,0,0.08);
-  font-weight:700;
-  color:#4b4f78;
-  font-size:22px;
-}
-
-.logo-box img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  border-radius:14px;
-}
-
-.logo h2{
-  color:#4b4f78;
-  letter-spacing:2px;
-  font-size:30px;
-}
-
-.nav-links{
-  display:flex;
-  gap:40px;
-  font-weight:500;
-}
-
-.nav-links a{
-  text-decoration:none;
-  color:#444;
-}
-
-.nav-btn{
-  background:#4b4f78;
-  color:white;
-  border:none;
-  padding:14px 30px;
-  border-radius:14px;
-  cursor:pointer;
-  font-weight:600;
-}
+/* body background centralized in dashboard.css */
 
 /* MAIN CARD */
 .profile-wrapper{
@@ -93,13 +23,14 @@ body{
   border-radius:35px;
   overflow:hidden;
   display:flex;
-  box-shadow:0 15px 40px rgba(0,0,0,0.08);
+  border:1px solid rgba(24,32,56,0.08);
+  box-shadow:0 20px 45px rgba(24,32,56,0.08);
 }
 
 /* LEFT PANEL */
 .left-panel{
   width:35%;
-  background:#4b4f78;
+  background:linear-gradient(160deg,#4b4f78 0%, #3f456a 100%);
   color:white;
   padding:50px 35px;
   position:relative;
@@ -112,12 +43,13 @@ body{
 }
 
 .avatar-box{
-  width:140px;
-  height:140px;
+  width:150px;
+  height:150px;
   border-radius:50%;
   background:white;
   overflow:hidden;
-  border:5px solid rgba(255,255,255,0.2);
+  border:6px solid rgba(255,255,255,0.25);
+  box-shadow:0 18px 35px rgba(19,24,44,0.25);
   margin-bottom:25px;
 }
 
@@ -129,11 +61,11 @@ body{
 
 .upload-btn{
   margin-top:15px;
-  background:transparent;
-  border:2px solid white;
+  background:rgba(255,255,255,0.14);
+  border:1px solid rgba(255,255,255,0.4);
   color:white;
-  padding:12px 28px;
-  border-radius:30px;
+  padding:12px 26px;
+  border-radius:999px;
   cursor:pointer;
   font-weight:600;
   transition:0.3s;
@@ -141,20 +73,49 @@ body{
 
 .upload-btn:hover{
   background:white;
-  color:#4b4f78;
+  color:#3f456a;
 }
 
 .left-panel h2{
-  margin-top:25px;
-  font-size:32px;
+  margin-top:22px;
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:0.2px;
 }
 
-.left-panel p{
-  margin-top:12px;
-  text-align:center;
-  line-height:1.7;
-  opacity:0.9;
-  font-size:15px;
+.profile-details{
+  width:100%;
+  margin-top:22px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.detail-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  padding:14px 16px;
+  border-radius:12px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.18);
+}
+
+.detail-label{
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:0.14em;
+  opacity:0.75;
+  min-width:110px;
+}
+
+.detail-value{
+  font-size:14px;
+  font-weight:600;
+  text-align:right;
+  word-break:break-word;
+  color:#f6f7ff;
 }
 
 /* RIGHT PANEL */
@@ -164,9 +125,24 @@ body{
 }
 
 .right-panel h1{
-  font-size:52px;
-  color:#333;
-  margin-bottom:40px;
+  font-size:42px;
+  color:#2b2f3a;
+  margin-bottom:30px;
+  letter-spacing:-0.5px;
+}
+
+.alert{
+  padding:14px 16px;
+  border-radius:14px;
+  margin-bottom:18px;
+  font-size:14px;
+  font-weight:600;
+}
+
+.alert-success{
+  background:rgba(45, 211, 111, 0.12);
+  color:#1e7b48;
+  border:1px solid rgba(45, 211, 111, 0.3);
 }
 
 .form-grid{
@@ -181,25 +157,29 @@ body{
 }
 
 .input-group label{
-  margin-bottom:10px;
-  font-weight:500;
-  color:#555;
+  margin-bottom:8px;
+  font-weight:600;
+  color:#454a5a;
+  font-size:13px;
+  letter-spacing:0.02em;
 }
 
 .input-group input,
 .input-group textarea{
-  border:none;
-  background:#f3f3f3;
-  padding:18px 20px;
-  border-radius:18px;
-  font-size:15px;
+  border:1px solid transparent;
+  background:#f4f5f9;
+  padding:16px 18px;
+  border-radius:16px;
+  font-size:14px;
   outline:none;
   transition:0.3s;
 }
 
 .input-group input:focus,
 .input-group textarea:focus{
-  background:#ececec;
+  background:#ffffff;
+  border-color:rgba(75,79,120,0.35);
+  box-shadow:0 0 0 3px rgba(75,79,120,0.12);
 }
 
 .bio{
@@ -216,9 +196,9 @@ textarea{
   background:#4b4f78;
   color:white;
   border:none;
-  padding:18px 40px;
-  border-radius:18px;
-  font-size:16px;
+  padding:16px 38px;
+  border-radius:16px;
+  font-size:15px;
   font-weight:600;
   cursor:pointer;
   transition:0.3s;
