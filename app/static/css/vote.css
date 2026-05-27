@@ -5,6 +5,10 @@
 }
  
 .vote-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     opacity: 0.65;
     transition: opacity 0.25s ease;
 }

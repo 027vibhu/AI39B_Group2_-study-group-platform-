@@ -3,6 +3,7 @@
 {% block title %}LOREVIA Chat{% endblock %}
 
 {% block head %}
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/vote.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 {% endblock %}
@@ -43,12 +44,33 @@
     <div class="chat-body" id="chatBody">
       <!-- Initial messages from server -->
       {% for msg in messages %}
-      <div class="message received" data-sender="{{ msg.username }}">
-        <div class="message-bubble">
-          <div style="font-size: 0.7rem; color: #888; margin-bottom: 2px;">{{ msg.username }}</div>
-          {{ msg.content }}
-          <div class="message-time">{{ msg.time_label }}</div>
-        </div>
+      <div class="message received" 
+           data-sender="{{ msg.username }}" 
+           data-message-id="{{ msg.id }}">
+          <div class="message-bubble">
+              <div class="message-username">{{ msg.username }}</div>
+              <div class="message-content">{{ msg.content }}</div>
+              <div class="message-time">{{ msg.time_label }}</div>
+          </div>
+
+          <!-- Upvote / Downvote -->
+          <div class="vote-container">
+              <button class="vote-btn upvote-btn" 
+                      data-vote="up"
+                      data-message-id="{{ msg.id }}">
+                  👍
+              </button>
+              
+              <span class="vote-score">
+                  {{ msg.net_score | default(0) }}
+              </span>
+              
+              <button class="vote-btn downvote-btn" 
+                      data-vote="down"
+                      data-message-id="{{ msg.id }}">
+                  👎
+              </button>
+          </div>
       </div>
       {% endfor %}
     </div>
@@ -87,7 +109,7 @@ document.querySelectorAll('.message').forEach(msg => {
         msg.classList.remove('received');
         msg.classList.add('sent');
         // Hide sender name for own messages
-        const senderLabel = msg.querySelector('div[style*="font-size: 0.7rem"]');
+        const senderLabel = msg.querySelector('.message-username');
         if (senderLabel) senderLabel.style.display = 'none';
     }
 });
@@ -157,13 +179,18 @@ function addMessageToUI(text, type, sender){
   message.classList.add('message', type);
   let senderHTML = '';
   if (type === 'received') {
-      senderHTML = `<div style="font-size: 0.7rem; color: #888; margin-bottom: 2px;">${sender}</div>`;
+      senderHTML = `<div class="message-username">${sender}</div>`;
   }
   message.innerHTML = `
     <div class="message-bubble">
       ${senderHTML}
       ${text}
       <div class="message-time">${getTime()}</div>
+    </div>
+    <div class="vote-container">
+      <button class="vote-btn upvote-btn" data-vote="up">👍</button>
+      <span class="vote-score">0</span>
+      <button class="vote-btn downvote-btn" data-vote="down">👎</button>
     </div>
   `;
   chatBody.appendChild(message);
@@ -173,6 +200,49 @@ function addMessageToUI(text, type, sender){
 sendBtn.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', function(e){
   if(e.key === 'Enter') sendMessage();
+});
+
+chatBody.addEventListener('click', function(event) {
+  const button = event.target.closest('.vote-btn');
+  if (!button) return;
+  const message = button.closest('.message');
+  if (!message) return;
+
+  const scoreSpan = message.querySelector('.vote-score');
+  const upButton = message.querySelector('.upvote-btn');
+  const downButton = message.querySelector('.downvote-btn');
+  let score = Number(scoreSpan.textContent.trim()) || 0;
+  const voteType = button.dataset.vote;
+
+  if (voteType === 'up') {
+      if (button.classList.contains('active')) {
+          button.classList.remove('active');
+          score -= 1;
+      } else {
+          if (downButton.classList.contains('active')) {
+              downButton.classList.remove('active');
+              score += 2;
+          } else {
+              score += 1;
+          }
+          button.classList.add('active');
+      }
+  } else if (voteType === 'down') {
+      if (button.classList.contains('active')) {
+          button.classList.remove('active');
+          score += 1;
+      } else {
+          if (upButton.classList.contains('active')) {
+              upButton.classList.remove('active');
+              score -= 2;
+          } else {
+              score -= 1;
+          }
+          button.classList.add('active');
+      }
+  }
+
+  scoreSpan.textContent = score;
 });
 
 imageInput.addEventListener('change', function(){
@@ -185,6 +255,11 @@ imageInput.addEventListener('change', function(){
     <div class="message-bubble">
       <img src="${imageURL}" class="message-image">
       <div class="message-time">${getTime()}</div>
+    </div>
+    <div class="vote-container">
+      <button class="vote-btn upvote-btn" data-vote="up">👍</button>
+      <span class="vote-score">0</span>
+      <button class="vote-btn downvote-btn" data-vote="down">👎</button>
     </div>
   `;
   chatBody.appendChild(message);
