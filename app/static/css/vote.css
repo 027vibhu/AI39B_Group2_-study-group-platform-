@@ -1,0 +1,62 @@
+/* vote.css - Upvote/Downvote System */
+ 
+.message {
+    transition: background-color 0.2s ease;
+}
+ 
+.vote-container {
+    opacity: 0.65;
+    transition: opacity 0.25s ease;
+}
+ 
+.message:hover .vote-container {
+    opacity: 1;
+}
+ 
+.vote-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1.15rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+ 
+.vote-btn:hover {
+    transform: scale(1.15);
+    background-color: #f3f4f6;
+}
+ 
+.vote-btn.active {
+    transform: scale(1.1);
+}
+ 
+.upvote-btn.active {
+    color: #10b981 !important;
+}
+ 
+.downvote-btn.active {
+    color: #ef4444 !important;
+}
+ 
+.vote-score {
+    min-width: 28px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+ 
+.vote-container button {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+ 
+/* Optional nice touch */
+.message .vote-score {
+    user-select: none;
+}
+ 
