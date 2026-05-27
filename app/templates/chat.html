@@ -277,7 +277,11 @@ function getTime(){
 }
 
 function scrollBottom(){
-  chatBody.scrollTop = chatBody.scrollHeight;
+    chatBody.scrollTop = chatBody.scrollHeight;
 }
 </script>
+
+// === VOTE SYSTEM JAVASCRIPT ===
+<script src="{{ url_for('static', filename='js/vote.js') }}"></script>
+
 {% endblock %}
