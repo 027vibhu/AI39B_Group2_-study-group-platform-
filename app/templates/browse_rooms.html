@@ -137,7 +137,49 @@
             </div>
 
         </div>
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const search = document.querySelector('.search');
+          const rooms = Array.from(document.querySelectorAll('.room'));
 
+          if (search) {
+            search.addEventListener('input', function (e) {
+              const q = e.target.value.trim().toLowerCase();
+              rooms.forEach(room => {
+                const title = room.querySelector('.room-info h3')?.textContent.trim().toLowerCase() || '';
+                const id = room.querySelector('.room-info span')?.textContent.trim().toLowerCase() || '';
+                if (title.includes(q) || id.includes(q)) {
+                  room.style.display = '';
+                } else {
+                  room.style.display = 'none';
+                }
+              });
+            });
+          }
+
+          // Attach join button handlers
+          document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.join-btn');
+            if (!btn) return;
+            const room = btn.closest('.room');
+            const title = room?.querySelector('.room-info h3')?.textContent.trim() || 'Room';
+            const code = room?.querySelector('.room-info span')?.textContent.trim() || '';
+            console.log('Join clicked:', title, code);
+            const notice = document.createElement('div');
+            notice.textContent = `Joining ${title} ${code}`;
+            notice.style.position = 'fixed';
+            notice.style.right = '20px';
+            notice.style.bottom = '20px';
+            notice.style.background = 'rgba(0,0,0,0.8)';
+            notice.style.color = 'white';
+            notice.style.padding = '10px 14px';
+            notice.style.borderRadius = '8px';
+            notice.style.zIndex = 9999;
+            document.body.appendChild(notice);
+            setTimeout(() => notice.remove(), 1800);
+          });
+        });
+        </script>
     </div>
 
 </div>
