@@ -12,6 +12,7 @@ import random
 import os
 import uuid
 from werkzeug.utils import secure_filename
+from app.controllers.moderation_controller import ModerationController
 
 bp = Blueprint('home', __name__)
 
@@ -136,7 +137,8 @@ def profile():
 
 @bp.route('/moderation')
 def moderation():
-    return render_template('moderation.html')
+    controller = ModerationController()
+    return controller.show_moderation()
 
 
 @bp.route('/profile/update', methods=['POST'])
