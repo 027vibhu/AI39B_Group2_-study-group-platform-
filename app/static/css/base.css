@@ -1,0 +1,21 @@
+:root{
+  --primary:#4C5372;
+  --secondary:#7C7E9D;
+  --neutral:#FFFDF6;
+  --dark:#2f3347;
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Poppins",sans-serif;
+}
+
+body{
+  min-height:100vh;
+  background:var(--neutral);
+  color:var(--dark);
+}
+
+/* Navbar styles moved to css/nav_bar.css */

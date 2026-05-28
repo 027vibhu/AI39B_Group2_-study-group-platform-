@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}LOREVIA — Study Together{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
+
+{% block content %}
+  <section class="hero">
+    <div class="grid-bg"></div>
+    <div class="noise"></div>
+
+    <div class="hero-wrapper">
+      <div class="side-label">
+        STUDY • CONNECT • DISCUSS
+      </div>
+
+      <div class="hero-text">
+        <h1 class="main-title">
+          <span class="solid">Study</span>
+          <span class="outline">Together.</span>
+        </h1>
+
+        <div class="floating-line line1"></div>
+        <div class="floating-line line2"></div>
+
+        <p class="hero-description">
+          Real-time study rooms, instant discussions,
+          answer sharing, voice sessions and collaborative
+          learning spaces built for students who hate
+          studying alone.
+
+        </p>
+
+        <div class="hero-actions">
+          <button class="primary-btn">Get Started</button>
+          <button class="ghost-btn">Explore Platform</button>
+        </div>
+      </div>
+
+      <div class="study-panel">
+        <div class="panel-header">
+          <span class="live-pill"></span>
+          LIVE SESSION
+        </div>
+
+        <div class="message-card user1">
+          <span class="name">Kira</span>
+          <p>who solved question 4?</p>
+        </div>
+
+        <div class="message-card user2">
+          <span class="name">Aman</span>
+          <p>uploading notes rn wait 😭</p>
+        </div>
+
+        <div class="message-card user3">
+          <span class="name">Luna</span>
+          <p>join voice we're discussing derivation</p>
+        </div>
+
+        <div class="room-code">
+          ROOM #MATH-1A
+        </div>
+      </div>
+
+      <div class="sticky-note note1">
+        ∫ x²+1 dx
+      </div>
+
+      <div class="sticky-note note3">
+         Δx · Δp  ≥  ℏ / 2
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    const symbols = [
+      '+', '−', '×', '÷', '=',
+      '∫', 'π', 'α', 'β', 'θ',
+      'Σ', 'Δ', '∞', 'λ'
+    ];
+
+    let lastSpawn = 0;
+
+    window.addEventListener('mousemove', (e) => {
+      const now = Date.now();
+      if (now - lastSpawn < 70) return;
+
+      lastSpawn = now;
+
+      const particle = document.createElement('div');
+      particle.className = 'math-symbol';
+      particle.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+      particle.style.left = e.clientX + 'px';
+      particle.style.top = e.clientY + 'px';
+      particle.style.fontSize = Math.random() * 18 + 14 + 'px';
+      particle.style.color = [
+        '#4C5372',
+        '#7C7E9D',
+        '#8FA7FF',
+        '#D18CE0',
+        '#A790FF'
+      ][Math.floor(Math.random() * 5)];
+      particle.style.setProperty('--moveX', `${(Math.random() - 0.5) * 90}px`);
+      particle.style.setProperty('--moveY', `${(Math.random() - 0.5) * 90}px`);
+
+      document.body.appendChild(particle);
+
+      setTimeout(() => {
+        particle.remove();
+      }, 1000);
+    });
+  </script>
+{% endblock %}

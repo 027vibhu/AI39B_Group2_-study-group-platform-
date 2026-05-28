@@ -1,0 +1,460 @@
+:root{
+  --primary:#4C5372;
+  --secondary:#7C7E9D;
+  --tertiary:#E2D4E0;
+  --neutral:#FFFDF6;
+  --dark:#2f3347;
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Poppins",sans-serif;
+}
+
+body{
+  background:var(--neutral);
+  color:var(--dark);
+  overflow-x:hidden;
+}
+
+/* Navbar styles centralized in css/nav_bar.css */
+
+/* =========================
+   HERO
+========================== */
+
+.hero{
+  min-height:100vh;
+
+  position:relative;
+  overflow:hidden;
+
+  background:
+  radial-gradient(circle at top left, rgba(226,212,224,0.55), transparent 30%),
+  radial-gradient(circle at bottom right, rgba(143,167,255,0.22), transparent 28%),
+  var(--neutral);
+}
+
+.grid-bg{
+  position:absolute;
+  inset:0;
+
+  background-image:
+  linear-gradient(rgba(76,83,114,0.06) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(76,83,114,0.06) 1px, transparent 1px);
+
+  background-size:60px 60px;
+
+  mask-image:radial-gradient(circle at center, black 45%, transparent 90%);
+}
+
+.noise{
+  position:absolute;
+  inset:0;
+
+  opacity:0.03;
+
+  background-image:
+  repeating-radial-gradient(circle at 0 0,#000 0,transparent 2px,transparent 40px);
+}
+
+.hero-wrapper{
+  position:relative;
+
+  width:100%;
+  min-height:100vh;
+
+  padding:150px 7vw 80px;
+}
+
+/* =========================
+   SIDE LABEL
+========================== */
+
+.side-label{
+  position:absolute;
+
+  writing-mode:vertical-rl;
+
+  top:220px;
+  left:20px;
+
+  font-size:11px;
+  letter-spacing:7px;
+
+  color:rgba(76,83,114,0.4);
+}
+
+/* =========================
+   HERO TEXT
+========================== */
+
+.hero-text{
+  position:relative;
+  z-index:3;
+
+  max-width:780px;
+}
+
+.main-title{
+  display:flex;
+  flex-direction:column;
+
+  line-height:0.9;
+
+  position:relative;
+}
+
+.main-title .solid{
+  font-size:clamp(4rem,12vw,9rem);
+  font-weight:800;
+  color:var(--dark);
+}
+
+.main-title .outline{
+  margin-left:120px;
+
+  font-size:clamp(4rem,11vw,8rem);
+  font-weight:800;
+
+  color:transparent;
+  -webkit-text-stroke:2px var(--primary);
+}
+
+.hero-description{
+  margin-top:55px;
+
+  max-width:520px;
+
+  font-size:1.05rem;
+  line-height:2.1;
+
+  color:#666;
+
+  position:relative;
+  z-index:4;
+}
+
+.hero-actions{
+  margin-top:50px;
+
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+}
+
+.primary-btn,
+.ghost-btn{
+  padding:18px 34px;
+
+  border-radius:18px;
+
+  font-size:15px;
+  font-weight:600;
+
+  cursor:pointer;
+  transition:0.3s;
+}
+
+.primary-btn{
+  border:none;
+
+  background:var(--primary);
+  color:white;
+
+  box-shadow:0 18px 40px rgba(76,83,114,0.25);
+}
+
+.primary-btn:hover{
+  transform:translateY(-5px);
+}
+
+.ghost-btn{
+  border:1px solid rgba(76,83,114,0.12);
+
+  background:rgba(255,255,255,0.7);
+  backdrop-filter:blur(10px);
+}
+
+.ghost-btn:hover{
+  transform:translateY(-5px);
+}
+
+/* =========================
+   FLOATING LINES
+========================== */
+
+.floating-line{
+  position:absolute;
+  height:2px;
+  background:rgba(76,83,114,0.12);
+}
+
+.line1{
+  width:240px;
+
+  top:80px;
+  right:-140px;
+
+  transform:rotate(16deg);
+}
+
+.line2{
+  width:180px;
+
+  bottom:-10px;
+  left:300px;
+
+  transform:rotate(-16deg);
+}
+
+/* =========================
+   STUDY PANEL
+========================== */
+
+.study-panel{
+  position:absolute;
+
+  right:8vw;
+  top:170px;
+
+  width:350px;
+
+  background:rgba(255,255,255,0.66);
+  backdrop-filter:blur(20px);
+
+  border:1px solid rgba(76,83,114,0.08);
+
+  border-radius:34px;
+
+  padding:30px;
+
+  transform:rotate(4deg);
+
+  box-shadow:0 30px 60px rgba(0,0,0,0.08);
+
+  z-index:5;
+}
+
+.panel-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+  color:var(--primary);
+  font-weight:700;
+
+  margin-bottom:25px;
+}
+
+.live-pill{
+  width:12px;
+  height:12px;
+
+  border-radius:50%;
+
+  background:#2ed573;
+
+  box-shadow:0 0 14px #2ed573;
+}
+
+.message-card{
+  padding:16px;
+
+  border-radius:20px;
+
+  margin-bottom:16px;
+}
+
+.message-card .name{
+  display:block;
+
+  font-size:12px;
+  opacity:0.7;
+
+  margin-bottom:8px;
+}
+
+.message-card p{
+  font-size:14px;
+  line-height:1.7;
+}
+
+.user1{
+  background:#ececf2;
+}
+
+.user2{
+  background:var(--primary);
+  color:white;
+}
+
+.user3{
+  background:#e9ddff;
+}
+
+.room-code{
+  margin-top:25px;
+
+  text-align:center;
+
+  background:rgba(76,83,114,0.08);
+
+  padding:14px;
+
+  border-radius:16px;
+
+  font-weight:700;
+  letter-spacing:2px;
+}
+
+/* =========================
+   STICKY NOTES
+========================== */
+
+.sticky-note{
+  position:absolute;
+
+  padding:16px 20px;
+
+  border-radius:16px;
+
+  font-weight:600;
+
+  box-shadow:0 20px 40px rgba(0,0,0,0.08);
+
+  z-index:2;
+
+  opacity:0.92;
+}
+
+.note1{
+  top:170px;
+  left:52%;
+
+  background:#fff2bd;
+
+  transform:rotate(-10deg);
+}
+
+.note2{
+  left:8%;
+  bottom:120px;
+
+  background:#ffd7d7;
+
+  transform:rotate(7deg);
+
+  z-index:1;
+}
+
+.note3{
+  right:16%;
+  bottom:140px;
+
+  background:#dfffe0;
+
+  transform:rotate(-6deg);
+}
+
+/* =========================
+   MATH SYMBOLS
+========================== */
+
+.math-symbol{
+  position:fixed;
+
+  pointer-events:none;
+  user-select:none;
+
+  z-index:99999;
+
+  font-weight:700;
+
+  opacity:0.7;
+
+  animation:floatFade 1s ease-out forwards;
+}
+
+@keyframes floatFade{
+
+  0%{
+    opacity:0.8;
+
+    transform:
+    translate(0,0)
+    scale(1)
+    rotate(0deg);
+  }
+
+  100%{
+    opacity:0;
+
+    transform:
+    translate(var(--moveX),var(--moveY))
+    scale(0.4)
+    rotate(90deg);
+  }
+
+}
+
+/* =========================
+   RESPONSIVE
+========================== */
+
+@media(max-width:1100px){
+
+  .study-panel{
+    position:relative;
+
+    right:auto;
+    top:auto;
+
+    margin-top:70px;
+
+    width:100%;
+    max-width:420px;
+
+    transform:none;
+  }
+
+  .main-title .outline{
+    margin-left:0;
+  }
+
+  .sticky-note{
+    display:none;
+  }
+
+}
+
+@media(max-width:800px){
+
+  .navbar{
+    padding:0 20px;
+  }
+
+  .nav-links{
+    display:none;
+  }
+
+  .side-label{
+    display:none;
+  }
+
+  .hero-wrapper{
+    padding-top:120px;
+  }
+
+  .main-title .solid,
+  .main-title .outline{
+    font-size:4rem;
+  }
+
+  .hero-description{
+    font-size:1rem;
+  }
+
+}

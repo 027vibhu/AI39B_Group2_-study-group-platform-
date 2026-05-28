@@ -1,0 +1,73 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Lorevia - Join Room{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/join_room.css') }}">
+{% endblock %}
+
+{% block topbar_title %}Join Workspace{% endblock %}
+
+{% block content %}
+    <div class="auth-box join-box-wrap">
+      <div class="left-panel">
+        <div class="left-content">
+          <h1>Join Room</h1>
+          <p>Enter the 6 digit room code to connect with your study team instantly.</p>
+        </div>
+      </div>
+
+      <div class="right-panel">
+        <div class="form-box">
+          <h2 class="title">Join</h2>
+          <p class="sub">Type your 6 digit room code below</p>
+
+          <div class="code-inputs">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+            <input type="text" maxlength="1">
+          </div>
+          <button class="main-btn" id="joinBtn">
+            Join Room
+          </button>
+        </div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    const inputs = document.querySelectorAll('.code-inputs input');
+    const joinBtn = document.getElementById('joinBtn');
+
+    inputs.forEach((input, index) => {
+      input.addEventListener('input', () => {
+        if(input.value.length === 1 && index < inputs.length - 1){
+          inputs[index + 1].focus();
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if(e.key === 'Backspace' && input.value === '' && index > 0){
+          inputs[index - 1].focus();
+        }
+      });
+    });
+
+    joinBtn.addEventListener('click', () => {
+        let code = "";
+        inputs.forEach(input => {
+            code += input.value;
+        });
+
+        if (code.length === 6) {
+            window.location.href = `/chat/${code}`;
+        } else {
+            alert("Please enter a 6-digit room code.");
+        }
+    });
+  </script>
+{% endblock %}

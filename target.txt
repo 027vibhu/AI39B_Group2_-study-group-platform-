@@ -1,0 +1,50 @@
+Moderation Panel UI Reference
+
+HTML Structure:
+- .moderation-panel
+  - header.mod-header
+    - h1 "Moderation Panel"
+    - p "Manage disruptive users in the room"
+  - .mod-controls
+    - .search-box
+      - input[type=text][placeholder="Search users..."]
+      - button.btn.btn-primary "Search"
+    - .filter-group
+      - button.btn.btn-secondary.active "All"
+      - button.btn.btn-secondary "Active"
+      - button.btn.btn-secondary "Muted"
+  - .user-table
+    - .user-row (repeat)
+      - .user-meta
+        - img.avatar
+        - .user-info
+          - strong.user-name
+          - span.user-role
+      - .user-status "Online"
+      - .user-actions
+        - button.btn.action-btn "Kick"
+        - button.btn.btn-danger.action-btn "Ban"
+  - .action-summary
+    - p "Selected user actions are irreversible. Please confirm before banning."
+
+Modal Structure:
+- .modal-backdrop
+  - .modal-window
+    - h2 "Confirm Action"
+    - p "Are you sure you want to kick/ban this user?"
+    - .modal-buttons
+      - button.btn.btn-secondary "Cancel"
+      - button.btn.btn-danger "Confirm"
+
+Core CSS Styling:
+- color palette: neutral background, white cards, indigo primary, red danger
+- card spacing and subtle shadow
+- responsive layout with max-width 960px center
+- hover states for buttons
+- table rows stack on mobile, user meta aligned horizontally on desktop
+
+Interaction Notes:
+- Search field filters user list
+- Kick/Ban buttons open confirmation modal
+- Active filter toggles user state
+- Buttons should clearly separate normal and destructive actions

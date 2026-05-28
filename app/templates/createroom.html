@@ -1,0 +1,79 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Create Workspace - Lorevia{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/createroom.css') }}">
+{% endblock %}
+
+{% block topbar_title %}Create Workspace{% endblock %}
+
+{% block content %}
+    <div class="auth-box create-box">
+      <div class="left-panel">
+        <div class="left-content">
+          <h1>Create Room</h1>
+          <p>Launch a private or public study workspace instantly, then share the room code with your classmates.</p>
+        </div>
+      </div>
+
+      <div class="right-panel">
+        <div class="form-box">
+          <h2 class="title">Create</h2>
+          <p class="sub">Setup your study workspace below</p>
+
+          <form method="post" action="{{ url_for('home.create_room') }}">
+            <input type="hidden" name="room_code" id="room-code-value" value="{{ room_code }}">
+            <input type="hidden" name="is_private" id="is-private-value" value="0">
+            <div class="input-box">
+              <span>🏷️</span>
+              <input type="text" name="room_name" placeholder="Room name" required>
+            </div>
+            <div class="input-group">
+              <label>Your Room Code</label>
+              <div class="code-grid">
+                {% for char in room_code %}
+                <input type="text" maxlength="1" value="{{ char }}" readonly>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="toggle-container">
+              <div class="toggle-text">
+                <span class="toggle-title" id="toggle-label">Public Room</span>
+                <span class="toggle-desc" id="toggle-sublabel">Listed in Browse Rooms and open to anyone</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="public-toggle" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <button type="submit" class="main-btn">Create Room</button>
+          </form>
+        </div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    // Handle switching text content based on toggle interaction dynamically
+    const toggleInput = document.getElementById('public-toggle');
+    const toggleLabel = document.getElementById('toggle-label');
+    const toggleSublabel = document.getElementById('toggle-sublabel');
+    const isPrivateValue = document.getElementById('is-private-value');
+
+    toggleInput.addEventListener('change', () => {
+      if (toggleInput.checked) {
+        toggleLabel.textContent = 'Public Room';
+        toggleSublabel.textContent = 'Listed in Browse Rooms and open to anyone';
+        isPrivateValue.value = '0';
+      } else {
+        toggleLabel.textContent = 'Private Room';
+        toggleSublabel.textContent = 'Listed in Browse Rooms but requires the room code to join';
+        isPrivateValue.value = '1';
+      }
+    });
+  </script>
+{% endblock %}
