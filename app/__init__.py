@@ -2,6 +2,8 @@ from flask import Flask
 from flask_socketio import SocketIO
 from config import Config
 
+from app.routes.roomroutes import room_bp
+app.register_blueprint(room_bp)
 socketio = SocketIO()
 
 def create_app():
