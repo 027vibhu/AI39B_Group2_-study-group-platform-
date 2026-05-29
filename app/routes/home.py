@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, session, request, current_app, flash
 from app.models import (
-    create_room as create_room_record,
     create_user_room,
     delete_room_by_code,
     get_joined_rooms_for_user,
@@ -8,6 +7,7 @@ from app.models import (
     get_room_by_code,
 )
 from app.models.database import get_user_by_id, update_user_avatar, update_user_profile
+from app.controllers.room_controller import RoomController
 import random
 import os
 import uuid
@@ -183,23 +183,22 @@ def update_avatar():
     return redirect(url_for('home.profile'))
 
 
+room_controller = RoomController()
+
+
 @bp.route('/create_room', methods=['GET', 'POST'])
 def create_room():
     if request.method == 'POST':
         room_name = request.form.get('room_name', '').strip()
         subject_tag = request.form.get('subject_tag', '').strip()
         submitted_code = (request.form.get('room_code') or '').strip().upper()
-        if len(submitted_code) == 6 and submitted_code.isalnum() and not get_room_by_code(submitted_code):
-            code = submitted_code
-        else:
-            code = _generate_unique_room_code()
 
         is_private = request.form.get('is_private') == '1'
 
-        new_room = create_room_record(
-            code,
-            room_name or f'Room {code}',
+        new_room = room_controller.create_room(
+            room_name,
             subject_tag,
+            submitted_code,
             is_private,
         )
 
@@ -207,8 +206,8 @@ def create_room():
         if user_id:
             _remember_joined_room_for_user(user_id, new_room['id'])
         else:
-            _remember_joined_room(code)
+            _remember_joined_room(new_room['code'])
 
-        return redirect(url_for('home.chat', room_code=code))
+        return redirect(url_for('home.chat', room_code=new_room['code']))
 
     return render_template('createroom.html', room_code=_generate_unique_room_code())
