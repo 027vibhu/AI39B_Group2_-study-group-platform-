@@ -68,51 +68,27 @@
         </div>
 
         <div class="rooms">
-
-            <div class="room">
-                <div class="room-left">
-                    <div class="icon">C</div>
+            {% if rooms %}
+                {% for room in rooms %}
+                    <div class="room">
+                        <div class="room-left">
+                            <div class="icon">{{ room.name[:1]|upper }}</div>
+                            <div class="room-info">
+                                <h3>{{ room.name }}</h3>
+                                <span>#{{ room.code }}</span>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('home.chat', room_code=room.code) }}" class="join-btn" aria-label="Join Room">Join Room</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="room empty-room">
                     <div class="room-info">
-                        <h3>Chemistry</h3>
-                        <span>#483921</span>
+                        <h3>No public rooms available</h3>
+                        <p>Try creating a room or check back later.</p>
                     </div>
                 </div>
-                <button type="button" class="join-btn" aria-label="Join Room">Join Room</button>
-            </div>
-
-            <div class="room">
-                <div class="room-left">
-                    <div class="icon">M</div>
-                    <div class="room-info">
-                        <h3>Maths</h3>
-                        <span>#271504</span>
-                    </div>
-                </div>
-                <button type="button" class="join-btn" aria-label="Join Room">Join Room</button>
-            </div>
-
-            <div class="room">
-                <div class="room-left">
-                    <div class="icon">P</div>
-                    <div class="room-info">
-                        <h3>Physics</h3>
-                        <span>#684319</span>
-                    </div>
-                </div>
-                <button type="button" class="join-btn" aria-label="Join Room">Join Room</button>
-            </div>
-
-            <div class="room">
-                <div class="room-left">
-                    <div class="icon">B</div>
-                    <div class="room-info">
-                        <h3>Biology</h3>
-                        <span>#910275</span>
-                    </div>
-                </div>
-                <button type="button" class="join-btn" aria-label="Join Room">Join Room</button>
-            </div>
-
+            {% endif %}
         </div>
 
     </div>
