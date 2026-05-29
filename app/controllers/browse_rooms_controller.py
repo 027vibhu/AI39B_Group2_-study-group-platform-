@@ -15,8 +15,9 @@ class BrowseRoomsController(BaseController):
         Returns:
             Rendered template with public rooms data
         """
-        # Fetch all public rooms using RoomModel
+        # Ensure the room table exists before querying
         room_model = RoomModel()
+        room_model.create_table()
         public_rooms = room_model.get_all_public_rooms()
         
         # Prepare context data
