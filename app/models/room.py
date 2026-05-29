@@ -17,6 +17,12 @@ def create_rooms_table():
                 "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
             )
+            cursor.execute("SHOW COLUMNS FROM room LIKE %s", ("subject_tags",))
+            if not cursor.fetchone():
+                cursor.execute(
+                    "ALTER TABLE room "
+                    "ADD COLUMN subject_tags VARCHAR(255) DEFAULT ''"
+                )
     finally:
         connection.close()
 

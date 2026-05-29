@@ -9,7 +9,7 @@ class RoomModel(BaseModel):
 
     def create_table(self):
         """Create the `room` table if it does not exist."""
-        query = (
+        create_query = (
             "CREATE TABLE IF NOT EXISTS room ("
             "id INT AUTO_INCREMENT PRIMARY KEY,"
             "code VARCHAR(6) NOT NULL UNIQUE,"
@@ -19,7 +19,15 @@ class RoomModel(BaseModel):
             "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
         )
-        return self.execute(query)
+        self.execute(create_query)
+        check_query = "SHOW COLUMNS FROM room LIKE %s"
+        if not self.fetch_one(check_query, ("subject_tags",)):
+            alter_query = (
+                "ALTER TABLE room "
+                "ADD COLUMN subject_tags VARCHAR(255) DEFAULT ''"
+            )
+            return self.execute(alter_query)
+        return 0
 
     def get_all_public_rooms(self):
         query = (
