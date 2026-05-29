@@ -15,6 +15,7 @@ class RoomModel(BaseModel):
             "code VARCHAR(6) NOT NULL UNIQUE,"
             "name VARCHAR(120) NOT NULL DEFAULT '',"
             "is_private TINYINT(1) NOT NULL DEFAULT 0,"
+            "subject_tags VARCHAR(255) DEFAULT '',"
             "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
         )
@@ -22,7 +23,7 @@ class RoomModel(BaseModel):
 
     def get_all_public_rooms(self):
         query = (
-            "SELECT id, code, name, is_private, created_at "
+            "SELECT id, code, name, is_private, subject_tags, created_at "
             "FROM room WHERE is_private = 0 "
             "ORDER BY created_at DESC"
         )
