@@ -6,6 +6,8 @@ from app.models import (
     get_joined_rooms_for_user,
     get_messages_for_room,
     get_room_by_code,
+    get_online_users,
+    get_offline_users,
 )
 from app.models.database import get_user_by_id, update_user_avatar, update_user_profile
 import random
@@ -100,10 +102,19 @@ def chat(room_code):
     else:
         _remember_joined_room(room_code)
     
-    # Fetch previous messages
+    # Fetch previous messages and member presence
     messages = get_messages_for_room(room['id'])
-    
-    return render_template('chat.html', room=room, room_code=room_code, messages=messages)
+    online_members = get_online_users(room['id'])
+    offline_members = get_offline_users(room['id'])
+
+    return render_template(
+        'chat.html',
+        room=room,
+        room_code=room_code,
+        messages=messages,
+        online_members=online_members,
+        offline_members=offline_members,
+    )
 
 
 @bp.route('/chat/<room_code>/delete', methods=['POST'])
