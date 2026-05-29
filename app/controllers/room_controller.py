@@ -1,7 +1,7 @@
 import random
 
 from app.controllers.base_controller import BaseController
-from app.models import create_room as create_room_record, get_room_by_code
+from app.models.room import RoomModel
 
 
 class RoomController(BaseController):
@@ -10,12 +10,12 @@ class RoomController(BaseController):
 
     def create_room(self, room_name: str, subject_tag: str, submitted_code: str, is_private: bool):
         submitted_code = (submitted_code or '').strip().upper()
-        if len(submitted_code) == 6 and submitted_code.isalnum() and not get_room_by_code(submitted_code):
+        if len(submitted_code) == 6 and submitted_code.isalnum() and not RoomModel.get_room_by_code(submitted_code):
             code = submitted_code
         else:
             code = self._generate_unique_room_code()
 
-        return create_room_record(
+        return RoomModel.create_room(
             code,
             room_name or f'Room {code}',
             subject_tag,
