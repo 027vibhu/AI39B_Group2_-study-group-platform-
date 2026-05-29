@@ -6,6 +6,7 @@ from app.models import (
     get_joined_rooms_for_user,
     get_messages_for_room,
     get_room_by_code,
+    is_user_in_room,
 )
 from app.models.message_vote import MessageVote
 from app.controllers import MessageVoteController
@@ -85,7 +86,13 @@ def chat(room_code):
         return "Room not found", 404
 
     user_id = session.get('user_id')
-    if user_id:
+    if room['is_private']:
+        if not user_id:
+            return "Private room. Login required.", 403
+        if not is_user_in_room(user_id, room['id']):
+            create_user_room(user_id, room['id'])
+            _remember_joined_room_for_user(user_id, room['id'])
+    elif user_id:
         _remember_joined_room_for_user(user_id, room['id'])
     else:
         _remember_joined_room(room_code)

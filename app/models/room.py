@@ -102,6 +102,19 @@ def create_user_room(user_id, room_id):
         connection.close()
 
 
+def is_user_in_room(user_id, room_id):
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT 1 FROM user_room WHERE user_id = %s AND room_id = %s LIMIT 1",
+                (user_id, room_id),
+            )
+            return cursor.fetchone() is not None
+    finally:
+        connection.close()
+
+
 def get_joined_rooms_for_user(user_id, limit=8):
     connection = get_database_connection()
     try:
