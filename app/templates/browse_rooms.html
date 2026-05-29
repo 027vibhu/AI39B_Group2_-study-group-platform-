@@ -76,6 +76,16 @@
                             <div class="room-info">
                                 <h3>{{ room.name }}</h3>
                                 <span>#{{ room.code }}</span>
+                                {% if room.subject_tags %}
+                                <div class="room-tags">
+                                    {% for tag in room.subject_tags.split(',') %}
+                                        {% set clean_tag = tag.strip() %}
+                                        {% if clean_tag %}
+                                        <span class="room-tag">{{ clean_tag }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                         <a href="{{ url_for('home.chat', room_code=room.code) }}" class="join-btn" aria-label="Join Room">Join Room</a>
