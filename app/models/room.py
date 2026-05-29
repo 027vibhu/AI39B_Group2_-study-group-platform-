@@ -187,3 +187,40 @@ def is_user_banned_from_room(username, room_name):
             return result is not None
     finally:
         connection.close()
+        
+# ... Keep ALL of your existing code exactly as it is ...
+
+# 1. ADD THIS NEW DATABASE HELPER FUNCTION AT THE BOTTOM
+def get_all_public_rooms():
+    """Queries the database for all public rooms."""
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            # is_private = 0 means the room is public
+            cursor.execute(
+                "SELECT id, code, name, is_private, created_at "
+                "FROM room WHERE is_private = 0 ORDER BY created_at DESC"
+            )
+            return cursor.fetchall()
+    finally:
+        connection.close()
+
+
+# 2. ADD THIS DOMAIN CLASS AT THE VERY BOTTOM FOR OOP ENCAPSULATION
+class Room:
+    def __init__(self, room_id, code, name, is_private, created_at=None):
+        self.room_id = room_id
+        self.code = code
+        self.name = name
+        self.is_private = bool(is_private)
+        self.created_at = created_at
+
+    def to_dict(self):
+        """Converts the object properties into a clean dictionary payload for the frontend."""
+        return {
+            "id": self.room_id,
+            "code": self.code,
+            "name": self.name,
+            "is_public": not self.is_private,  # Flips it to make it intuitive for front-end consumption
+            "created_at": str(self.created_at) if self.created_at else None
+        }
