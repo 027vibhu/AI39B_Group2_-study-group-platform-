@@ -40,6 +40,9 @@
                 <div class="room-number">{{ (room.name[:1] if room.name else room.code[:1]) | upper }}</div>
               <div>
                 <div>{{ room.name if room.name else 'Room ' ~ room.code }}</div>
+                {% if room.subject_tag %}
+                  <small class="room-tag">{{ room.subject_tag }}</small>
+                {% endif %}
                 <small>#{{ room.code }}</small>
               </div>
             </a>

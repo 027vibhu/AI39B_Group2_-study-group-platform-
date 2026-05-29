@@ -20,6 +20,9 @@
         <div class="chat-avatar">C</div>
         <div class="chat-info">
           <h2>{{ room.name if room.name else 'Room ' ~ room_code }}</h2>
+          {% if room.subject_tag %}
+            <p class="chat-subject">{{ room.subject_tag }}</p>
+          {% endif %}
           <p id="memberStatus">Connecting...</p>
         </div>
       </div>

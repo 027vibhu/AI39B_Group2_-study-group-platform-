@@ -115,7 +115,7 @@ def get_joined_rooms_for_user(user_id, limit=8):
     try:
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT room.id, room.code, room.name, room.is_private, room.created_at "
+                "SELECT room.id, room.code, room.name, room.subject_tag, room.is_private, room.created_at "
                 "FROM user_room "
                 "JOIN room ON room.id = user_room.room_id "
                 "WHERE user_room.user_id = %s "
