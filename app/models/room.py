@@ -1,5 +1,6 @@
 from app.models.database import ensure_database_exists, get_database_connection
 
+from datetime import datetime, timedelta
 
 def create_rooms_table():
     ensure_database_exists()
@@ -137,3 +138,52 @@ def delete_room_by_code(room_code):
     if not room:
         return 0
     return delete_room_by_id(room['id'])
+
+
+def log_room_action(username, room_name, action_type, duration_minutes=None, reason=None):
+    """
+    Logs a kick or ban action into the database.
+    If it's a ban, it calculates the 'ban_until' time using duration_minutes.
+    """
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            ban_until = None
+            
+            # Calculate the expiration time only if it's a ban with a duration
+            if action_type == 'ban' and duration_minutes:
+                ban_until = datetime.now() + timedelta(minutes=int(duration_minutes))
+
+            sql = """
+                INSERT INTO room_actions (username, room_name, action_type, ban_until, reason)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (username, room_name, action_type, ban_until, reason))
+    finally:
+        connection.close()
+
+
+def is_user_banned_from_room(username, room_name):
+    """
+    Checks if a user is currently banned from a specific room.
+    Returns True if banned, False otherwise.
+    """
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            # Look for an active ban where the expiration time is still in the future
+            sql = """
+                SELECT * FROM room_actions 
+                WHERE username = %s 
+                  AND room_name = %s 
+                  AND action_type = 'ban'
+                  AND (ban_until IS NULL OR ban_until > NOW())
+                ORDER BY created_at DESC LIMIT 1
+            """
+            cursor.execute(sql, (username, room_name))
+            result = cursor.fetchone()
+            
+            # If a record is found, they are banned
+            return result is not None
+    finally:
+        connection.close()
