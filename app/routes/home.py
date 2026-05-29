@@ -8,7 +8,6 @@ from app.models import (
 )
 from app.models.database import get_user_by_id, update_user_avatar, update_user_profile
 from app.controllers.room_controller import RoomController
-import random
 import os
 import uuid
 from werkzeug.utils import secure_filename
@@ -67,13 +66,6 @@ def _remember_joined_room_for_user(user_id, room_id):
 @bp.route('/create')
 def create():
     return redirect(url_for('home.create_room'))
-
-
-def _generate_unique_room_code():
-    while True:
-        code = str(random.randint(100000, 999999))
-        if not get_room_by_code(code):
-            return code
 
 
 @bp.route('/chat/<room_code>')
@@ -210,4 +202,4 @@ def create_room():
 
         return redirect(url_for('home.chat', room_code=new_room['code']))
 
-    return render_template('createroom.html', room_code=_generate_unique_room_code())
+    return render_template('createroom.html', room_code=room_controller._generate_unique_room_code())
