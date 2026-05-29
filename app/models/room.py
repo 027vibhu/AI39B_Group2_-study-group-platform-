@@ -12,10 +12,18 @@ def create_rooms_table():
                 "id INT AUTO_INCREMENT PRIMARY KEY,"
                 "code VARCHAR(6) NOT NULL UNIQUE,"
                 "name VARCHAR(120) NOT NULL DEFAULT '',"
+                "subject_tag VARCHAR(80) NOT NULL DEFAULT '',"
                 "is_private TINYINT(1) NOT NULL DEFAULT 0,"
                 "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
             )
+
+            cursor.execute("SHOW COLUMNS FROM room LIKE 'subject_tag'")
+            if not cursor.fetchone():
+                cursor.execute(
+                    "ALTER TABLE room "
+                    "ADD COLUMN subject_tag VARCHAR(80) NOT NULL DEFAULT ''"
+                )
     finally:
         connection.close()
 
@@ -46,7 +54,7 @@ def get_room_by_code(room_code):
     try:
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT id, code, name, is_private, created_at "
+                "SELECT id, code, name, subject_tag, is_private, created_at "
                 "FROM room WHERE code = %s LIMIT 1",
                 (room_code,),
             )
@@ -60,7 +68,7 @@ def get_room_by_id(room_id):
     try:
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT id, code, name, is_private, created_at "
+                "SELECT id, code, name, subject_tag, is_private, created_at "
                 "FROM room WHERE id = %s LIMIT 1",
                 (room_id,),
             )
@@ -69,15 +77,15 @@ def get_room_by_id(room_id):
         connection.close()
 
 
-def create_room(code, name, is_private):
+def create_room(code, name, subject_tag, is_private):
     create_rooms_table()
 
     connection = get_database_connection()
     try:
         with connection.cursor() as cursor:
             cursor.execute(
-                "INSERT INTO room (code, name, is_private) VALUES (%s, %s, %s)",
-                (code, name, int(is_private)),
+                "INSERT INTO room (code, name, subject_tag, is_private) VALUES (%s, %s, %s, %s)",
+                (code, name, subject_tag, int(is_private)),
             )
             room_id = cursor.lastrowid
     finally:

@@ -134,6 +134,11 @@ def profile():
     return render_template('profile.html', user=user)
 
 
+@bp.route('/moderation')
+def moderation():
+    return render_template('moderation.html')
+
+
 @bp.route('/profile/update', methods=['POST'])
 def update_profile():
     user_id = session.get('user_id')
