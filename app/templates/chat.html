@@ -46,6 +46,12 @@
         <div class="message-bubble">
           <div style="font-size: 0.7rem; color: #888; margin-bottom: 2px;">{{ msg.username }}</div>
           {{ msg.content }}
+          <div class="message-votes" data-message-id="{{ msg.id }}">
+            <button class="vote-button upvote" type="button" data-vote-type="upvote">▲</button>
+            <span class="vote-count" data-vote-type="upvotes">0</span>
+            <button class="vote-button downvote" type="button" data-vote-type="downvote">▼</button>
+            <span class="vote-count" data-vote-type="downvotes">0</span>
+          </div>
           <div class="message-time">{{ msg.time_label }}</div>
         </div>
       </div>
@@ -151,23 +157,63 @@ function sendMessage(){
   messageInput.value = '';
 }
 
-function addMessageToUI(text, type, sender){
+function addMessageToUI(text, type, sender, messageId = null){
   const message = document.createElement('div');
   message.classList.add('message', type);
+  if (messageId) {
+    message.dataset.messageId = messageId;
+  }
   let senderHTML = '';
   if (type === 'received') {
       senderHTML = `<div style="font-size: 0.7rem; color: #888; margin-bottom: 2px;">${sender}</div>`;
   }
+  const voteControls = messageId ? `
+      <div class="message-votes" data-message-id="${messageId}">
+        <button class="vote-button upvote" type="button" data-vote-type="upvote">▲</button>
+        <span class="vote-count" data-vote-type="upvotes">0</span>
+        <button class="vote-button downvote" type="button" data-vote-type="downvote">▼</button>
+        <span class="vote-count" data-vote-type="downvotes">0</span>
+      </div>
+    ` : '';
   message.innerHTML = `
     <div class="message-bubble">
       ${senderHTML}
       ${text}
+      ${voteControls}
       <div class="message-time">${getTime()}</div>
     </div>
   `;
   chatBody.appendChild(message);
   scrollBottom();
 }
+
+chatBody.addEventListener('click', event => {
+  const voteButton = event.target.closest('.vote-button');
+  if (!voteButton) return;
+  const voteType = voteButton.dataset.voteType;
+  const messageId = voteButton.closest('.message-votes')?.dataset.messageId;
+  if (!messageId) return;
+  fetch(`/message/${messageId}/vote`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ vote_type: voteType }),
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        console.error(data.error);
+        return;
+      }
+      const voteRow = voteButton.closest('.message-votes');
+      if (voteRow) {
+        voteRow.querySelector('[data-vote-type="upvotes"]').innerText = data.upvotes;
+        voteRow.querySelector('[data-vote-type="downvotes"]').innerText = data.downvotes;
+      }
+    })
+    .catch(error => console.error('Vote failed', error));
+});
 
 sendBtn.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', function(e){
