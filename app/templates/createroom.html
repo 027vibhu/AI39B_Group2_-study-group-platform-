@@ -29,12 +29,9 @@
               <span>🏷️</span>
               <input type="text" name="room_name" placeholder="Room name" required>
             </div>
-            <div class="input-group">
-              <label>Your Room Code</label>
-              <div class="code-grid">
-                {% for char in room_code %}
-                <input type="text" maxlength="1" value="{{ char }}" readonly>
-                {% endfor %}
+              <div class="input-box">
+                <span>📚</span>
+                <input type="text" name="subject_tag" placeholder="Subject tag (e.g. Math, Biology)" value="">
               </div>
             </div>
 

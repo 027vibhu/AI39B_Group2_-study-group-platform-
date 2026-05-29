@@ -187,6 +187,7 @@ def update_avatar():
 def create_room():
     if request.method == 'POST':
         room_name = request.form.get('room_name', '').strip()
+        subject_tag = request.form.get('subject_tag', '').strip()
         submitted_code = (request.form.get('room_code') or '').strip().upper()
         if len(submitted_code) == 6 and submitted_code.isalnum() and not get_room_by_code(submitted_code):
             code = submitted_code
@@ -195,7 +196,12 @@ def create_room():
 
         is_private = request.form.get('is_private') == '1'
 
-        new_room = create_room_record(code, room_name or f'Room {code}', is_private)
+        new_room = create_room_record(
+            code,
+            room_name or f'Room {code}',
+            subject_tag,
+            is_private,
+        )
 
         user_id = session.get('user_id')
         if user_id:
