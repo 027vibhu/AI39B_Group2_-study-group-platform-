@@ -1,6 +1,6 @@
 from flask import Blueprint
 
-from app.controllers.message_vote_controller import MessageVoteController
+from app.controllers.message_vote_controllers import MessageVoteController
 
 
 message_vote_bp = Blueprint(

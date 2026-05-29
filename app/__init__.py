@@ -13,8 +13,11 @@ def create_app():
     # register blueprints
     from app.routes import home as home_bp
     from app.routes import auth as auth_bp
+    from app.routes.message_vote_routes import message_vote_bp
+
     app.register_blueprint(home_bp.bp)
     app.register_blueprint(auth_bp.bp)
+    app.register_blueprint(message_vote_bp)
 
     # Import sockets and models to register them
     from app import sockets, models
