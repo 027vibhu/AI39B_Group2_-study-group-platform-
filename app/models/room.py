@@ -13,6 +13,7 @@ def create_rooms_table():
                 "code VARCHAR(6) NOT NULL UNIQUE,"
                 "name VARCHAR(120) NOT NULL DEFAULT '',"
                 "is_private TINYINT(1) NOT NULL DEFAULT 0,"
+                "subject_tags VARCHAR(255) DEFAULT '',"
                 "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
             )
@@ -46,7 +47,7 @@ def get_room_by_code(room_code):
     try:
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT id, code, name, is_private, created_at "
+                "SELECT id, code, name, is_private, subject_tags, created_at "
                 "FROM room WHERE code = %s LIMIT 1",
                 (room_code,),
             )
@@ -60,7 +61,7 @@ def get_room_by_id(room_id):
     try:
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT id, code, name, is_private, created_at "
+                "SELECT id, code, name, is_private, subject_tags, created_at "
                 "FROM room WHERE id = %s LIMIT 1",
                 (room_id,),
             )
@@ -69,15 +70,16 @@ def get_room_by_id(room_id):
         connection.close()
 
 
-def create_room(code, name, is_private):
+def create_room(code, name, is_private, subject_tags):
     create_rooms_table()
 
     connection = get_database_connection()
     try:
         with connection.cursor() as cursor:
             cursor.execute(
-                "INSERT INTO room (code, name, is_private) VALUES (%s, %s, %s)",
-                (code, name, int(is_private)),
+                "INSERT INTO room (code, name, is_private, subject_tags) "
+                "VALUES (%s, %s, %s, %s)",
+                (code, name, int(is_private), subject_tags),
             )
             room_id = cursor.lastrowid
     finally:
@@ -107,7 +109,7 @@ def get_joined_rooms_for_user(user_id, limit=8):
     try:
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT room.id, room.code, room.name, room.is_private, room.created_at "
+                "SELECT room.id, room.code, room.name, room.is_private, room.subject_tags, room.created_at "
                 "FROM user_room "
                 "JOIN room ON room.id = user_room.room_id "
                 "WHERE user_room.user_id = %s "
