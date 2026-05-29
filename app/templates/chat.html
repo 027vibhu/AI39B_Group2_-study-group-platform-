@@ -16,6 +16,16 @@
     <div class="chat-header">
       <div class="header-left">
         <h2>Private Room: {{ room.name if room.name else 'Room ' ~ room_code }} 🔒</h2>
+        {% if room.subject_tags %}
+        <div class="room-tags">
+          {% for tag in room.subject_tags.split(',') %}
+            {% set clean_tag = tag.strip() %}
+            {% if clean_tag %}
+            <span class="room-tag">{{ clean_tag }}</span>
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
         <div class="online">● 3 members online</div>
       </div>
 

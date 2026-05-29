@@ -36,6 +36,23 @@
   color:#222;
 }
 
+.room-tags{
+  margin-top:10px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.room-tag{
+  display:inline-flex;
+  align-items:center;
+  padding:8px 14px;
+  border-radius:999px;
+  background:#EEF0FF;
+  color:#2E3A59;
+  font-size:13px;
+}
+
 .online{
   margin-top:6px;
   color:#55C878;
