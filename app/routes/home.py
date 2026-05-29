@@ -12,6 +12,26 @@ import os
 import uuid
 from werkzeug.utils import secure_filename
 
+from datetime import datetime
+
+
+# Lightweight view wrapper so templates can use both dict-style and attribute access
+class UserView:
+    def __init__(self, d):
+        self._d = d or {}
+
+    def get(self, key, default=None):
+        return self._d.get(key, default)
+
+    def __getattr__(self, name):
+        val = self._d.get(name)
+        if name == 'created_at' and isinstance(val, str):
+            try:
+                return datetime.fromisoformat(val)
+            except Exception:
+                return val
+        return val
+
 bp = Blueprint('home', __name__)
 
 
@@ -103,7 +123,11 @@ def inject_joined_rooms():
 
     current_user = None
     if user_id:
-        current_user = get_user_by_id(user_id)
+        user_rec = get_user_by_id(user_id)
+        if user_rec:
+            current_user = UserView(user_rec)
+        else:
+            current_user = None
 
     return {
         'joined_rooms': joined_rooms,
@@ -123,7 +147,9 @@ def profile():
         session.clear()
         return redirect(url_for('auth.login'))
 
-    return render_template('profile.html', user=user)
+    # Wrap into the shared `UserView` so templates can access fields
+    user_view = UserView(user)
+    return render_template('profile.html', user=user_view)
 
 
 @bp.route('/moderation')
