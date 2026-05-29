@@ -1,36 +1,116 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Browse Rooms</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/browse_rooms.css') }}">
-</head>
-<body>
+{% extends "base_dash.html" %}
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-    <div>
-        <div class="logo">L</div>
+{% block title %}Browse Rooms{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/browse_rooms.css') }}">
+{% endblock %}
+{% block topbar_title %}Browse Rooms{% endblock %}
 
-        <div class="nav">
-            <a href="#">🏠 Dashboard</a>
-            <a href="#">➕ Create Room</a>
-            <a href="#">💬 Join Room</a>
-            <a href="#">🧭 Browse Rooms</a>
-        </div>
+{% block nav %}
+  <a href="{{ url_for('home.index') }}" class="nav-item">
+    <i class="fa-solid fa-house"></i>
+    Dashboard
+  </a>
+  <a href="{{ url_for('home.create_room') }}" class="nav-item">
+    <i class="fa-solid fa-plus"></i>
+    Create Room
+  </a>
+  <a href="{{ url_for('home.join_room') }}" class="nav-item">
+    <i class="fa-solid fa-comments"></i>
+    Join Room
+  </a>
+  <a href="{{ url_for('home.browse_rooms') }}" class="nav-item active">
+    <i class="fa-solid fa-compass"></i>
+    Browse Rooms
+  </a>
+{% endblock %}
 
-        <div class="joined">
-            <h4>JOINED ROOMS</h4>
+{% block content %}
+<div class="blur1"></div>
+<div class="blur2"></div>
 
-            <div class="joined-room">
-                <p>Testing 1</p>
-                <span>#972635</span>
+<div class="container">
+
+    <div class="left">
+        <div class="left-content">
+            <h2>Discover Study Rooms</h2>
+            <p>
+                Join collaborative learning spaces where students
+                discuss problems, solve assignments together,
+                share answers and prepare for exams in real-time.
+            </p>
+
+            <div class="stats">
+                <div class="stat">
+                    <span>ACTIVE ROOMS</span>
+                    <h3>24</h3>
+                </div>
+
+                <div class="stat">
+                    <span>ONLINE STUDENTS</span>
+                    <h3>184</h3>
+                </div>
+
+                <div class="stat">
+                    <span>TOTAL SESSIONS</span>
+                    <h3>1.2k</h3>
+                </div>
             </div>
 
-            <div class="joined-room">
-                <p>Chemistry</p>
-                <span>#105848</span>
+        </div>
+    </div>
+
+    <div class="right">
+
+        <div class="right-header">
+            <h2>Available Rooms</h2>
+            <input type="text" class="search" placeholder="Search rooms..." aria-label="Search rooms">
+        </div>
+
+        <div class="rooms">
+
+            <div class="room">
+                <div class="room-left">
+                    <div class="icon">C</div>
+                    <div class="room-info">
+                        <h3>Chemistry</h3>
+                        <span>#483921</span>
+                    </div>
+                </div>
+                <button type="button" class="join-btn" aria-label="Join Room">Join Room</button>
+            </div>
+
+            <div class="room">
+                <div class="room-left">
+                    <div class="icon">M</div>
+                    <div class="room-info">
+                        <h3>Maths</h3>
+                        <span>#271504</span>
+                    </div>
+                </div>
+                <button type="button" class="join-btn" aria-label="Join Room">Join Room</button>
+            </div>
+
+            <div class="room">
+                <div class="room-left">
+                    <div class="icon">P</div>
+                    <div class="room-info">
+                        <h3>Physics</h3>
+                        <span>#684319</span>
+                    </div>
+                </div>
+                <button type="button" class="join-btn" aria-label="Join Room">Join Room</button>
+            </div>
+
+            <div class="room">
+                <div class="room-left">
+                    <div class="icon">B</div>
+                    <div class="room-info">
+                        <h3>Biology</h3>
+                        <span>#910275</span>
+                    </div>
+                </div>
+                <button type="button" class="join-btn" aria-label="Join Room">Join Room</button>
             </div>
 
         </div>
@@ -38,154 +118,46 @@
     </div>
 </div>
 
-<!-- MAIN -->
-<div class="main">
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const search = document.querySelector('.search');
+  const rooms = Array.from(document.querySelectorAll('.room'));
 
-    <div class="blur1"></div>
-    <div class="blur2"></div>
+  if (search) {
+    search.addEventListener('input', function (e) {
+      const q = e.target.value.trim().toLowerCase();
+      rooms.forEach(room => {
+        const title = room.querySelector('.room-info h3')?.textContent.trim().toLowerCase() || '';
+        const id = room.querySelector('.room-info span')?.textContent.trim().toLowerCase() || '';
+        if (title.includes(q) || id.includes(q)) {
+          room.style.display = '';
+        } else {
+          room.style.display = 'none';
+        }
+      });
+    });
+  }
 
-    <div class="top">
-        <h1>Browse Rooms</h1>
-        <div class="profile"></div>
-    </div>
-
-    <!-- CONTAINER -->
-    <div class="container">
-
-        <!-- LEFT -->
-        <div class="left">
-            <div class="left-content">
-                <h2>Discover Study Rooms</h2>
-                <p>
-                    Join collaborative learning spaces where students
-                    discuss problems, solve assignments together,
-                    share answers and prepare for exams in real-time.
-                </p>
-
-                <div class="stats">
-                    <div class="stat">
-                        <span>ACTIVE ROOMS</span>
-                        <h3>24</h3>
-                    </div>
-
-                    <div class="stat">
-                        <span>ONLINE STUDENTS</span>
-                        <h3>184</h3>
-                    </div>
-
-                    <div class="stat">
-                        <span>TOTAL SESSIONS</span>
-                        <h3>1.2k</h3>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- RIGHT -->
-        <div class="right">
-
-            <div class="right-header">
-                <h2>Available Rooms</h2>
-                <input type="text" class="search" placeholder="Search rooms..." aria-label="Search rooms">
-            </div>
-
-            <!-- ROOMS -->
-            <div class="rooms">
-
-                <div class="room">
-                    <div class="room-left">
-                        <div class="icon">C</div>
-                        <div class="room-info">
-                            <h3>Chemistry</h3>
-                            <span>#483921</span>
-                        </div>
-                    </div>
-                    <button type="button" class="join-btn" aria-label="Join Room">Join Room</button>
-                </div>
-
-                <div class="room">
-                    <div class="room-left">
-                        <div class="icon">M</div>
-                        <div class="room-info">
-                            <h3>Maths</h3>
-                            <span>#271504</span>
-                        </div>
-                    </div>
-                    <button type="button" class="join-btn" aria-label="Join Room">Join Room</button>
-                </div>
-
-                <div class="room">
-                    <div class="room-left">
-                        <div class="icon">P</div>
-                        <div class="room-info">
-                            <h3>Physics</h3>
-                            <span>#684319</span>
-                        </div>
-                    </div>
-                    <button type="button" class="join-btn" aria-label="Join Room">Join Room</button>
-                </div>
-
-                <div class="room">
-                    <div class="room-left">
-                        <div class="icon">B</div>
-                        <div class="room-info">
-                            <h3>Biology</h3>
-                            <span>#910275</span>
-                        </div>
-                    </div>
-                    <button type="button" class="join-btn" aria-label="Join Room">Join Room</button>
-                </div>
-
-            </div>
-
-        </div>
-        <script>
-        document.addEventListener('DOMContentLoaded', function () {
-          const search = document.querySelector('.search');
-          const rooms = Array.from(document.querySelectorAll('.room'));
-
-          if (search) {
-            search.addEventListener('input', function (e) {
-              const q = e.target.value.trim().toLowerCase();
-              rooms.forEach(room => {
-                const title = room.querySelector('.room-info h3')?.textContent.trim().toLowerCase() || '';
-                const id = room.querySelector('.room-info span')?.textContent.trim().toLowerCase() || '';
-                if (title.includes(q) || id.includes(q)) {
-                  room.style.display = '';
-                } else {
-                  room.style.display = 'none';
-                }
-              });
-            });
-          }
-
-          // Attach join button handlers
-          document.addEventListener('click', function (e) {
-            const btn = e.target.closest('.join-btn');
-            if (!btn) return;
-            const room = btn.closest('.room');
-            const title = room?.querySelector('.room-info h3')?.textContent.trim() || 'Room';
-            const code = room?.querySelector('.room-info span')?.textContent.trim() || '';
-            console.log('Join clicked:', title, code);
-            const notice = document.createElement('div');
-            notice.textContent = `Joining ${title} ${code}`;
-            notice.style.position = 'fixed';
-            notice.style.right = '20px';
-            notice.style.bottom = '20px';
-            notice.style.background = 'rgba(0,0,0,0.8)';
-            notice.style.color = 'white';
-            notice.style.padding = '10px 14px';
-            notice.style.borderRadius = '8px';
-            notice.style.zIndex = 9999;
-            document.body.appendChild(notice);
-            setTimeout(() => notice.remove(), 1800);
-          });
-        });
-        </script>
-    </div>
-
-</div>
-
-</body>
-</html>
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.join-btn');
+    if (!btn) return;
+    const room = btn.closest('.room');
+    const title = room?.querySelector('.room-info h3')?.textContent.trim() || 'Room';
+    const code = room?.querySelector('.room-info span')?.textContent.trim() || '';
+    console.log('Join clicked:', title, code);
+    const notice = document.createElement('div');
+    notice.textContent = `Joining ${title} ${code}`;
+    notice.style.position = 'fixed';
+    notice.style.right = '20px';
+    notice.style.bottom = '20px';
+    notice.style.background = 'rgba(0,0,0,0.8)';
+    notice.style.color = 'white';
+    notice.style.padding = '10px 14px';
+    notice.style.borderRadius = '8px';
+    notice.style.zIndex = 9999;
+    document.body.appendChild(notice);
+    setTimeout(() => notice.remove(), 1800);
+  });
+});
+</script>
+{% endblock %}
