@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, session, request, current_app, flash
+from flask import Blueprint, render_template, redirect, url_for, session, request, current_app, flash, jsonify
 from app.models import (
     create_room as create_room_record,
     create_user_room,
@@ -7,6 +7,7 @@ from app.models import (
     get_messages_for_room,
     get_room_by_code,
 )
+from app.controllers import MessageVoteController
 from app.models.database import get_user_by_id, update_user_avatar, update_user_profile
 import random
 import os
@@ -92,6 +93,21 @@ def chat(room_code):
     messages = get_messages_for_room(room['id'])
     
     return render_template('chat.html', room=room, room_code=room_code, messages=messages)
+
+
+@bp.route('/message/<int:message_id>/vote', methods=['POST'])
+def vote_message(message_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Authentication required'}), 401
+
+    vote_type = request.form.get('vote_type') or (request.get_json(silent=True) or {}).get('vote_type')
+    if vote_type not in ('upvote', 'downvote'):
+        return jsonify({'error': 'Invalid vote type'}), 400
+
+    controller = MessageVoteController()
+    result = controller.handle(message_id, user_id, vote_type)
+    return jsonify(result)
 
 
 @bp.route('/chat/<room_code>/delete', methods=['POST'])
