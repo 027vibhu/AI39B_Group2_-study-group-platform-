@@ -57,14 +57,24 @@
 
             <label class="label">Subject Tags</label>
 
-            <div class="tags">
-              <div class="tag active">Math</div>
-              <div class="tag">Science</div>
-              <div class="tag">Programming</div>
-              <div class="tag">History</div>
-              <div class="tag">Design</div>
-              <div class="tag add">+ Add</div>
+            <div class="tags" id="tags-container">
+              <div class="tag" data-subject="math">📐 Math</div>
+              <div class="tag" data-subject="physics">⚛️ Physics</div>
+              <div class="tag" data-subject="chemistry">🧪 Chemistry</div>
+              <div class="tag" data-subject="biology">🧬 Biology</div>
+              <div class="tag" data-subject="history">📚 History</div>
+              <div class="tag" data-subject="literature">✍️ Literature</div>
+              <div class="tag" data-subject="programming">💻 Programming</div>
+              <div class="tag" data-subject="design">🎨 Design</div>
+              <div class="tag" data-subject="languages">🌍 Languages</div>
             </div>
+
+            <div class="custom-tag-section">
+              <input type="text" id="custom-tag-input" placeholder="Add custom subject..." maxlength="20">
+              <button type="button" id="add-custom-btn" class="add-custom-btn">+ Add</button>
+            </div>
+
+            <input type="hidden" name="selected_tags" id="selected-tags-input" value="">
 
           </div>
 
@@ -107,6 +117,71 @@
         isPrivateValue.value = '1';
       }
     });
+
+    // Subject Tags functionality
+    const tagsContainer = document.getElementById('tags-container');
+    const customTagInput = document.getElementById('custom-tag-input');
+    const addCustomBtn = document.getElementById('add-custom-btn');
+    const selectedTagsInput = document.getElementById('selected-tags-input');
+    let selectedTags = [];
+
+    function updateSelectedTags() {
+      selectedTags = Array.from(document.querySelectorAll('.tag.active')).map(tag => tag.dataset.subject || tag.textContent.trim());
+      selectedTagsInput.value = selectedTags.join(',');
+    }
+
+    // Handle tag click
+    tagsContainer.addEventListener('click', (e) => {
+      if (e.target.classList.contains('tag') && !e.target.classList.contains('custom')) {
+        e.target.classList.toggle('active');
+        updateSelectedTags();
+      }
+    });
+
+    // Add custom tag
+    addCustomBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tagText = customTagInput.value.trim();
+      
+      if (tagText && tagText.length > 0) {
+        // Check if tag already exists
+        const tagExists = Array.from(tagsContainer.querySelectorAll('.tag')).some(
+          tag => tag.textContent.trim().toLowerCase() === tagText.toLowerCase()
+        );
+
+        if (!tagExists) {
+          const newTag = document.createElement('div');
+          newTag.classList.add('tag', 'custom', 'active');
+          newTag.dataset.subject = tagText.toLowerCase();
+          newTag.innerHTML = `${tagText} <span class="remove-tag">✕</span>`;
+          tagsContainer.appendChild(newTag);
+          
+          customTagInput.value = '';
+          updateSelectedTags();
+        } else {
+          alert('This tag already exists!');
+        }
+      }
+    });
+
+    // Handle Enter key in custom tag input
+    customTagInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addCustomBtn.click();
+      }
+    });
+
+    // Handle remove custom tag
+    tagsContainer.addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove-tag')) {
+        e.target.parentElement.remove();
+        updateSelectedTags();
+      }
+    });
+
+    // Initialize selected tags on page load
+    updateSelectedTags();
   </script>
   <script src="{{ url_for('static', filename='js/create_workspace_step1.js') }}"></script>
 {% endblock %}
