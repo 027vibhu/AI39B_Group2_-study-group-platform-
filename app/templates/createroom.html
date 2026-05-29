@@ -4,72 +4,88 @@
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/createroom.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/create_workspace_step1.css') }}">
 {% endblock %}
 
 {% block topbar_title %}Create Workspace{% endblock %}
 
 {% block content %}
-    <div class="auth-box create-box">
-      <div class="left-panel">
-        <div class="left-content">
-          <h1>Create Room</h1>
-          <p>Launch a private or public study workspace instantly, then share the room code with your classmates.</p>
-        </div>
-      </div>
+  <h1 class="page-title">Create Workspace</h1>
 
-      <div class="right-panel">
-        <div class="form-box">
-          <h2 class="title">Create</h2>
-          <p class="sub">Setup your study workspace below</p>
+  <div class="workspace">
 
-          <form method="post" action="{{ url_for('home.create_room') }}">
-            <input type="hidden" name="room_code" id="room-code-value" value="{{ room_code }}">
-            <input type="hidden" name="is_private" id="is-private-value" value="0">
-            <div class="input-box">
-              <span>🏷️</span>
-              <input type="text" name="room_name" placeholder="Room name" required>
+    <!-- Left -->
+    <div class="left">
+      <h1>Create<br>Room</h1>
+
+      <p>
+        Launch a private or public study workspace instantly,
+        then share the room code with your classmates.
+      </p>
+    </div>
+
+    <!-- Right -->
+    <div class="right">
+
+      <div class="form-box">
+
+        <h2>Create</h2>
+
+        <p class="subtitle">
+          Setup your study workspace below
+        </p>
+
+        <form method="post" action="{{ url_for('home.create_room') }}">
+          <input type="hidden" name="room_code" id="room-code-value" value="{{ room_code }}">
+          <input type="hidden" name="is_private" id="is-private-value" value="0">
+
+          <div class="input-box">
+            <span>🏷️</span>
+            <input type="text" name="room_name" placeholder="Room name" required>
+          </div>
+
+          <label class="label">Your Room Code</label>
+
+          <div class="code-grid">
+            {% for char in room_code %}
+            <input type="text" maxlength="1" value="{{ char }}" readonly>
+            {% endfor %}
+          </div>
+
+          <!-- Subject Tags -->
+          <div class="subject-section">
+
+            <label class="label">Subject Tags</label>
+
+            <div class="tags">
+              <div class="tag active">Math</div>
+              <div class="tag">Science</div>
+              <div class="tag">Programming</div>
+              <div class="tag">History</div>
+              <div class="tag">Design</div>
+              <div class="tag add">+ Add</div>
             </div>
-            <div class="input-group">
-              <label>Your Room Code</label>
-              <div class="code-grid">
-                {% for char in room_code %}
-                <input type="text" maxlength="1" value="{{ char }}" readonly>
-                {% endfor %}
-              </div>
+
+          </div>
+
+          <div class="toggle-container">
+            <div class="toggle-text">
+              <span class="toggle-title" id="toggle-label">Public Room</span>
+              <span class="toggle-desc" id="toggle-sublabel">Listed in Browse Rooms and open to anyone</span>
             </div>
+            <label class="switch">
+              <input type="checkbox" id="public-toggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
 
-            <!-- Subject Tags -->
-            <div class="subject-section">
+          <button type="submit" class="main-btn">Create Room</button>
+        </form>
 
-              <label class="label">Subject Tags</label>
-
-              <div class="tags">
-                <div class="tag active">Math</div>
-                <div class="tag">Science</div>
-                <div class="tag">Programming</div>
-                <div class="tag">History</div>
-                <div class="tag">Design</div>
-                <div class="tag add">+ Add</div>
-              </div>
-
-            </div>
-
-            <div class="toggle-container">
-              <div class="toggle-text">
-                <span class="toggle-title" id="toggle-label">Public Room</span>
-                <span class="toggle-desc" id="toggle-sublabel">Listed in Browse Rooms and open to anyone</span>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="public-toggle" checked>
-                <span class="slider"></span>
-              </label>
-            </div>
-
-            <button type="submit" class="main-btn">Create Room</button>
-          </form>
-        </div>
       </div>
     </div>
+
+  </div>
 {% endblock %}
 
 {% block scripts %}
