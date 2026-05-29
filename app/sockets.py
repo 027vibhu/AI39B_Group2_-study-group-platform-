@@ -21,7 +21,11 @@ def handle_send_message(data):
         room = get_room_by_code(room_code)
         if room:
             # Save message to database
-            create_message(room['id'], username, message_content)
+            message_id = create_message(room['id'], username, message_content)
             
             print(f"Message from {username} to room {room_code}: {message_content}")
-            emit('receive_message', {'message': message_content, 'username': username}, room=room_code)
+            emit('receive_message', {
+                'message': message_content,
+                'username': username,
+                'message_id': message_id,
+            }, room=room_code)

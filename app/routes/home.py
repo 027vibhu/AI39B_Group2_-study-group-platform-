@@ -7,6 +7,7 @@ from app.models import (
     get_messages_for_room,
     get_room_by_code,
 )
+from app.models.message_vote import MessageVote
 from app.controllers import MessageVoteController
 from app.models.database import get_user_by_id, update_user_avatar, update_user_profile
 import random
@@ -91,6 +92,11 @@ def chat(room_code):
     
     # Fetch previous messages
     messages = get_messages_for_room(room['id'])
+    for msg in messages:
+        vote_counts = MessageVote.get_vote_count(msg['id'])
+        msg['upvotes'] = vote_counts.get('upvotes', 0)
+        msg['downvotes'] = vote_counts.get('downvotes', 0)
+        msg['user_vote'] = MessageVote.get_user_vote(msg['id'], user_id) if user_id else None
     
     return render_template('chat.html', room=room, room_code=room_code, messages=messages)
 

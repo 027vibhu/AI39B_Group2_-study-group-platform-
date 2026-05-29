@@ -220,6 +220,11 @@
   color:#b91c1c;
 }
 
+.vote-button.active{
+  background:#4f46e5;
+  color:#ffffff;
+}
+
 .message-image{
   width:240px;
   border-radius:18px;

@@ -47,10 +47,10 @@
           <div style="font-size: 0.7rem; color: #888; margin-bottom: 2px;">{{ msg.username }}</div>
           {{ msg.content }}
           <div class="message-votes" data-message-id="{{ msg.id }}">
-            <button class="vote-button upvote" type="button" data-vote-type="upvote">▲</button>
-            <span class="vote-count" data-vote-type="upvotes">0</span>
-            <button class="vote-button downvote" type="button" data-vote-type="downvote">▼</button>
-            <span class="vote-count" data-vote-type="downvotes">0</span>
+            <button class="vote-button upvote{% if msg.user_vote == 'upvote' %} active{% endif %}" type="button" data-vote-type="upvote">▲</button>
+            <span class="vote-count" data-vote-type="upvotes">{{ msg.upvotes|default(0) }}</span>
+            <button class="vote-button downvote{% if msg.user_vote == 'downvote' %} active{% endif %}" type="button" data-vote-type="downvote">▼</button>
+            <span class="vote-count" data-vote-type="downvotes">{{ msg.downvotes|default(0) }}</span>
           </div>
           <div class="message-time">{{ msg.time_label }}</div>
         </div>
@@ -121,9 +121,8 @@ socket.on('status', (data) => {
 });
 
 socket.on('receive_message', (data) => {
-  if (data.username !== displayName) {
-        addMessageToUI(data.message, 'received', data.username);
-    }
+  const type = data.username === displayName ? 'sent' : 'received';
+  addMessageToUI(data.message, type, data.username, data.message_id);
 });
 
 if (chatMenuButton && chatMenu) {
@@ -153,7 +152,6 @@ function sendMessage(){
   const text = messageInput.value.trim();
   if(text === '') return;
   socket.emit('send_message', { room: roomCode, message: text, username: displayName });
-  addMessageToUI(text, 'sent', displayName);
   messageInput.value = '';
 }
 
@@ -210,6 +208,9 @@ chatBody.addEventListener('click', event => {
       if (voteRow) {
         voteRow.querySelector('[data-vote-type="upvotes"]').innerText = data.upvotes;
         voteRow.querySelector('[data-vote-type="downvotes"]').innerText = data.downvotes;
+        voteRow.querySelectorAll('.vote-button').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.voteType === voteType);
+        });
       }
     })
     .catch(error => console.error('Vote failed', error));
