@@ -323,6 +323,44 @@ input:checked + .slider:before{
     flex-direction:column;
     align-items:flex-start;
   }
+
+/* Subject tags (added for create room) */
+.subject-section{
+  margin-bottom:22px;
+}
+
+.tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.tag{
+  padding:10px 14px;
+  background:#f3f3f3;
+  border-radius:18px;
+  font-size:13px;
+  color:#555;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.tag:hover{
+  background:#e6e6ff;
+  color:#4b4f78;
+}
+
+.tag.active{
+  background:#4b4f78;
+  color:white;
+}
+
+.tag.add{
+  border:2px dashed #d0d0e8;
+  background:transparent;
+  color:#6d6db3;
+}
+
 }
 *{
   margin:0;
