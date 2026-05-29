@@ -81,31 +81,48 @@
   </div>
 
   <div class="right-panel">
-    <h3>Members (3)</h3>
+    {% set total_members = (online_members | length if online_members else 0) + (offline_members | length if offline_members else 0) %}
+    <h3>Members ({{ total_members }})</h3>
 
-    <div class="member">
-      <div class="member-left">
-        <div class="member-avatar">U</div>
-        <div class="member-name">You</div>
+    <div class="section-title">Online</div>
+    {% if online_members %}
+      {% for member in online_members %}
+      <div class="member">
+        <div class="member-left">
+          <div class="member-avatar">{{ member.username[:1] | upper }}</div>
+          <div class="member-name">{{ member.username }}</div>
+        </div>
+        <div class="green-dot"></div>
       </div>
-      <div class="green-dot"></div>
-    </div>
+      {% endfor %}
+    {% else %}
+      <div class="member offline">
+        <div class="member-left">
+          <div class="member-avatar">–</div>
+          <div class="member-name">No members online</div>
+        </div>
+      </div>
+    {% endif %}
 
-    <div class="member">
-      <div class="member-left">
-        <div class="member-avatar">A</div>
-        <div class="member-name">Alice</div>
+    <div class="section-title">Offline</div>
+    {% if offline_members %}
+      {% for member in offline_members %}
+      <div class="member">
+        <div class="member-left">
+          <div class="member-avatar">{{ member.username[:1] | upper }}</div>
+          <div class="member-name">{{ member.username }}</div>
+        </div>
+        <div class="offline-dot"></div>
       </div>
-      <div class="green-dot"></div>
-    </div>
-
-    <div class="member">
-      <div class="member-left">
-        <div class="member-avatar">B</div>
-        <div class="member-name">Bob</div>
+      {% endfor %}
+    {% else %}
+      <div class="member offline">
+        <div class="member-left">
+          <div class="member-avatar">–</div>
+          <div class="member-name">No users have joined offline</div>
+        </div>
       </div>
-      <div class="green-dot"></div>
-    </div>
+    {% endif %}
 
     <div class="section-title">GROUP SETTINGS</div>
     <div class="setting">👥 Add People</div>

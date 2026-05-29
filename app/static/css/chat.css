@@ -222,6 +222,13 @@
   background:#4FD675;
 }
 
+.offline-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#B0B0B0;
+}
+
 .section-title{
   margin-top:35px;
   margin-bottom:20px;
