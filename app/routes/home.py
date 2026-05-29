@@ -200,7 +200,7 @@ def update_avatar():
 def create_room():
     if request.method == 'POST':
         room_name = request.form.get('room_name', '').strip()
-        subject_tags = (request.form.get('subject_tags') or '').strip()
+        subject_tags = (request.form.get('selected_tags') or '').strip()
         submitted_code = (request.form.get('room_code') or '').strip().upper()
         if len(submitted_code) == 6 and submitted_code.isalnum() and not get_room_by_code(submitted_code):
             code = submitted_code
