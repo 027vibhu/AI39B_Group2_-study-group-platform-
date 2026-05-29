@@ -1,0 +1,81 @@
+{% extends "base_sidebar.html" %}
+
+{% block title %}Moderation Panel{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/moderation.css') }}">
+{% endblock %}
+{% block topbar_title %}Moderation Panel{% endblock %}
+
+{% block content %}
+<section class="moderation-panel">
+  <header class="mod-header">
+    <div>
+      <h1>Moderation Panel</h1>
+      <p>Manage disruptive users in the room</p>
+    </div>
+  </header>
+
+  <div class="mod-controls">
+    <div class="search-box">
+      <input type="text" placeholder="Search users..." aria-label="Search users">
+      <button type="button" class="btn btn-primary">Search</button>
+    </div>
+
+    <div class="filter-group">
+      <button type="button" class="btn btn-secondary active">All</button>
+      <button type="button" class="btn btn-secondary">Active</button>
+      <button type="button" class="btn btn-secondary">Muted</button>
+    </div>
+  </div>
+
+  <div class="user-table">
+    <article class="user-row">
+      <div class="user-meta">
+        <img class="avatar" src="{{ url_for('static', filename='images/default_user_icon.jpg') }}" alt="User avatar">
+        <div class="user-info">
+          <strong class="user-name">Jane Doe</strong>
+          <span class="user-role">Participant</span>
+        </div>
+      </div>
+      <div class="user-status">Online</div>
+      <div class="user-actions">
+        <button type="button" class="btn action-btn">Kick</button>
+        <button type="button" class="btn btn-danger action-btn">Ban</button>
+      </div>
+    </article>
+
+    <article class="user-row">
+      <div class="user-meta">
+        <img class="avatar" src="{{ url_for('static', filename='images/default_user_icon.jpg') }}" alt="User avatar">
+        <div class="user-info">
+          <strong class="user-name">Alex Rivera</strong>
+          <span class="user-role">Moderator</span>
+        </div>
+      </div>
+      <div class="user-status">Muted</div>
+      <div class="user-actions">
+        <button type="button" class="btn action-btn">Kick</button>
+        <button type="button" class="btn btn-danger action-btn">Ban</button>
+      </div>
+    </article>
+  </div>
+
+  <div class="action-summary">
+    <p>Selected user actions are irreversible. Please confirm before banning.</p>
+  </div>
+</section>
+
+<div class="modal-backdrop" hidden>
+  <div class="modal-window">
+    <h2>Confirm Action</h2>
+    <p>Are you sure you want to kick/ban this user?</p>
+    <div class="modal-buttons">
+      <button type="button" class="btn btn-secondary">Cancel</button>
+      <button type="button" class="btn btn-danger">Confirm</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/moderation.js') }}"></script>
+{% endblock %}
