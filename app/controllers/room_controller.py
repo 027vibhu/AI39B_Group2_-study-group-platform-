@@ -13,7 +13,7 @@ class RoomController(BaseController):
         if len(submitted_code) == 6 and submitted_code.isalnum() and not RoomModel.get_room_by_code(submitted_code):
             code = submitted_code
         else:
-            code = self._generate_unique_room_code()
+            code = self.generate_unique_room_code()
 
         return RoomModel.create_room(
             code,
@@ -25,5 +25,5 @@ class RoomController(BaseController):
     def generate_unique_room_code(self) -> str:
         while True:
             code = str(random.randint(100000, 999999))
-            if not get_room_by_code(code):
+            if not RoomModel.get_room_by_code(code):
                 return code
