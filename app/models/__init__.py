@@ -9,3 +9,4 @@ from app.models.room import (
 	get_room_by_id,
 )
 from app.models.message import create_message, create_messages_table, get_messages_for_room
+from app.models.message_vote import MessageVote
