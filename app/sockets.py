@@ -6,6 +6,19 @@ from app.models import create_message, get_room_by_code, set_user_online, set_us
 # Track joined sockets so disconnect can update presence
 _active_presence = {}
 
+def _broadcast_presence(room_code, room_id):
+    online = get_online_users(room_id)
+    offline = get_offline_users(room_id)
+    emit(
+        'presence_update',
+        {
+            'online': online,
+            'offline': offline,
+        },
+        room=room_code,
+    )
+
+
 @socketio.on('join')
 def handle_join(data):
     room_code = data.get('room')
@@ -29,6 +42,8 @@ def handle_join(data):
 
     print(f"{username} joined room: {room_code}")
     emit('status', {'msg': f'{username} has entered the room', 'username': username}, room=room_code)
+    _broadcast_presence(room_code, room['id'])
+
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -42,6 +57,7 @@ def handle_disconnect():
         {'msg': f"{presence['username']} has left the room", 'username': presence['username']},
         room=presence['room_code'],
     )
+    _broadcast_presence(presence['room_code'], presence['room_id'])
 
 @socketio.on('send_message')
 def handle_send_message(data):

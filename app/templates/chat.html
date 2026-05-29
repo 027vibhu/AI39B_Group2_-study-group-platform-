@@ -82,9 +82,10 @@
 
   <div class="right-panel">
     {% set total_members = (online_members | length if online_members else 0) + (offline_members | length if offline_members else 0) %}
-    <h3>Members ({{ total_members }})</h3>
+    <h3 id="memberCount">Members ({{ total_members }})</h3>
 
     <div class="section-title">Online</div>
+    <div id="onlineMembers">
     {% if online_members %}
       {% for member in online_members %}
       <div class="member">
@@ -103,8 +104,10 @@
         </div>
       </div>
     {% endif %}
+    </div>
 
     <div class="section-title">Offline</div>
+    <div id="offlineMembers">
     {% if offline_members %}
       {% for member in offline_members %}
       <div class="member">
@@ -123,6 +126,7 @@
         </div>
       </div>
     {% endif %}
+    </div>
 
     <div class="section-title">GROUP SETTINGS</div>
     <div class="setting">👥 Add People</div>
@@ -166,8 +170,13 @@ const chatBody = document.getElementById('chatBody');
 const imageInput = document.getElementById('imageInput');
 const emojiBtn = document.getElementById('emojiBtn');
 const memberStatus = document.getElementById('memberStatus');
+const memberCount = document.getElementById('memberCount');
+const onlineMembersContainer = document.getElementById('onlineMembers');
+const offlineMembersContainer = document.getElementById('offlineMembers');
 const chatMenuButton = document.getElementById('chatMenuButton');
 const chatMenu = document.getElementById('chatMenu');
+const initialOnlineMembers = {{ online_members | tojson | safe }};
+const initialOfflineMembers = {{ offline_members | tojson | safe }};
 
 /* SOCKET CONNECTION */
 socket.on('connect', () => {
@@ -177,8 +186,20 @@ socket.on('connect', () => {
 
 socket.on('status', (data) => {
     console.log(data.msg);
-    memberStatus.innerText = "Online";
+    if (memberStatus) {
+      memberStatus.innerText = "Online";
+    }
 });
+
+socket.on('presence_update', (data) => {
+    if (data && data.online !== undefined && data.offline !== undefined) {
+        renderPresenceLists(data.online, data.offline);
+    }
+});
+
+if (onlineMembersContainer || offlineMembersContainer) {
+    renderPresenceLists(initialOnlineMembers, initialOfflineMembers);
+}
 
 socket.on('receive_message', (data) => {
   if (data.username !== displayName) {
@@ -244,6 +265,67 @@ sendBtn.addEventListener('click', sendMessage);
 messageInput.addEventListener('keypress', function(e){
   if(e.key === 'Enter') sendMessage();
 });
+
+function renderPresenceLists(onlineUsers, offlineUsers) {
+    if (memberCount) {
+      const total = (onlineUsers?.length || 0) + (offlineUsers?.length || 0);
+      memberCount.innerText = `Members (${total})`;
+    }
+
+    if (onlineMembersContainer) {
+      onlineMembersContainer.innerHTML = '';
+      if (onlineUsers && onlineUsers.length > 0) {
+          onlineUsers.forEach((user) => {
+              const member = document.createElement('div');
+              member.className = 'member';
+              member.innerHTML = `
+                <div class="member-left">
+                  <div class="member-avatar">${user.username.charAt(0).toUpperCase()}</div>
+                  <div class="member-name">${user.username}</div>
+                </div>
+                <div class="green-dot"></div>
+              `;
+              onlineMembersContainer.appendChild(member);
+          });
+      } else {
+          onlineMembersContainer.innerHTML = `
+            <div class="member offline">
+              <div class="member-left">
+                <div class="member-avatar">–</div>
+                <div class="member-name">No members online</div>
+              </div>
+            </div>
+          `;
+      }
+    }
+
+    if (offlineMembersContainer) {
+      offlineMembersContainer.innerHTML = '';
+      if (offlineUsers && offlineUsers.length > 0) {
+          offlineUsers.forEach((user) => {
+              const member = document.createElement('div');
+              member.className = 'member';
+              member.innerHTML = `
+                <div class="member-left">
+                  <div class="member-avatar">${user.username.charAt(0).toUpperCase()}</div>
+                  <div class="member-name">${user.username}</div>
+                </div>
+                <div class="offline-dot"></div>
+              `;
+              offlineMembersContainer.appendChild(member);
+          });
+      } else {
+          offlineMembersContainer.innerHTML = `
+            <div class="member offline">
+              <div class="member-left">
+                <div class="member-avatar">–</div>
+                <div class="member-name">No users have joined offline</div>
+              </div>
+            </div>
+          `;
+      }
+    }
+}
 
 chatBody.addEventListener('click', function(event) {
   const button = event.target.closest('.vote-btn');
