@@ -5,6 +5,9 @@
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/create_workspace_step1.css') }}">
 {% endblock %}
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/create_workspace_step1.js') }}"></script>
+{% endblock %}
 
 {% block topbar_title %}Create Workspace{% endblock %}
 
