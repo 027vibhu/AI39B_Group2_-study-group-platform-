@@ -22,7 +22,7 @@ class RoomController(BaseController):
             is_private,
         )
 
-    def _generate_unique_room_code(self) -> str:
+    def generate_unique_room_code(self) -> str:
         while True:
             code = str(random.randint(100000, 999999))
             if not get_room_by_code(code):

@@ -202,4 +202,4 @@ def create_room():
 
         return redirect(url_for('home.chat', room_code=new_room['code']))
 
-    return render_template('createroom.html', room_code=room_controller._generate_unique_room_code())
+    return render_template('createroom.html', room_code=room_controller.generate_unique_room_code())
