@@ -26,12 +26,14 @@ def create_app():
     from app.models.database import create_users_table
     from app.models.room import create_rooms_table, create_user_rooms_table
     from app.models.message import create_messages_table
+    from app.models.presence_model import room_presence_model
 
     with app.app_context():
         create_users_table()
         create_rooms_table()
         create_user_rooms_table()
         create_messages_table()
+        room_presence_model.create_room_presence_table()
 
     @app.errorhandler(404)
     def page_not_found(e):
