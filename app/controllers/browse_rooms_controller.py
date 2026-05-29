@@ -1,5 +1,5 @@
 from app.controllers.base_controller import BaseController
-from app.models.room import get_all_public_rooms
+from app.models.room_model import RoomModel
 
 
 class BrowseRoomsController(BaseController):
@@ -15,8 +15,9 @@ class BrowseRoomsController(BaseController):
         Returns:
             Rendered template with public rooms data
         """
-        # Fetch all public rooms using raw SQL query from model
-        public_rooms = get_all_public_rooms()
+        # Fetch all public rooms using RoomModel
+        room_model = RoomModel()
+        public_rooms = room_model.get_all_public_rooms()
         
         # Prepare context data
         context = {
