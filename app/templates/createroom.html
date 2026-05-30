@@ -4,14 +4,12 @@
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/createroom.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/create_workspace_step1.css') }}">
+  
 {% endblock %}
 
-{% block topbar_title %}Create Workspace{% endblock %}
+{% block topbar_title %}{% endblock %}
 
 {% block content %}
-  <h1 class="page-title">Create Workspace</h1>
-
   <div class="workspace">
 
     <!-- Left -->
@@ -57,17 +55,7 @@
 
             <label class="label">Subject Tags</label>
 
-            <div class="tags" id="tags-container">
-              <div class="tag" data-subject="math">📐 Math</div>
-              <div class="tag" data-subject="physics">⚛️ Physics</div>
-              <div class="tag" data-subject="chemistry">🧪 Chemistry</div>
-              <div class="tag" data-subject="biology">🧬 Biology</div>
-              <div class="tag" data-subject="history">📚 History</div>
-              <div class="tag" data-subject="literature">✍️ Literature</div>
-              <div class="tag" data-subject="programming">💻 Programming</div>
-              <div class="tag" data-subject="design">🎨 Design</div>
-              <div class="tag" data-subject="languages">🌍 Languages</div>
-            </div>
+            <div class="tags" id="tags-container"></div>
 
             <div class="custom-tag-section">
               <input type="text" id="custom-tag-input" placeholder="Add custom subject..." maxlength="20">
@@ -113,13 +101,14 @@
         isPrivateValue.value = '0';
       } else {
         toggleLabel.textContent = 'Private Room';
-        toggleSublabel.textContent = 'Listed in Browse Rooms but requires the room code to join';
+        toggleSublabel.textContent = 'Requires the room code to join';
         isPrivateValue.value = '1';
       }
     });
 
     // Subject Tags functionality
     const tagsContainer = document.getElementById('tags-container');
+    const formEl = document.querySelector('form');
     const customTagInput = document.getElementById('custom-tag-input');
     const addCustomBtn = document.getElementById('add-custom-btn');
     const selectedTagsInput = document.getElementById('selected-tags-input');
@@ -130,12 +119,19 @@
       selectedTagsInput.value = selectedTags.join(',');
     }
 
-    // Handle tag click
+    // Handle tag click (supports clicks on inner elements)
     tagsContainer.addEventListener('click', (e) => {
-      if (e.target.classList.contains('tag') && !e.target.classList.contains('custom')) {
-        e.target.classList.toggle('active');
+      const tag = e.target.closest('.tag');
+      if (!tag) return;
+
+      if (e.target.classList.contains('remove-tag')) {
+        tag.remove();
         updateSelectedTags();
+        return;
       }
+
+      tag.classList.toggle('active');
+      updateSelectedTags();
     });
 
     // Add custom tag
@@ -172,16 +168,15 @@
       }
     });
 
-    // Handle remove custom tag
-    tagsContainer.addEventListener('click', (e) => {
-      if (e.target.classList.contains('remove-tag')) {
-        e.target.parentElement.remove();
-        updateSelectedTags();
-      }
-    });
-
     // Initialize selected tags on page load
     updateSelectedTags();
+
+    // Ensure the latest tags are captured on submit
+    if (formEl) {
+      formEl.addEventListener('submit', () => {
+        updateSelectedTags();
+      });
+    }
   </script>
   <script src="{{ url_for('static', filename='js/create_workspace_step1.js') }}"></script>
 {% endblock %}

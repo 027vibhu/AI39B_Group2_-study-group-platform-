@@ -4,7 +4,7 @@
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/browse_rooms.css') }}">
 {% endblock %}
-{% block topbar_title %}Browse Rooms{% endblock %}
+{% block topbar_title %}{% endblock %}
 
 {% block nav %}
   <a href="{{ url_for('home.index') }}" class="nav-item">
@@ -40,22 +40,7 @@
                 share answers and prepare for exams in real-time.
             </p>
 
-            <div class="stats">
-                <div class="stat">
-                    <span>ACTIVE ROOMS</span>
-                    <h3>24</h3>
-                </div>
-
-                <div class="stat">
-                    <span>ONLINE STUDENTS</span>
-                    <h3>184</h3>
-                </div>
-
-                <div class="stat">
-                    <span>TOTAL SESSIONS</span>
-                    <h3>1.2k</h3>
-                </div>
-            </div>
+            <div class="stats"></div>
 
         </div>
     </div>

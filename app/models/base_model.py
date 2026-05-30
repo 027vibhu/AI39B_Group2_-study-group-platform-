@@ -1,40 +1,78 @@
-from app.models.database import get_database_connection
+from abc import ABC, abstractmethod
 
 
-class BaseModel:
-    """Base model providing raw SQL helpers using project's DB connection.
 
-    Subclasses should use `execute`, `fetch_one`, and `fetch_all` for
-    parameterized raw SQL queries.
+
+class BaseModel(ABC):
+    """Abstract base model with convenience helpers for simple tables.
+
+    Subclasses should define a `table` property and can use the provided
+    helpers (`find_by_id`, `find_by`, `find_all`, `count_all`) to interact
+    with the database without writing boilerplate each time.
     """
 
-    def execute(self, query, params=None):
-        connection = get_database_connection()
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute(query, params or ())
-                # Return lastrowid if available, otherwise affected rowcount
-                try:
-                    return cursor.lastrowid or cursor.rowcount
-                except Exception:
-                    return cursor.rowcount
-        finally:
-            connection.close()
+    @property
+    @abstractmethod
+    def table(self):
+        raise NotImplementedError()
 
-    def fetch_one(self, query, params=None):
-        connection = get_database_connection()
+    def find_by_id(self, id_):
+        from app.models.database import Database
+        db = Database()
         try:
-            with connection.cursor() as cursor:
-                cursor.execute(query, params or ())
-                return cursor.fetchone()
+            r = db.fetch_one(f"SELECT * FROM {self.table} WHERE id = %s", (id_,))
+            return r
         finally:
-            connection.close()
+            db.close()
 
-    def fetch_all(self, query, params=None):
-        connection = get_database_connection()
+    def find_by(self, column, value):
+        from app.models.database import Database
+        db = Database()
         try:
-            with connection.cursor() as cursor:
-                cursor.execute(query, params or ())
-                return cursor.fetchall()
+            r = db.fetch_one(f"SELECT * FROM {self.table} WHERE {column} = %s", (value,))
+            return r
         finally:
-            connection.close()
+            db.close()
+
+    def find_all(self, order_by='id'):
+        from app.models.database import Database
+        db = Database()
+        try:
+            r = db.fetch_all(f"SELECT * FROM {self.table} ORDER BY {order_by}")
+            return r
+        finally:
+            db.close()
+
+    def count_all(self):
+        from app.models.database import Database
+        db = Database()
+        try:
+            r = db.fetch_one(f"SELECT COUNT(*) AS total FROM {self.table}")
+            return r['total'] if r else 0
+        finally:
+            db.close()
+
+    # Convenience passthroughs used by some legacy models
+    def execute(self, query: str, params=None):
+        from app.models.database import Database
+        db = Database()
+        try:
+            return db.execute(query, params)
+        finally:
+            db.close()
+
+    def fetch_one(self, query: str, params=None):
+        from app.models.database import Database
+        db = Database()
+        try:
+            return db.fetch_one(query, params)
+        finally:
+            db.close()
+
+    def fetch_all(self, query: str, params=None):
+        from app.models.database import Database
+        db = Database()
+        try:
+            return db.fetch_all(query, params)
+        finally:
+            db.close()

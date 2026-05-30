@@ -1,5 +1,6 @@
 import pymysql
 from config import Config
+from typing import Optional
 
 
 def get_database_connection():
@@ -55,49 +56,6 @@ def create_users_table():
                 "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
             )
-
-            cursor.execute("SHOW COLUMNS FROM users LIKE 'avatar_url'")
-            if not cursor.fetchone():
-                cursor.execute(
-                    "ALTER TABLE users "
-                    "ADD COLUMN avatar_url VARCHAR(255) NOT NULL "
-                    "DEFAULT 'images/default_user_icon.jpg'"
-                )
-
-            cursor.execute("SHOW COLUMNS FROM users LIKE 'first_name'")
-            if not cursor.fetchone():
-                cursor.execute(
-                    "ALTER TABLE users "
-                    "ADD COLUMN first_name VARCHAR(80) NOT NULL DEFAULT ''"
-                )
-
-            cursor.execute("SHOW COLUMNS FROM users LIKE 'last_name'")
-            if not cursor.fetchone():
-                cursor.execute(
-                    "ALTER TABLE users "
-                    "ADD COLUMN last_name VARCHAR(80) NOT NULL DEFAULT ''"
-                )
-
-            cursor.execute("SHOW COLUMNS FROM users LIKE 'school'")
-            if not cursor.fetchone():
-                cursor.execute(
-                    "ALTER TABLE users "
-                    "ADD COLUMN school VARCHAR(160) NOT NULL DEFAULT ''"
-                )
-
-            cursor.execute("SHOW COLUMNS FROM users LIKE 'address'")
-            if not cursor.fetchone():
-                cursor.execute(
-                    "ALTER TABLE users "
-                    "ADD COLUMN address VARCHAR(255) NOT NULL DEFAULT ''"
-                )
-
-            cursor.execute("SHOW COLUMNS FROM users LIKE 'bio'")
-            if not cursor.fetchone():
-                cursor.execute(
-                    "ALTER TABLE users "
-                    "ADD COLUMN bio TEXT"
-                )
     finally:
         connection.close()
 
@@ -203,12 +161,13 @@ def update_user_profile(user_id, first_name, last_name, school, address, bio):
     finally:
         connection.close()
 
+
 def create_room_actions_table():
     """
     Creates the table for tracking kicked or banned users.
     """
     ensure_database_exists()
-    
+
     connection = get_database_connection()
     try:
         with connection.cursor() as cursor:
@@ -227,3 +186,80 @@ def create_room_actions_table():
             cursor.execute(sql)
     finally:
         connection.close()
+
+
+class Database:
+    """Lightweight pymysql wrapper compatible with the README blueprint.
+
+    Keeps the module-level helper functions for backward compatibility.
+    """
+
+    def __init__(self):
+        self._conn = get_database_connection()
+
+    def fetch_one(self, query: str, params: Optional[tuple] = None):
+        with self._conn.cursor() as cur:
+            cur.execute(query, params or ())
+            return cur.fetchone()
+
+    def fetch_all(self, query: str, params: Optional[tuple] = None):
+        with self._conn.cursor() as cur:
+            cur.execute(query, params or ())
+            return cur.fetchall()
+
+    def execute(self, query: str, params: Optional[tuple] = None):
+        with self._conn.cursor() as cur:
+            cur.execute(query, params or ())
+            self._conn.commit()
+            try:
+                return cur.lastrowid
+            except Exception:
+                return cur.rowcount
+
+    def close(self):
+        try:
+            self._conn.close()
+        except Exception:
+            pass
+
+    @staticmethod
+    def create_tables():
+        """Attempt to create core tables by delegating to available modules.
+
+        This keeps behavior consistent with the existing project (which
+        creates several tables at startup).
+        """
+        # Ensure database exists and create core users table
+        ensure_database_exists()
+        create_users_table()
+
+        # Try to create other tables if their modules are available
+        try:
+            # room tables
+            from app.models.room import create_rooms_table, create_user_rooms_table
+
+            create_rooms_table()
+            create_user_rooms_table()
+        except Exception:
+            pass
+
+        try:
+            from app.models.message import create_messages_table
+
+            create_messages_table()
+        except Exception:
+            pass
+
+        try:
+            from app.models.message_vote import MessageVote
+
+            MessageVote.ensure_table_exists()
+        except Exception:
+            pass
+
+        try:
+            from app.models.presence_model import room_presence_model
+
+            room_presence_model.create_room_presence_table()
+        except Exception:
+            pass

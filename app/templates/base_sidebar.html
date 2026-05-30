@@ -30,16 +30,17 @@
 
     <div class="rooms">
       {% block rooms %}
-        <div class="rooms-title">Browse Rooms</div>
         {% block browse_rooms %}{% endblock %}
 
         {% if joined_rooms %}
           <div class="rooms-title rooms-title-spaced">Joined Rooms</div>
           {% for room in joined_rooms %}
             <a href="{{ url_for('home.chat', room_code=room.code) }}" class="room {% if current_room_code == room.code %}active{% endif %}">
-                <div class="room-number">{{ (room.name[:1] if room.name else room.code[:1]) | upper }}</div>
               <div>
-                <div>{{ room.name if room.name else 'Room ' ~ room.code }}</div>
+                <div>
+                  {{ room.name if room.name else 'Room ' ~ room.code }}
+                  {% if room.is_private %}<i class="fa-solid fa-lock" style="font-size: 0.8em; margin-left: 4px; color: #a0a4b8;" title="Private Room"></i>{% endif %}
+                </div>
                 <small>#{{ room.code }}</small>
               </div>
             </a>

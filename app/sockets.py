@@ -1,14 +1,11 @@
 from flask import session, request
 from flask_socketio import disconnect, join_room, emit
 from app import socketio
-from app.models import (
-    create_message,
-    get_room_by_code,
-    set_user_online,
-    set_user_offline,
-    get_online_users,
-    get_offline_users,
-)
+from app.models.message import create_message
+from app.models.message_vote import create_or_update_vote, get_vote_count, remove_vote
+from app.models.room import get_room_by_code, get_room_by_id
+from app.models.message import get_message_by_id
+from app.models.presence_model import set_user_online, set_user_offline, get_online_users, get_offline_users
 
 # Track joined sockets so disconnect can update presence
 _active_presence = {}
@@ -83,3 +80,49 @@ def handle_send_message(data):
                 'username': username,
                 'message_id': message_id,
             }, room=room_code)
+
+
+@socketio.on('vote_message')
+def handle_vote_message(data):
+    user_id = session.get('user_id')
+    if not user_id:
+        emit('vote_error', {'message': 'Authentication required'})
+        return
+
+    message_id = data.get('message_id')
+    vote_type = data.get('vote_type')
+    action = data.get('action') or 'vote'
+
+    if not message_id:
+        emit('vote_error', {'message': 'message_id is required'})
+        return
+
+    msg = get_message_by_id(message_id)
+    if not msg:
+        emit('vote_error', {'message': 'Message not found'})
+        return
+
+    room = get_room_by_id(msg.get('room_id'))
+    if not room or not room.get('code'):
+        emit('vote_error', {'message': 'Room not found'})
+        return
+
+    if action == 'remove_vote':
+        remove_vote(message_id, user_id)
+    else:
+        if vote_type not in ('upvote', 'downvote'):
+            emit('vote_error', {'message': 'Invalid vote type'})
+            return
+        create_or_update_vote(message_id, user_id, vote_type)
+
+    votes = get_vote_count(message_id)
+    payload = {
+        'message_id': message_id,
+        'upvotes': votes.get('upvotes', 0),
+        'downvotes': votes.get('downvotes', 0),
+        'room_code': room.get('code'),
+        'actor_user_id': user_id,
+        'vote_type': None if action == 'remove_vote' else vote_type,
+        'action': action,
+    }
+    emit('vote_update', payload, room=room.get('code'))
