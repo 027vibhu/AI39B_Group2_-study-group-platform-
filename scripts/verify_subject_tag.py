@@ -3,8 +3,14 @@ Verification script for `subject_tag` support.
 Run locally to attempt creating a test room and print the stored row.
 This script does not run automatically; run it where your DB is accessible.
 """
+import os
 import random
 import sys
+
+# Ensure the project root is on sys.path so the `app` package can be imported
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 
 from app.models import create_room, get_room_by_code
 
