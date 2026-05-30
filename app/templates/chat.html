@@ -10,37 +10,31 @@
 {% block topbar_title %}{{ room.name if room.name else 'Room ' ~ room_code }}{% endblock %}
 
 {% block content %}
-  <!-- CHAT -->
-  <div class="chat-wrapper">
-    <!-- HEADER -->
+  <div class="chat-section">
     <div class="chat-header">
-      <div class="chat-user">
-        <div class="chat-avatar">C</div>
-        <div class="chat-info">
-          <h2>{{ room.name if room.name else 'Room ' ~ room_code }}</h2>
-          <p id="memberStatus">Connecting...</p>
+      <div class="header-left">
+        <h2>{{ room.name if room.name else 'Room ' ~ room_code }}</h2>
+        {% if room.subject_tags %}
+        <div class="room-tags">
+          {% for tag in room.subject_tags.split(',') %}
+            {% set clean_tag = tag.strip() %}
+            {% if clean_tag %}
+            <span class="room-tag">{{ clean_tag }}</span>
+            {% endif %}
+          {% endfor %}
         </div>
+        {% endif %}
+        <div class="online">● {{ online_members | length if online_members else 0 }} members online</div>
       </div>
 
-      <div class="chat-actions">
-        <button class="action-btn"><i class="fa-solid fa-phone"></i></button>
-        <button class="action-btn"><i class="fa-solid fa-video"></i></button>
-        <div class="chat-menu">
-          <button class="action-btn" id="chatMenuButton" aria-label="Open chat menu" aria-expanded="false" type="button">
-            <i class="fa-solid fa-ellipsis"></i>
-          </button>
-          <div class="chat-dropdown" id="chatMenu" aria-hidden="true">
-            <form method="POST" action="{{ url_for('home.delete_chat', room_code=room_code) }}">
-              <button type="submit" class="chat-menu-item danger">Delete chat room</button>
-            </form>
-          </div>
-        </div>
+      <div class="header-actions">
+        <button class="action-btn">📞</button>
+        <button class="action-btn">🎥</button>
+        <button class="action-btn">➕</button>
       </div>
     </div>
 
-    <!-- BODY -->
     <div class="chat-body" id="chatBody">
-      <!-- Initial messages from server -->
       {% for msg in messages %}
       <div class="message received" data-sender="{{ msg.username }}" data-message-id="{{ msg.id }}">
         <div class="message-bubble">
@@ -58,21 +52,74 @@
       {% endfor %}
     </div>
 
-    <!-- INPUT -->
-    <div class="chat-input-area">
-      <button class="input-icon" id="emojiBtn"><i class="fa-regular fa-face-smile"></i></button>
-      <label class="input-icon">
-        <i class="fa-solid fa-image"></i>
-        <input type="file" hidden accept="image/*" id="imageInput" />
+    <div class="chat-input">
+      <button class="icon-btn">😀</button>
+      <label class="icon-btn">
+        📎
+        <input type="file" hidden id="imageInput" accept="image/*">
       </label>
-      <input type="text" class="chat-input" placeholder="Type your message..." id="messageInput" />
-      <button class="send-btn" id="sendBtn"><i class="fa-solid fa-paper-plane"></i></button>
+      <input type="text" class="input-box" id="messageInput" placeholder="Type a message...">
+      <button class="send-btn" id="sendBtn">➤</button>
     </div>
+  </div>
+
+  <div class="right-panel">
+    {% set total_members = (online_members | length if online_members else 0) + (offline_members | length if offline_members else 0) %}
+    <h3 id="memberCount">Members ({{ total_members }})</h3>
+
+    <div class="section-title">Online</div>
+    <div id="onlineMembers">
+    {% if online_members %}
+      {% for member in online_members %}
+      <div class="member">
+        <div class="member-left">
+          <div class="member-avatar">{{ member.username[:1] | upper }}</div>
+          <div class="member-name">{{ member.username }}</div>
+        </div>
+        <div class="green-dot"></div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="member offline">
+        <div class="member-left">
+          <div class="member-avatar">–</div>
+          <div class="member-name">No members online</div>
+        </div>
+      </div>
+    {% endif %}
+    </div>
+
+    <div class="section-title">Offline</div>
+    <div id="offlineMembers">
+    {% if offline_members %}
+      {% for member in offline_members %}
+      <div class="member">
+        <div class="member-left">
+          <div class="member-avatar">{{ member.username[:1] | upper }}</div>
+          <div class="member-name">{{ member.username }}</div>
+        </div>
+        <div class="offline-dot"></div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="member offline">
+        <div class="member-left">
+          <div class="member-avatar">–</div>
+          <div class="member-name">No users have joined offline</div>
+        </div>
+      </div>
+    {% endif %}
+    </div>
+
+    <div class="section-title">GROUP SETTINGS</div>
+    <div class="setting">👥 Add People</div>
+    <div class="setting">📞 Voice Call</div>
+    <div class="setting">🎥 Video Call</div>
+    <div class="setting">⚙ Group Info</div>
   </div>
 {% endblock %}
 
 {% block scripts %}
-<!-- Socket.IO Client -->
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
 // Use logged-in username only
@@ -106,8 +153,13 @@ const chatBody = document.getElementById('chatBody');
 const imageInput = document.getElementById('imageInput');
 const emojiBtn = document.getElementById('emojiBtn');
 const memberStatus = document.getElementById('memberStatus');
+const memberCount = document.getElementById('memberCount');
+const onlineMembersContainer = document.getElementById('onlineMembers');
+const offlineMembersContainer = document.getElementById('offlineMembers');
 const chatMenuButton = document.getElementById('chatMenuButton');
 const chatMenu = document.getElementById('chatMenu');
+const initialOnlineMembers = {{ online_members | tojson | safe }};
+const initialOfflineMembers = {{ offline_members | tojson | safe }};
 
 /* SOCKET CONNECTION */
 socket.on('connect', () => {
@@ -117,8 +169,20 @@ socket.on('connect', () => {
 
 socket.on('status', (data) => {
     console.log(data.msg);
-    memberStatus.innerText = "Online";
+    if (memberStatus) {
+      memberStatus.innerText = "Online";
+    }
 });
+
+socket.on('presence_update', (data) => {
+    if (data && data.online !== undefined && data.offline !== undefined) {
+        renderPresenceLists(data.online, data.offline);
+    }
+});
+
+if (onlineMembersContainer || offlineMembersContainer) {
+    renderPresenceLists(initialOnlineMembers, initialOfflineMembers);
+}
 
 socket.on('receive_message', (data) => {
   const type = data.username === displayName ? 'sent' : 'received';
@@ -230,6 +294,67 @@ sendBtn.addEventListener('click', sendMessage);
 
           <!-- INPUT -->
 });
+
+function renderPresenceLists(onlineUsers, offlineUsers) {
+    if (memberCount) {
+      const total = (onlineUsers?.length || 0) + (offlineUsers?.length || 0);
+      memberCount.innerText = `Members (${total})`;
+    }
+
+    if (onlineMembersContainer) {
+      onlineMembersContainer.innerHTML = '';
+      if (onlineUsers && onlineUsers.length > 0) {
+          onlineUsers.forEach((user) => {
+              const member = document.createElement('div');
+              member.className = 'member';
+              member.innerHTML = `
+                <div class="member-left">
+                  <div class="member-avatar">${user.username.charAt(0).toUpperCase()}</div>
+                  <div class="member-name">${user.username}</div>
+                </div>
+                <div class="green-dot"></div>
+              `;
+              onlineMembersContainer.appendChild(member);
+          });
+      } else {
+          onlineMembersContainer.innerHTML = `
+            <div class="member offline">
+              <div class="member-left">
+                <div class="member-avatar">–</div>
+                <div class="member-name">No members online</div>
+              </div>
+            </div>
+          `;
+      }
+    }
+
+    if (offlineMembersContainer) {
+      offlineMembersContainer.innerHTML = '';
+      if (offlineUsers && offlineUsers.length > 0) {
+          offlineUsers.forEach((user) => {
+              const member = document.createElement('div');
+              member.className = 'member';
+              member.innerHTML = `
+                <div class="member-left">
+                  <div class="member-avatar">${user.username.charAt(0).toUpperCase()}</div>
+                  <div class="member-name">${user.username}</div>
+                </div>
+                <div class="offline-dot"></div>
+              `;
+              offlineMembersContainer.appendChild(member);
+          });
+      } else {
+          offlineMembersContainer.innerHTML = `
+            <div class="member offline">
+              <div class="member-left">
+                <div class="member-avatar">–</div>
+                <div class="member-name">No users have joined offline</div>
+              </div>
+            </div>
+          `;
+      }
+    }
+}
 
 chatBody.addEventListener('click', function(event) {
   const button = event.target.closest('.vote-btn');

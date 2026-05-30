@@ -7,6 +7,8 @@ from app.models import (
     get_messages_for_room,
     get_room_by_code,
     is_user_in_room,
+    get_online_users,
+    get_offline_users,
 )
 from app.models.message_vote import MessageVote
 from app.controllers import MessageVoteController
@@ -109,15 +111,24 @@ def chat(room_code):
     else:
         _remember_joined_room(room_code)
     
-    # Fetch previous messages
+    # Fetch previous messages, vote totals, and member presence
     messages = get_messages_for_room(room['id'])
     for msg in messages:
         vote_counts = MessageVote.get_vote_count(msg['id'])
         msg['upvotes'] = vote_counts.get('upvotes', 0)
         msg['downvotes'] = vote_counts.get('downvotes', 0)
         msg['user_vote'] = MessageVote.get_user_vote(msg['id'], user_id) if user_id else None
-    
-    return render_template('chat.html', room=room, room_code=room_code, messages=messages)
+    online_members = get_online_users(room['id'])
+    offline_members = get_offline_users(room['id'])
+
+    return render_template(
+        'chat.html',
+        room=room,
+        room_code=room_code,
+        messages=messages,
+        online_members=online_members,
+        offline_members=offline_members,
+    )
 
 
 @bp.route('/message/<int:message_id>/vote', methods=['POST'])
@@ -229,6 +240,7 @@ def update_avatar():
 def create_room():
     if request.method == 'POST':
         room_name = request.form.get('room_name', '').strip()
+        subject_tags = (request.form.get('selected_tags') or '').strip()
         submitted_code = (request.form.get('room_code') or '').strip().upper()
         if len(submitted_code) == 6 and submitted_code.isalnum() and not get_room_by_code(submitted_code):
             code = submitted_code
@@ -237,7 +249,7 @@ def create_room():
 
         is_private = request.form.get('is_private') == '1'
 
-        new_room = create_room_record(code, room_name or f'Room {code}', is_private)
+        new_room = create_room_record(code, room_name or f'Room {code}', is_private, subject_tags)
 
         user_id = session.get('user_id')
         if user_id:

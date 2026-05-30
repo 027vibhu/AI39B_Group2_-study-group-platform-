@@ -28,6 +28,7 @@ def create_app():
     from app.models.message import create_messages_table
     from app.models.message_vote import MessageVote
     from app.models.message_vote_model import MessageVoteModel
+    from app.models.presence_model import room_presence_model
 
     with app.app_context():
         create_users_table()
@@ -36,6 +37,7 @@ def create_app():
         create_messages_table()
         MessageVote.ensure_table_exists()
         MessageVoteModel().create_table()
+        room_presence_model.create_room_presence_table()
 
     @app.errorhandler(404)
     def page_not_found(e):
