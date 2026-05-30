@@ -6,6 +6,7 @@
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/vote.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/subject_tags.css') }}">
 {% endblock %}
 
 {% block topbar_title %}{{ room.name if room.name else 'Room ' ~ room_code }}{% endblock %}
@@ -45,6 +46,14 @@
 
     <!-- BODY -->
     <div class="chat-body" id="chatBody">
+      <!-- Subject Tags Section -->
+      <div style="padding: 12px 16px; border-bottom: 1px solid #e0e0e0;">
+        <input type="hidden" id="roomId" value="{{ room.id }}">
+        <div class="tags-container" id="roomTagsContainer">
+            <p style="font-size: 12px; color: #999; margin: 0;">Loading tags...</p>
+        </div>
+      </div>
+
       <!-- Initial messages from server -->
       {% for msg in messages %}
       <div class="message received" 
@@ -285,5 +294,6 @@ function scrollBottom(){
 </script>
 
 <script src="{{ url_for('static', filename='js/vote.js') }}"></script>
+<script src="{{ url_for('static', filename='js/subject_tags.js') }}"></script>
 
 {% endblock %}
