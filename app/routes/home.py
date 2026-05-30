@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, session, request, current_app, flash
+from flask import Blueprint, render_template, redirect, url_for, session, request, current_app, flash, jsonify
 from app.models import (
     create_room as create_room_record,
     create_user_room,
@@ -6,7 +6,10 @@ from app.models import (
     get_joined_rooms_for_user,
     get_messages_for_room,
     get_room_by_code,
+    is_user_in_room,
 )
+from app.models.message_vote import MessageVote
+from app.controllers import MessageVoteController
 from app.models.database import get_user_by_id, update_user_avatar, update_user_profile
 import random
 import os
@@ -83,15 +86,41 @@ def chat(room_code):
         return "Room not found", 404
 
     user_id = session.get('user_id')
-    if user_id:
+    if room['is_private']:
+        if not user_id:
+            return "Private room. Login required.", 403
+        if not is_user_in_room(user_id, room['id']):
+            create_user_room(user_id, room['id'])
+            _remember_joined_room_for_user(user_id, room['id'])
+    elif user_id:
         _remember_joined_room_for_user(user_id, room['id'])
     else:
         _remember_joined_room(room_code)
     
     # Fetch previous messages
     messages = get_messages_for_room(room['id'])
+    for msg in messages:
+        vote_counts = MessageVote.get_vote_count(msg['id'])
+        msg['upvotes'] = vote_counts.get('upvotes', 0)
+        msg['downvotes'] = vote_counts.get('downvotes', 0)
+        msg['user_vote'] = MessageVote.get_user_vote(msg['id'], user_id) if user_id else None
     
     return render_template('chat.html', room=room, room_code=room_code, messages=messages)
+
+
+@bp.route('/message/<int:message_id>/vote', methods=['POST'])
+def vote_message(message_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Authentication required'}), 401
+
+    vote_type = request.form.get('vote_type') or (request.get_json(silent=True) or {}).get('vote_type')
+    if vote_type not in ('upvote', 'downvote'):
+        return jsonify({'error': 'Invalid vote type'}), 400
+
+    controller = MessageVoteController()
+    result = controller.handle(message_id, user_id, vote_type)
+    return jsonify(result)
 
 
 @bp.route('/chat/<room_code>/delete', methods=['POST'])

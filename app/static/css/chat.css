@@ -181,6 +181,50 @@
   opacity:0.7;
 }
 
+.message-votes{
+  display:flex;
+  align-items:center;
+  gap:0.5rem;
+  margin-top:12px;
+}
+
+.vote-button{
+  width:32px;
+  height:32px;
+  border:none;
+  border-radius:50%;
+  background:#f4f4f8;
+  color:#4b4b71;
+  cursor:pointer;
+  transition:0.2s ease;
+  font-size:14px;
+}
+
+.vote-button:hover{
+  background:#666BB3;
+  color:#fff;
+}
+
+.vote-count{
+  min-width:32px;
+  text-align:center;
+  font-size:0.95rem;
+  color:#4b4b71;
+}
+
+.vote-count[data-vote-type="upvotes"]{
+  color:#1f7a1f;
+}
+
+.vote-count[data-vote-type="downvotes"]{
+  color:#b91c1c;
+}
+
+.vote-button.active{
+  background:#4f46e5;
+  color:#ffffff;
+}
+
 .message-image{
   width:240px;
   border-radius:18px;

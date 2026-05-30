@@ -23,12 +23,14 @@ def create_app():
     from app.models.database import create_users_table
     from app.models.room import create_rooms_table, create_user_rooms_table
     from app.models.message import create_messages_table
+    from app.models.message_vote import MessageVote
 
     with app.app_context():
         create_users_table()
         create_rooms_table()
         create_user_rooms_table()
         create_messages_table()
+        MessageVote.ensure_table_exists()
 
     @app.errorhandler(404)
     def page_not_found(e):
