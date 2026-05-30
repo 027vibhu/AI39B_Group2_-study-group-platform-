@@ -202,3 +202,28 @@ def update_user_profile(user_id, first_name, last_name, school, address, bio):
             return cursor.rowcount
     finally:
         connection.close()
+
+def create_room_actions_table():
+    """
+    Creates the table for tracking kicked or banned users.
+    """
+    ensure_database_exists()
+    
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            # We use ENUM for action types and DATETIME for the ban expiration
+            sql = """
+            CREATE TABLE IF NOT EXISTS room_actions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) NOT NULL,
+                room_name VARCHAR(100) NOT NULL,
+                action_type ENUM('kick', 'ban') NOT NULL,
+                ban_until DATETIME NULL,
+                reason TEXT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+            cursor.execute(sql)
+    finally:
+        connection.close()
