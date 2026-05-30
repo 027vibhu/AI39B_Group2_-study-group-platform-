@@ -16,7 +16,7 @@ class RoomRoutesAPI:
             public_rooms = controller.browse_public_rooms()
             
             # Serialize the domain objects using their built-in OOP methods
-            serialized_data = [room.to_dict() for room in public_rooms]
+            serialized_data = [room.to_dict() if hasattr(room, 'to_dict') else room for room in public_rooms]
             
             return jsonify({
                 "status": "success",

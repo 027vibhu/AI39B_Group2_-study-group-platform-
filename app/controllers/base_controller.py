@@ -1,11 +1,17 @@
-from abc import ABC, abstractmethod
+from flask import render_template, redirect, url_for, session, request, flash
 
-class BaseController(ABC):
-    """Abstract base controller for handling request logic."""
 
-    def __init__(self):
-        pass
+class BaseController:
+    """Minimal BaseController to be inherited by concrete controllers.
 
-    @abstractmethod
-    def handle(self, *args, **kwargs):
-        raise NotImplementedError("Subclasses must implement handle")
+    Provides small helper wrappers around common Flask response helpers.
+    """
+
+    def render(self, template_name, **context):
+        return render_template(template_name, **context)
+
+    def redirect(self, endpoint, **kwargs):
+        return redirect(url_for(endpoint, **kwargs))
+
+    def get_session_user_id(self):
+        return session.get('user_id')

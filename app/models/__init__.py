@@ -7,6 +7,7 @@ from app.models.room import (
 	get_joined_rooms_for_user,
 	get_room_by_code,
 	get_room_by_id,
+	is_user_in_room,
 )
 from app.models.message import create_message, create_messages_table, get_messages_for_room
 from app.models.message_vote import MessageVote

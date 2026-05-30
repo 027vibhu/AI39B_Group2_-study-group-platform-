@@ -134,6 +134,21 @@ def get_joined_rooms_for_user(user_id, limit=8):
         connection.close()
 
 
+def get_all_public_rooms():
+    """Return all public rooms (is_private = 0), newest first."""
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id, code, name, is_private, created_at "
+                "FROM room WHERE is_private = 0 "
+                "ORDER BY created_at DESC",
+            )
+            return cursor.fetchall()
+    finally:
+        connection.close()
+
+
 def delete_room_by_id(room_id):
     connection = get_database_connection()
     try:
