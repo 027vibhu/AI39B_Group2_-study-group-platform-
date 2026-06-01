@@ -26,11 +26,16 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', () => setActiveFilter(button));
   });
 
-  searchInput.addEventListener('input', () => {
+  const searchButton = document.querySelector('.search-box button');
+
+  function refreshCurrentFilter() {
     const activeButton = document.querySelector('.filter-group .active');
     const filter = activeButton ? activeButton.textContent.trim().toLowerCase() : 'all';
     updateFilter(filter === 'all' ? 'all' : filter);
-  });
+  }
+
+  searchInput.addEventListener('input', refreshCurrentFilter);
+  searchButton?.addEventListener('click', refreshCurrentFilter);
 
   document.querySelectorAll('.action-btn').forEach(button => {
     button.addEventListener('click', () => {
@@ -49,5 +54,19 @@ document.addEventListener('DOMContentLoaded', () => {
   confirmButton.addEventListener('click', () => {
     modalBackdrop.hidden = true;
     activeAction = null;
+  });
+
+  modalBackdrop.addEventListener('click', event => {
+    if (event.target === modalBackdrop) {
+      modalBackdrop.hidden = true;
+      activeAction = null;
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !modalBackdrop.hidden) {
+      modalBackdrop.hidden = true;
+      activeAction = null;
+    }
   });
 });
