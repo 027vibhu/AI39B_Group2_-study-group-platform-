@@ -29,35 +29,22 @@
   </div>
 
   <div class="user-table">
-    <article class="user-row">
-      <div class="user-meta">
-        <img class="avatar" src="{{ url_for('static', filename='images/default_user_icon.jpg') }}" alt="User avatar">
-        <div class="user-info">
-          <strong class="user-name">Jane Doe</strong>
-          <span class="user-role">Participant</span>
+    {% for user in moderation_users %}
+      <article class="user-row">
+        <div class="user-meta">
+          <img class="avatar" src="{{ url_for('static', filename=user.avatar) }}" alt="{{ user.name }} avatar">
+          <div class="user-info">
+            <strong class="user-name">{{ user.name }}</strong>
+            <span class="user-role">{{ user.role }}</span>
+          </div>
         </div>
-      </div>
-      <div class="user-status">Online</div>
-      <div class="user-actions">
-        <button type="button" class="btn action-btn">Kick</button>
-        <button type="button" class="btn btn-danger action-btn">Ban</button>
-      </div>
-    </article>
-
-    <article class="user-row">
-      <div class="user-meta">
-        <img class="avatar" src="{{ url_for('static', filename='images/default_user_icon.jpg') }}" alt="User avatar">
-        <div class="user-info">
-          <strong class="user-name">Alex Rivera</strong>
-          <span class="user-role">Moderator</span>
+        <div class="user-status">{{ user.status }}</div>
+        <div class="user-actions">
+          <button type="button" class="btn action-btn">Kick</button>
+          <button type="button" class="btn btn-danger action-btn">Ban</button>
         </div>
-      </div>
-      <div class="user-status">Muted</div>
-      <div class="user-actions">
-        <button type="button" class="btn action-btn">Kick</button>
-        <button type="button" class="btn btn-danger action-btn">Ban</button>
-      </div>
-    </article>
+      </article>
+    {% endfor %}
   </div>
 
   <div class="action-summary">

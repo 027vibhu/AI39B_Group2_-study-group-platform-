@@ -165,7 +165,27 @@ def profile():
 
 @bp.route('/moderation')
 def moderation():
-    return render_template('moderation.html')
+    moderation_users = [
+        {
+            'name': 'Jane Doe',
+            'role': 'Participant',
+            'status': 'Online',
+            'avatar': 'images/default_user_icon.jpg',
+        },
+        {
+            'name': 'Alex Rivera',
+            'role': 'Moderator',
+            'status': 'Muted',
+            'avatar': 'images/default_user_icon.jpg',
+        },
+        {
+            'name': 'Samir Patel',
+            'role': 'Participant',
+            'status': 'Online',
+            'avatar': 'images/default_user_icon.jpg',
+        },
+    ]
+    return render_template('moderation.html', moderation_users=moderation_users)
 
 
 @bp.route('/profile/update', methods=['POST'])
