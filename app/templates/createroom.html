@@ -4,56 +4,86 @@
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/createroom.css') }}">
+  
 {% endblock %}
 
-{% block topbar_title %}Create Workspace{% endblock %}
+{% block topbar_title %}{% endblock %}
 
 {% block content %}
-    <div class="auth-box create-box">
-      <div class="left-panel">
-        <div class="left-content">
-          <h1>Create Room</h1>
-          <p>Launch a private or public study workspace instantly, then share the room code with your classmates.</p>
-        </div>
-      </div>
+  <div class="workspace">
 
-      <div class="right-panel">
-        <div class="form-box">
-          <h2 class="title">Create</h2>
-          <p class="sub">Setup your study workspace below</p>
+    <!-- Left -->
+    <div class="left">
+      <h1>Create<br>Room</h1>
 
-          <form method="post" action="{{ url_for('home.create_room') }}">
-            <input type="hidden" name="room_code" id="room-code-value" value="{{ room_code }}">
-            <input type="hidden" name="is_private" id="is-private-value" value="0">
-            <div class="input-box">
-              <span>🏷️</span>
-              <input type="text" name="room_name" placeholder="Room name" required>
+      <p>
+        Launch a private or public study workspace instantly,
+        then share the room code with your classmates.
+      </p>
+    </div>
+
+    <!-- Right -->
+    <div class="right">
+
+      <div class="form-box">
+
+        <h2>Create</h2>
+
+        <p class="subtitle">
+          Setup your study workspace below
+        </p>
+
+        <form method="post" action="{{ url_for('home.create_room') }}">
+          <input type="hidden" name="room_code" id="room-code-value" value="{{ room_code }}">
+          <input type="hidden" name="is_private" id="is-private-value" value="0">
+
+          <div class="input-box">
+            <span>🏷️</span>
+            <input type="text" name="room_name" placeholder="Room name" required>
+          </div>
+
+          <label class="label">Your Room Code</label>
+
+          <div class="code-grid">
+            {% for char in room_code %}
+            <input type="text" maxlength="1" value="{{ char }}" readonly>
+            {% endfor %}
+          </div>
+
+          <!-- Subject Tags -->
+          <div class="subject-section">
+
+            <label class="label">Subject Tags</label>
+
+            <div class="tags" id="tags-container"></div>
+
+            <div class="custom-tag-section">
+              <input type="text" id="custom-tag-input" placeholder="Add custom subject..." maxlength="20">
+              <button type="button" id="add-custom-btn" class="add-custom-btn">+ Add</button>
             </div>
-            <div class="input-group">
-              <label>Your Room Code</label>
-              <div class="code-grid">
-                {% for char in room_code %}
-                <input type="text" maxlength="1" value="{{ char }}" readonly>
-                {% endfor %}
-              </div>
-            </div>
 
-            <div class="toggle-container">
-              <div class="toggle-text">
-                <span class="toggle-title" id="toggle-label">Public Room</span>
-                <span class="toggle-desc" id="toggle-sublabel">Listed in Browse Rooms and open to anyone</span>
-              </div>
-              <label class="switch">
-                <input type="checkbox" id="public-toggle" checked>
-                <span class="slider"></span>
-              </label>
-            </div>
+            <input type="hidden" name="selected_tags" id="selected-tags-input" value="">
 
-            <button type="submit" class="main-btn">Create Room</button>
-          </form>
-        </div>
+          </div>
+
+          <div class="toggle-container">
+            <div class="toggle-text">
+              <span class="toggle-title" id="toggle-label">Public Room</span>
+              <span class="toggle-desc" id="toggle-sublabel">Listed in Browse Rooms and open to anyone</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="public-toggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <button type="submit" class="main-btn">Create Room</button>
+        </form>
+
       </div>
     </div>
+
+  </div>
 {% endblock %}
 
 {% block scripts %}
@@ -71,9 +101,82 @@
         isPrivateValue.value = '0';
       } else {
         toggleLabel.textContent = 'Private Room';
-        toggleSublabel.textContent = 'Listed in Browse Rooms but requires the room code to join';
+        toggleSublabel.textContent = 'Requires the room code to join';
         isPrivateValue.value = '1';
       }
     });
+
+    // Subject Tags functionality
+    const tagsContainer = document.getElementById('tags-container');
+    const formEl = document.querySelector('form');
+    const customTagInput = document.getElementById('custom-tag-input');
+    const addCustomBtn = document.getElementById('add-custom-btn');
+    const selectedTagsInput = document.getElementById('selected-tags-input');
+    let selectedTags = [];
+
+    function updateSelectedTags() {
+      selectedTags = Array.from(document.querySelectorAll('.tag.active')).map(tag => tag.dataset.subject || tag.textContent.trim());
+      selectedTagsInput.value = selectedTags.join(',');
+    }
+
+    // Handle tag click (supports clicks on inner elements)
+    tagsContainer.addEventListener('click', (e) => {
+      const tag = e.target.closest('.tag');
+      if (!tag) return;
+
+      if (e.target.classList.contains('remove-tag')) {
+        tag.remove();
+        updateSelectedTags();
+        return;
+      }
+
+      tag.classList.toggle('active');
+      updateSelectedTags();
+    });
+
+    // Add custom tag
+    addCustomBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tagText = customTagInput.value.trim();
+
+      if (tagText && tagText.length > 0) {
+        // Check if tag already exists
+        const tagExists = Array.from(tagsContainer.querySelectorAll('.tag')).some(
+          tag => tag.textContent.trim().toLowerCase() === tagText.toLowerCase()
+        );
+
+        if (!tagExists) {
+          const newTag = document.createElement('div');
+          newTag.classList.add('tag', 'custom', 'active');
+          newTag.dataset.subject = tagText.toLowerCase();
+          newTag.innerHTML = `${tagText} <span class="remove-tag">✕</span>`;
+          tagsContainer.appendChild(newTag);
+
+          customTagInput.value = '';
+          updateSelectedTags();
+        } else {
+          alert('This tag already exists!');
+        }
+      }
+    });
+
+    // Handle Enter key in custom tag input
+    customTagInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addCustomBtn.click();
+      }
+    });
+
+    // Initialize selected tags on page load
+    updateSelectedTags();
+
+    // Ensure the latest tags are captured on submit
+    if (formEl) {
+      formEl.addEventListener('submit', () => {
+        updateSelectedTags();
+      });
+    }
   </script>
+  <script src="{{ url_for('static', filename='js/create_workspace_step1.js') }}"></script>
 {% endblock %}

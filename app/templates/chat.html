@@ -3,54 +3,54 @@
 {% block title %}LOREVIA Chat{% endblock %}
 
 {% block head %}
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 {% endblock %}
 
-{% block topbar_title %}{{ room.name if room.name else 'Room ' ~ room_code }}{% endblock %}
+{% block topbar_title %}{% endblock %}
 
 {% block content %}
-  <!-- CHAT -->
-  <div class="chat-wrapper">
-
-    <!-- HEADER -->
+  <div class="chat-layout">
+    <div class="chat-section">
     <div class="chat-header">
-      <div class="chat-user">
-        <div class="chat-avatar">C</div>
-        <div class="chat-info">
-          <h2>{{ room.name if room.name else 'Room ' ~ room_code }}</h2>
-          <p id="memberStatus">Connecting...</p>
+      <div class="header-left">
+        <h2>
+          {{ room.name if room.name else 'Room ' ~ room_code }}
+          {% if room.is_private %}<i class="fa-solid fa-lock" style="font-size: 0.7em; margin-left: 8px; color: #7a8194;" title="Private Room"></i>{% endif %}
+        </h2>
+        {% if room.subject_tags %}
+        <div class="room-tags">
+          {% for tag in room.subject_tags.split(',') %}
+            {% set clean_tag = tag.strip() %}
+            {% if clean_tag %}
+            <span class="room-tag">{{ clean_tag }}</span>
+            {% endif %}
+          {% endfor %}
         </div>
+        {% endif %}
+        
       </div>
 
-      <div class="chat-actions">
-        <button class="action-btn"><i class="fa-solid fa-phone"></i></button>
-        <button class="action-btn"><i class="fa-solid fa-video"></i></button>
-        <div class="chat-menu">
-          <button class="action-btn" id="chatMenuButton" aria-label="Open chat menu" aria-expanded="false" type="button">
-            <i class="fa-solid fa-ellipsis"></i>
-          </button>
-          <div class="chat-dropdown" id="chatMenu" aria-hidden="true">
-            <form method="POST" action="{{ url_for('home.delete_chat', room_code=room_code) }}">
-              <button type="submit" class="chat-menu-item danger">Delete chat room</button>
-            </form>
-          </div>
-        </div>
+      <div class="header-actions">
+        <button class="action-btn">📞</button>
+        <button class="action-btn">🎥</button>
+        <button class="action-btn">➕</button>
       </div>
     </div>
 
-    <!-- BODY -->
     <div class="chat-body" id="chatBody">
-      <!-- Initial messages from server -->
       {% for msg in messages %}
-      <div class="message received" data-sender="{{ msg.username }}">
+      <div class="message received" data-sender="{{ msg.username }}" data-message-id="{{ msg.id }}">
         <div class="message-bubble">
-          <div style="font-size: 0.7rem; color: #888; margin-bottom: 2px;">{{ msg.username }}</div>
-          {{ msg.content }}
-          <div class="message-votes" data-message-id="{{ msg.id }}">
-            <button class="vote-button upvote{% if msg.user_vote == 'upvote' %} active{% endif %}" type="button" data-vote-type="upvote">▲</button>
-            <span class="vote-count" data-vote-type="upvotes">{{ msg.upvotes|default(0) }}</span>
-            <button class="vote-button downvote{% if msg.user_vote == 'downvote' %} active{% endif %}" type="button" data-vote-type="downvote">▼</button>
-            <span class="vote-count" data-vote-type="downvotes">{{ msg.downvotes|default(0) }}</span>
+          <div class="message-username">{{ msg.username }}</div>
+          <div class="message-body">
+            <div class="message-content">{{ msg.content }}</div>
+            <div class="message-votes {% if (msg.upvotes|default(0)|int) > 0 or (msg.downvotes|default(0)|int) > 0 %}has-votes{% endif %}" data-message-id="{{ msg.id }}">
+              <button class="vote-button upvote{% if msg.user_vote == 'upvote' %} active{% endif %}" type="button" data-vote-type="upvote">▲</button>
+              <span class="vote-count" data-vote-type="upvotes">{{ 0 if msg.upvotes in [None, 'None', ''] else msg.upvotes }}</span>
+              <button class="vote-button downvote{% if msg.user_vote == 'downvote' %} active{% endif %}" type="button" data-vote-type="downvote">▼</button>
+              <span class="vote-count" data-vote-type="downvotes">{{ 0 if msg.downvotes in [None, 'None', ''] else msg.downvotes }}</span>
+            </div>
           </div>
           <div class="message-time">{{ msg.time_label }}</div>
         </div>
@@ -58,25 +58,69 @@
       {% endfor %}
     </div>
 
-    <!-- INPUT -->
-    <div class="chat-input-area">
-      <button class="input-icon" id="emojiBtn"><i class="fa-regular fa-face-smile"></i></button>
-      <label class="input-icon">
-        <i class="fa-solid fa-image"></i>
-        <input type="file" hidden accept="image/*" id="imageInput" />
+    <div class="chat-input">
+      <button class="icon-btn" id="emojiBtn">😀</button>
+      <label class="icon-btn">
+        📎
+        <input type="file" hidden id="imageInput" accept="image/*">
       </label>
-      <input type="text" class="chat-input" placeholder="Type your message..." id="messageInput" />
-      <button class="send-btn" id="sendBtn"><i class="fa-solid fa-paper-plane"></i></button>
+      <input type="text" class="input-box" id="messageInput" placeholder="Type a message...">
+      <button class="send-btn" id="sendBtn">➤</button>
+    </div>
+  </div>
+
+    <div class="right-panel">
+    {% set total_members = (online_members | length if online_members else 0) + (offline_members | length if offline_members else 0) %}
+    <h3 id="memberCount">Members ({{ total_members }})</h3>
+
+    <div class="section-title">Online</div>
+    <div id="onlineMembers">
+    {% if online_members %}
+      {% for member in online_members %}
+      <div class="member">
+        <div class="member-left">
+          <div class="member-avatar">{{ member.username[:1] | upper }}</div>
+          <div class="member-name">{{ member.username }}</div>
+        </div>
+        <div class="green-dot"></div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="member offline">
+        <div class="member-left">
+          <div class="member-avatar">–</div>
+          <div class="member-name">No members online</div>
+        </div>
+      </div>
+    {% endif %}
+    </div>
+
+    <div class="section-title">Offline</div>
+    <div id="offlineMembers">
+    {% if offline_members %}
+      {% for member in offline_members %}
+      <div class="member">
+        <div class="member-left">
+          <div class="member-avatar">{{ member.username[:1] | upper }}</div>
+          <div class="member-name">{{ member.username }}</div>
+        </div>
+        <div class="offline-dot"></div>
+      </div>
+      {% endfor %}
+    {% endif %}
+    </div>
+
+
     </div>
   </div>
 {% endblock %}
 
 {% block scripts %}
-<!-- Socket.IO Client -->
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
 // Use logged-in username only
 const displayName = "{{ current_user.username if current_user else '' }}";
+const userId = "{{ current_user.id if current_user else '' }}";
 const userProfile = document.getElementById('userProfile');
 if (userProfile) {
   const hasImage = userProfile.querySelector('img');
@@ -92,7 +136,7 @@ document.querySelectorAll('.message').forEach(msg => {
         msg.classList.remove('received');
         msg.classList.add('sent');
         // Hide sender name for own messages
-        const senderLabel = msg.querySelector('div[style*="font-size: 0.7rem"]');
+        const senderLabel = msg.querySelector('.message-username');
         if (senderLabel) senderLabel.style.display = 'none';
     }
 });
@@ -106,8 +150,13 @@ const chatBody = document.getElementById('chatBody');
 const imageInput = document.getElementById('imageInput');
 const emojiBtn = document.getElementById('emojiBtn');
 const memberStatus = document.getElementById('memberStatus');
+const memberCount = document.getElementById('memberCount');
+const onlineMembersContainer = document.getElementById('onlineMembers');
+const offlineMembersContainer = document.getElementById('offlineMembers');
 const chatMenuButton = document.getElementById('chatMenuButton');
 const chatMenu = document.getElementById('chatMenu');
+const initialOnlineMembers = JSON.parse('{{ (online_members or []) | tojson | safe }}');
+const initialOfflineMembers = JSON.parse('{{ (offline_members or []) | tojson | safe }}');
 
 /* SOCKET CONNECTION */
 socket.on('connect', () => {
@@ -117,12 +166,60 @@ socket.on('connect', () => {
 
 socket.on('status', (data) => {
     console.log(data.msg);
-    memberStatus.innerText = "Online";
+    if (memberStatus) {
+      memberStatus.innerText = "Online";
+    }
 });
+
+socket.on('presence_update', (data) => {
+    if (data && data.online !== undefined && data.offline !== undefined) {
+        renderPresenceLists(data.online, data.offline);
+    }
+});
+
+if (onlineMembersContainer || offlineMembersContainer) {
+    renderPresenceLists(initialOnlineMembers, initialOfflineMembers);
+}
 
 socket.on('receive_message', (data) => {
   const type = data.username === displayName ? 'sent' : 'received';
   addMessageToUI(data.message, type, data.username, data.message_id);
+});
+
+// Update vote counts when another client votes
+socket.on('vote_update', (data) => {
+  try {
+    console.log('socket vote_update received', data);
+    // Only process updates for the current room
+    if (data.room_code && data.room_code !== roomCode) return;
+    const messageId = String(data.message_id);
+    const votes = data;
+    const votesDiv = document.querySelector(`.message-votes[data-message-id="${messageId}"]`);
+    if (!votesDiv) return;
+    const upEl = votesDiv.querySelector('.vote-count[data-vote-type="upvotes"]');
+    const downEl = votesDiv.querySelector('.vote-count[data-vote-type="downvotes"]');
+    const upBtn = votesDiv.querySelector('.vote-button.upvote');
+    const downBtn = votesDiv.querySelector('.vote-button.downvote');
+    if (upEl) upEl.innerText = votes.upvotes || 0;
+    if (downEl) downEl.innerText = votes.downvotes || 0;
+    if ((votes.upvotes || 0) > 0 || (votes.downvotes || 0) > 0) {
+      votesDiv.classList.add('has-votes');
+    } else {
+      votesDiv.classList.remove('has-votes');
+    }
+
+    if (String(data.actor_user_id || '') === String(userId || '')) {
+      if (data.action === 'remove_vote') {
+        if (upBtn) upBtn.classList.remove('active');
+        if (downBtn) downBtn.classList.remove('active');
+      } else {
+        if (upBtn) upBtn.classList.toggle('active', data.vote_type === 'upvote');
+        if (downBtn) downBtn.classList.toggle('active', data.vote_type === 'downvote');
+      }
+    }
+  } catch (err) {
+    console.error('vote_update handling error', err);
+  }
 });
 
 if (chatMenuButton && chatMenu) {
@@ -161,9 +258,10 @@ function addMessageToUI(text, type, sender, messageId = null){
   if (messageId) {
     message.dataset.messageId = messageId;
   }
+  message.dataset.sender = sender;
   let senderHTML = '';
   if (type === 'received') {
-      senderHTML = `<div style="font-size: 0.7rem; color: #888; margin-bottom: 2px;">${sender}</div>`;
+    senderHTML = `<div class="message-username">${sender}</div>`;
   }
   const voteControls = messageId ? `
       <div class="message-votes" data-message-id="${messageId}">
@@ -176,8 +274,10 @@ function addMessageToUI(text, type, sender, messageId = null){
   message.innerHTML = `
     <div class="message-bubble">
       ${senderHTML}
-      ${text}
-      ${voteControls}
+      <div class="message-body">
+        <div class="message-content">${text}</div>
+        ${voteControls}
+      </div>
       <div class="message-time">${getTime()}</div>
     </div>
   `;
@@ -185,41 +285,66 @@ function addMessageToUI(text, type, sender, messageId = null){
   scrollBottom();
 }
 
-chatBody.addEventListener('click', event => {
-  const voteButton = event.target.closest('.vote-button');
-  if (!voteButton) return;
-  const voteType = voteButton.dataset.voteType;
-  const messageId = voteButton.closest('.message-votes')?.dataset.messageId;
-  if (!messageId) return;
-  fetch(`/message/${messageId}/vote`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ vote_type: voteType }),
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.error) {
-        console.error(data.error);
-        return;
-      }
-      const voteRow = voteButton.closest('.message-votes');
-      if (voteRow) {
-        voteRow.querySelector('[data-vote-type="upvotes"]').innerText = data.upvotes;
-        voteRow.querySelector('[data-vote-type="downvotes"]').innerText = data.downvotes;
-        voteRow.querySelectorAll('.vote-button').forEach(btn => {
-          btn.classList.toggle('active', btn.dataset.voteType === voteType);
-        });
-      }
-    })
-    .catch(error => console.error('Vote failed', error));
+sendBtn.addEventListener('click', sendMessage);
+messageInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    sendMessage();
+  }
 });
 
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keypress', function(e){
-  if(e.key === 'Enter') sendMessage();
-});
+function renderPresenceLists(onlineUsers, offlineUsers) {
+    if (memberCount) {
+      const total = (onlineUsers?.length || 0) + (offlineUsers?.length || 0);
+      memberCount.innerText = `Members (${total})`;
+    }
+
+    if (onlineMembersContainer) {
+      onlineMembersContainer.innerHTML = '';
+      if (onlineUsers && onlineUsers.length > 0) {
+          onlineUsers.forEach((user) => {
+              const member = document.createElement('div');
+              member.className = 'member';
+              member.innerHTML = `
+                <div class="member-left">
+                  <div class="member-avatar">${user.username.charAt(0).toUpperCase()}</div>
+                  <div class="member-name">${user.username}</div>
+                </div>
+                <div class="green-dot"></div>
+              `;
+              onlineMembersContainer.appendChild(member);
+          });
+      } else {
+          onlineMembersContainer.innerHTML = `
+            <div class="member offline">
+              <div class="member-left">
+                <div class="member-avatar">–</div>
+                <div class="member-name">No members online</div>
+              </div>
+            </div>
+          `;
+      }
+    }
+
+    if (offlineMembersContainer) {
+      offlineMembersContainer.innerHTML = '';
+      if (offlineUsers && offlineUsers.length > 0) {
+          offlineUsers.forEach((user) => {
+              const member = document.createElement('div');
+              member.className = 'member';
+              member.innerHTML = `
+                <div class="member-left">
+                  <div class="member-avatar">${user.username.charAt(0).toUpperCase()}</div>
+                  <div class="member-name">${user.username}</div>
+                </div>
+                <div class="offline-dot"></div>
+              `;
+              offlineMembersContainer.appendChild(member);
+          });
+      }
+    }
+}
+
 
 imageInput.addEventListener('change', function(){
   const file = this.files[0];
@@ -237,10 +362,12 @@ imageInput.addEventListener('change', function(){
   scrollBottom();
 });
 
-emojiBtn.addEventListener('click', () => {
-  messageInput.value += '😊';
-  messageInput.focus();
-});
+if (emojiBtn) {
+  emojiBtn.addEventListener('click', () => {
+    messageInput.value += '😊';
+    messageInput.focus();
+  });
+}
 
 function getTime(){
   const now = new Date();
@@ -248,7 +375,36 @@ function getTime(){
 }
 
 function scrollBottom(){
-  chatBody.scrollTop = chatBody.scrollHeight;
+    chatBody.scrollTop = chatBody.scrollHeight;
 }
+
+scrollBottom();
+
+// Voting logic
+chatBody.addEventListener('click', async (e) => {
+  const voteBtn = e.target.closest('.vote-button');
+  if (!voteBtn) return;
+  if (!userId) {
+    alert("You must be logged in to vote.");
+    return;
+  }
+
+  const messageVotesDiv = voteBtn.closest('.message-votes');
+  if (!messageVotesDiv) return;
+  
+  const messageId = messageVotesDiv.dataset.messageId;
+  const voteType = voteBtn.dataset.voteType; // 'upvote' or 'downvote'
+  const isRemoving = voteBtn.classList.contains('active');
+  socket.emit('vote_message', {
+    message_id: messageId,
+    vote_type: voteType,
+    action: isRemoving ? 'remove_vote' : 'vote'
+  });
+});
+
+socket.on('vote_error', (data) => {
+  console.error('Vote error:', data?.message || data);
+});
 </script>
+
 {% endblock %}

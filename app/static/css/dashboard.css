@@ -99,10 +99,11 @@ body{
 .nav-item.active::before{
   content:'';
   position:absolute;
-  left:-18px;
-  top:10px;
+  left:-10px;
+  top:50%;
+  transform:translateY(-50%);
   width:4px;
-  height:65%;
+  height:50%;
   border-radius:20px;
   background:#4b527b;
 }
@@ -186,6 +187,10 @@ body{
   align-items:center;
   justify-content:space-between;
   margin-bottom:10px;
+}
+
+.topbar .profile-menu{
+  margin-left:auto;
 }
 
 .topbar h1{
