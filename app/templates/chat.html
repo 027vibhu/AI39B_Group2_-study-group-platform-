@@ -35,6 +35,7 @@
         <button class="action-btn">📞</button>
         <button class="action-btn">🎥</button>
         <button class="action-btn">➕</button>
+        <a class="action-btn" href="{{ url_for('home.moderation') }}?room_code={{ room_code }}">Moderate</a>
       </div>
     </div>
 
@@ -119,8 +120,8 @@
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
 // Use logged-in username only
-const displayName = "{{ current_user.username if current_user else '' }}";
-const userId = "{{ current_user.id if current_user else '' }}";
+const displayName = "{{ current_user.username }}";
+const userId = "{{ current_user.id }}";
 const userProfile = document.getElementById('userProfile');
 if (userProfile) {
   const hasImage = userProfile.querySelector('img');
@@ -404,6 +405,15 @@ chatBody.addEventListener('click', async (e) => {
 
 socket.on('vote_error', (data) => {
   console.error('Vote error:', data?.message || data);
+});
+
+socket.on('moderation_action', (data) => {
+  if (!data || data.room_code !== roomCode) return;
+  if (data.username !== displayName) return;
+
+  alert(data.message || `You were ${data.action}ed from this room.`);
+  socket.disconnect();
+  window.location.href = "{{ url_for('home.index') }}";
 });
 </script>
 
