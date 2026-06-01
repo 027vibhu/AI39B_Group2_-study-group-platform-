@@ -170,6 +170,7 @@ def moderation():
     for r in rows:
         display_name = r.get('username') or ((r.get('first_name') or '') + ' ' + (r.get('last_name') or '')).strip() or 'User'
         moderation_users.append({
+            'id': r.get('id'),
             'name': display_name,
             'role': 'Participant',
             'status': 'Online',
@@ -177,6 +178,21 @@ def moderation():
         })
 
     return render_template('moderation.html', moderation_users=moderation_users)
+
+
+@bp.route('/moderation/action', methods=['POST'])
+def moderation_action():
+    data = request.get_json() or {}
+    action = (data.get('action') or '').strip().lower()
+    user_id = data.get('user_id')
+
+    if action not in {'kick', 'ban'} or not user_id:
+        return jsonify({'success': False, 'message': 'Invalid action or user'}), 400
+
+    # Placeholder: implement actual kick/ban logic here (emit socket event, update DB, etc.)
+    current_app.logger.info(f"Moderation action requested: {action} user_id={user_id}")
+
+    return jsonify({'success': True, 'action': action, 'user_id': user_id})
 
 
 @bp.route('/profile/update', methods=['POST'])

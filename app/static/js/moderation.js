@@ -39,10 +39,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.action-btn').forEach(button => {
     button.addEventListener('click', () => {
-      activeAction = button.textContent.trim();
+      const row = button.closest('.user-row');
+      const userId = row?.dataset?.userId;
+      const userName = row?.dataset?.userName || 'the user';
+      activeAction = button.dataset?.action || button.textContent.trim().toLowerCase();
       modalBackdrop.hidden = false;
       modalBackdrop.querySelector('h2').textContent = 'Confirm Action';
-      modalBackdrop.querySelector('p').textContent = `Are you sure you want to ${activeAction.toLowerCase()} this user?`;
+      modalBackdrop.querySelector('p').textContent = `Are you sure you want to ${activeAction} ${userName}?`;
+      // attach selected target to confirm button dataset
+      confirmButton.dataset.targetUserId = userId;
+      confirmButton.dataset.targetAction = activeAction;
     });
   });
 
@@ -52,6 +58,28 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   confirmButton.addEventListener('click', () => {
+    const userId = confirmButton.dataset.targetUserId;
+    const action = confirmButton.dataset.targetAction;
+    if (userId && action) {
+      fetch('/moderation/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, action }),
+      })
+        .then(res => res.json())
+        .then(json => {
+          if (json?.success) {
+            // Optionally remove or update the row
+            const row = document.querySelector(`.user-row[data-user-id="${userId}"]`);
+            if (action === 'kick' && row) {
+              row.remove();
+            }
+          } else {
+            console.error('Action failed', json);
+          }
+        })
+        .catch(err => console.error('Request error', err));
+    }
     modalBackdrop.hidden = true;
     activeAction = null;
   });

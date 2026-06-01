@@ -30,7 +30,7 @@
 
   <div class="user-table">
     {% for user in moderation_users %}
-      <article class="user-row">
+      <article class="user-row" data-user-id="{{ user.id }}" data-user-name="{{ user.name }}">
         <div class="user-meta">
           <img class="avatar" src="{{ url_for('static', filename=user.avatar) }}" alt="{{ user.name }} avatar">
           <div class="user-info">
@@ -40,8 +40,8 @@
         </div>
         <div class="user-status">{{ user.status }}</div>
         <div class="user-actions">
-          <button type="button" class="btn action-btn">Kick</button>
-          <button type="button" class="btn btn-danger action-btn">Ban</button>
+          <button type="button" class="btn action-btn" data-action="kick">Kick</button>
+          <button type="button" class="btn btn-danger action-btn" data-action="ban">Ban</button>
         </div>
       </article>
     {% endfor %}
