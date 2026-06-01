@@ -92,6 +92,11 @@
   transform: translateY(-1px);
 }
 
+.btn:focus-visible {
+  outline: 3px solid rgba(79, 70, 229, 0.28);
+  outline-offset: 3px;
+}
+
 .btn-primary {
   background: var(--primary);
   color: #ffffff;
@@ -128,6 +133,13 @@
   border: 1px solid var(--border);
   border-radius: 1.1rem;
   padding: 1.25rem 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.user-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  border-color: rgba(79, 70, 229, 0.15);
 }
 
 .user-meta {
@@ -189,6 +201,10 @@
   place-items: center;
   background: rgba(15, 23, 42, 0.45);
   z-index: 50;
+}
+
+.modal-backdrop[hidden] {
+  display: none;
 }
 
 .modal-window {
