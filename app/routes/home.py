@@ -3,15 +3,17 @@ from app.models.room import (
     create_room as create_room_record,
     create_user_room,
     delete_room_by_code,
+    log_moderation_action,
     get_joined_rooms_for_user,
     get_room_by_code,
+    is_user_banned_from_room,
     is_user_in_room,
 )
 from app.models.message import get_messages_for_room
 from app.models.presence_model import get_online_users, get_offline_users
 from app.models.message_vote import get_vote_count, get_user_vote
 from app.controllers import MessageVoteController
-from app.models.database import get_user_by_id, update_user_avatar, update_user_profile, get_all_users
+from app.models.database import get_user_by_id, get_user_by_username, update_user_avatar, update_user_profile
 import random
 import os
 import uuid
@@ -38,6 +40,7 @@ class HomeRoutes:
         self.bp.context_processor(self.inject_joined_rooms)
         self.bp.route('/profile')(self.profile)
         self.bp.route('/moderation')(self.moderation)
+        self.bp.route('/moderation/action', methods=['POST'])(self.moderation_action)
         self.bp.route('/profile/update', methods=['POST'])(self.update_profile)
         self.bp.route('/profile/avatar', methods=['POST'])(self.update_avatar)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
@@ -103,6 +106,19 @@ class HomeRoutes:
             return "Room not found", 404
 
         user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+
+        current_user = get_user_by_id(user_id)
+        if not current_user:
+            session.clear()
+            return redirect(url_for('auth.login'))
+
+        username = current_user['username']
+
+        if is_user_banned_from_room(username, room['code'], room.get('name')):
+            return "You are banned from this room.", 403
+
         if room['is_private']:
             if not user_id:
                 return "Private room. Login required.", 403
@@ -183,6 +199,85 @@ class HomeRoutes:
         controller = ModerationController()
         return controller.show_moderation()
 
+    def moderation_action(self):
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'status': 'error', 'message': 'Authentication required.'}), 401
+
+        current_user = get_user_by_id(user_id)
+        if not current_user:
+            return jsonify({'status': 'error', 'message': 'Invalid session.'}), 401
+
+        # moderation allowed for admins/moderators or room owners (checked later)
+
+        payload = request.get_json(silent=True) or request.form
+        room_code = (payload.get('room_code') or '').strip().upper()
+        target_username = (payload.get('username') or '').strip()
+        action = (payload.get('action') or '').strip().lower()
+        reason = (payload.get('reason') or '').strip() or None
+        duration_minutes = payload.get('duration_minutes')
+
+        if action not in {'kick', 'ban'}:
+            return jsonify({'status': 'error', 'message': 'Action must be kick or ban.'}), 400
+
+        if not room_code or not target_username:
+            return jsonify({'status': 'error', 'message': 'Room code and username are required.'}), 400
+
+        room = get_room_by_code(room_code)
+        if not room:
+            return jsonify({'status': 'error', 'message': 'Room not found.'}), 404
+
+        # Check permissions: admin/moderator or owner of the room
+        role = session.get('role')
+        if role not in ('admin', 'moderator') and room.get('owner_id') != current_user['id']:
+            if request.is_json:
+                return jsonify({'status': 'error', 'message': 'Moderator privileges required.'}), 403
+            flash('Moderator privileges required.', 'danger')
+            return redirect(url_for('home.moderation'))
+
+        target_user = get_user_by_username(target_username)
+        if not target_user:
+            return jsonify({'status': 'error', 'message': 'Target user not found.'}), 404
+
+        if action == 'ban':
+            try:
+                duration_minutes = int(duration_minutes) if duration_minutes not in (None, '') else None
+            except (TypeError, ValueError):
+                return jsonify({'status': 'error', 'message': 'Ban duration must be a number of minutes.'}), 400
+
+        log_room_action(target_username, room['code'], room.get('name') or room['code'], action, duration_minutes, reason)
+        log_moderation_action(
+            room['id'],
+            room['code'],
+            current_user['id'],
+            current_user['username'],
+            target_username,
+            action,
+            duration_minutes,
+            reason,
+        )
+
+        socketio.emit(
+            'moderation_action',
+            {
+                'action': action,
+                'room_code': room['code'],
+                'username': target_username,
+                'message': reason or f'You were {action}ed from this room.',
+            },
+            room=room['code'],
+        )
+
+        message = f"{target_username} was {action}ed in room {room['code']}."
+        if action == 'ban' and duration_minutes:
+            message = f"{target_username} was banned for {duration_minutes} minutes in room {room['code']}."
+
+        if request.accept_mimetypes.best == 'application/json' or request.is_json:
+            return jsonify({'status': 'success', 'message': message})
+
+        flash(message, 'success')
+        return redirect(url_for('home.moderation'))
+
     def update_profile(self):
         user_id = session.get('user_id')
         if not user_id:
@@ -235,7 +330,8 @@ class HomeRoutes:
 
             is_private = request.form.get('is_private') == '1'
 
-            new_room = create_room_record(code, room_name or f'Room {code}', is_private, subject_tags)
+            user_id = session.get('user_id')
+            new_room = create_room_record(code, room_name or f'Room {code}', is_private, subject_tags, owner_id=user_id)
 
             user_id = session.get('user_id')
             if user_id:

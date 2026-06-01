@@ -1,9 +1,9 @@
 from flask import session, request
-from flask_socketio import disconnect, join_room, emit
+from flask_socketio import join_room, emit
 from app import socketio
 from app.models.message import create_message
 from app.models.message_vote import create_or_update_vote, get_vote_count, remove_vote
-from app.models.room import get_room_by_code, get_room_by_id
+from app.models.room import get_room_by_code, get_room_by_id, is_user_banned_from_room
 from app.models.message import get_message_by_id
 from app.models.presence_model import set_user_online, set_user_offline, get_online_users, get_offline_users
 
@@ -26,7 +26,12 @@ def _broadcast_presence(room_code, room_id):
 @socketio.on('join')
 def handle_join(data):
     room_code = data.get('room')
-    username = data.get('username', 'Guest')
+    user_id = session.get('user_id')
+    if not user_id:
+        emit('moderation_action', {'action': 'auth_required', 'room_code': room_code, 'message': 'Login required.'})
+        return
+
+    username = data.get('username') or ''
     if not room_code:
         return
 
@@ -34,7 +39,18 @@ def handle_join(data):
     if not room:
         return
 
-    user_id = session.get('user_id') or 0
+    if is_user_banned_from_room(username, room_code, room.get('name')):
+        emit(
+            'moderation_action',
+            {
+                'action': 'ban',
+                'room_code': room_code,
+                'username': username,
+                'message': 'You are banned from this room.',
+            },
+        )
+        return
+
     join_room(room_code)
     set_user_online(user_id, room['id'], username)
     _active_presence[request.sid] = {
@@ -67,10 +83,27 @@ def handle_disconnect():
 def handle_send_message(data):
     room_code = data.get('room')
     message_content = data.get('message')
-    username = data.get('username', 'Guest')
+    user_id = session.get('user_id')
+    if not user_id:
+        emit('moderation_action', {'action': 'auth_required', 'room_code': room_code, 'message': 'Login required.'})
+        return
+
+    username = data.get('username') or ''
     if room_code and message_content:
         room = get_room_by_code(room_code)
         if room:
+            if is_user_banned_from_room(username, room_code, room.get('name')):
+                emit(
+                    'moderation_action',
+                    {
+                        'action': 'ban',
+                        'room_code': room_code,
+                        'username': username,
+                        'message': 'You are banned from this room.',
+                    },
+                )
+                return
+
             # Save message to database
             message_id = create_message(room['id'], username, message_content)
 

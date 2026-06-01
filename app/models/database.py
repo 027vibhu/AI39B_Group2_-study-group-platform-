@@ -171,10 +171,11 @@ def create_room_actions_table():
     connection = get_database_connection()
     try:
         with connection.cursor() as cursor:
-            # We use ENUM for action types and DATETIME for the ban expiration
+            # We keep both room_code and room_name for compatibility with older rows.
             sql = """
             CREATE TABLE IF NOT EXISTS room_actions (
                 id INT AUTO_INCREMENT PRIMARY KEY,
+                room_code VARCHAR(6) NULL,
                 username VARCHAR(50) NOT NULL,
                 room_name VARCHAR(100) NOT NULL,
                 action_type ENUM('kick', 'ban') NOT NULL,
@@ -184,6 +185,14 @@ def create_room_actions_table():
             )
             """
             cursor.execute(sql)
+            try:
+                cursor.execute("ALTER TABLE room_actions ADD COLUMN room_code VARCHAR(6) NULL AFTER id")
+            except Exception:
+                pass
+            try:
+                cursor.execute("ALTER TABLE room_actions ADD INDEX idx_room_actions_room_code (room_code)")
+            except Exception:
+                pass
     finally:
         connection.close()
 
@@ -254,6 +263,20 @@ class Database:
             from app.models.message_vote import MessageVote
 
             MessageVote.ensure_table_exists()
+        except Exception:
+            pass
+
+        try:
+            from app.models.database import create_room_actions_table
+
+            create_room_actions_table()
+        except Exception:
+            pass
+
+        try:
+            from app.models.room import create_moderation_log_table
+
+            create_moderation_log_table()
         except Exception:
             pass
 

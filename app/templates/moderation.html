@@ -11,57 +11,101 @@
   <header class="mod-header">
     <div>
       <h1>Moderation Panel</h1>
-      <p>Manage disruptive users in the room</p>
+      <p>Kick or ban a user from one of your owned rooms.</p>
     </div>
   </header>
 
-  <div class="mod-controls">
+  {% if can_moderate_any %}
+  <form id="moderationForm" class="mod-controls" action="{{ url_for('home.moderation_action') }}" method="post">
     <div class="search-box">
-      <input type="text" placeholder="Search users..." aria-label="Search users">
-      <button type="button" class="btn btn-primary">Search</button>
+      <div class="input-box">
+        <span>👤</span>
+        <input type="text" name="username" placeholder="Target username" aria-label="Target username" required>
+      </div>
+      <button type="button" class="main-btn" id="moderationSubmitTop">Apply</button>
     </div>
 
     <div class="filter-group">
-      <button type="button" class="btn btn-secondary active">All</button>
-      <button type="button" class="btn btn-secondary">Active</button>
-      <button type="button" class="btn btn-secondary">Muted</button>
+      <select name="room_code" aria-label="Select room" required>
+        <option value="">Select a room</option>
+        {% for room in owned_rooms %}
+          <option value="{{ room.code }}" {% if selected_room_code == room.code %}selected{% endif %}>{{ room.name if room.name else 'Room ' ~ room.code }} ({{ room.code }})</option>
+        {% endfor %}
+        {% if not owned_rooms and joined_rooms %}
+          {% for room in joined_rooms %}
+            <option value="{{ room.code }}" {% if selected_room_code == room.code %}selected{% endif %}>{{ room.name if room.name else 'Room ' ~ room.code }} ({{ room.code }})</option>
+          {% endfor %}
+        {% endif %}
+      </select>
+      <select name="action" id="moderationAction" aria-label="Select action" required>
+        <option value="kick">Kick</option>
+        <option value="ban">Ban</option>
+      </select>
+      <div class="input-box" style="width:160px;">
+        <input type="number" name="duration_minutes" id="banDuration" min="1" placeholder="Ban minutes" aria-label="Ban duration in minutes">
+      </div>
     </div>
-  </div>
 
-  <div class="user-table">
-    {% for user in moderation_users %}
-      <article class="user-row" data-user-id="{{ user.id }}" data-user-name="{{ user.name }}">
+    <div class="user-table">
+      <article class="user-row">
         <div class="user-meta">
-          <img class="avatar" src="{{ url_for('static', filename=user.avatar) }}" alt="{{ user.name }} avatar">
+          <img class="avatar" src="{{ url_for('static', filename='images/default_user_icon.jpg') }}" alt="User avatar">
           <div class="user-info">
-            <strong class="user-name">{{ user.name }}</strong>
-            <span class="user-role">{{ user.role }}</span>
+            <strong class="user-name">Reason</strong>
+            <span class="user-role">Optional note shown to moderators</span>
           </div>
         </div>
-        <div class="user-status">{{ user.status }}</div>
-        <div class="user-actions">
-          <button type="button" class="btn action-btn" data-action="kick">Kick</button>
-          <button type="button" class="btn btn-danger action-btn" data-action="ban">Ban</button>
+        <div class="user-actions" style="flex: 1;">
+          <div class="input-box">
+            <span>📝</span>
+            <input type="text" name="reason" placeholder="Reason for action" aria-label="Reason for action">
+          </div>
         </div>
       </article>
-    {% endfor %}
-  </div>
-
-  <div class="action-summary">
-    <p>Selected user actions are irreversible. Please confirm before banning.</p>
-  </div>
-</section>
-
-<div class="modal-backdrop" hidden>
-  <div class="modal-window">
-    <h2>Confirm Action</h2>
-    <p>Are you sure you want to kick/ban this user?</p>
-    <div class="modal-buttons">
-      <button type="button" class="btn btn-secondary">Cancel</button>
-      <button type="button" class="btn btn-danger">Confirm</button>
     </div>
+
+    <div class="action-summary" id="moderationStatus">
+      <p>Choose a room, enter a username, and confirm the action.</p>
+    </div>
+
+    {% if recent_actions %}
+    <div class="audit-log">
+      <div class="audit-log-header">
+        <h2>Recent Actions</h2>
+        <span>{{ selected_room_code }}</span>
+      </div>
+      <div class="audit-log-list">
+        {% for action in recent_actions %}
+        <article class="audit-item">
+          <div class="audit-item-main">
+            <strong>{{ action.actor_username }}</strong>
+            <span>{{ action.action_type|capitalize }}ed {{ action.target_username }}</span>
+          </div>
+          <div class="audit-item-meta">
+            {% if action.duration_minutes %}
+              <span>{{ action.duration_minutes }} min</span>
+            {% endif %}
+            <time>{{ action.created_at }}</time>
+          </div>
+          {% if action.reason %}
+          <p class="audit-reason">{{ action.reason }}</p>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="modal-buttons" style="justify-content: flex-end; margin-top: 18px;">
+      <button type="submit" class="main-btn" id="moderationSubmit">Confirm Action</button>
+    </div>
+  </form>
+  {% else %}
+  <div class="action-summary">
+    <p>Moderation tools are available to room moderators and administrators only.</p>
   </div>
-</div>
+  {% endif %}
+</section>
 {% endblock %}
 {% block scripts %}
   <script src="{{ url_for('static', filename='js/moderation.js') }}"></script>

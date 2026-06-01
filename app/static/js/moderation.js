@@ -1,100 +1,73 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const searchInput = document.querySelector('.search-box input');
-  const userRows = Array.from(document.querySelectorAll('.user-row'));
-  const filterButtons = Array.from(document.querySelectorAll('.filter-group button'));
-  const modalBackdrop = document.querySelector('.modal-backdrop');
-  const cancelButton = modalBackdrop.querySelector('.btn.btn-secondary');
-  const confirmButton = modalBackdrop.querySelector('.btn.btn-danger');
-  let activeAction = null;
+const moderationForm = document.getElementById('moderationForm');
+const moderationAction = document.getElementById('moderationAction');
+const banDuration = document.getElementById('banDuration');
+const moderationStatus = document.getElementById('moderationStatus');
+const moderationSubmitTop = document.getElementById('moderationSubmitTop');
 
-  function updateFilter(filter) {
-    userRows.forEach(row => {
-      const status = row.querySelector('.user-status')?.textContent?.trim().toLowerCase();
-      const matchesStatus = filter === 'all' || status === filter;
-      const matchesSearch = row.textContent.toLowerCase().includes(searchInput.value.toLowerCase());
-      row.style.display = matchesStatus && matchesSearch ? '' : 'none';
+function setStatus(message, isError = false) {
+  if (!moderationStatus) return;
+  moderationStatus.textContent = message;
+  moderationStatus.dataset.state = isError ? 'error' : 'success';
+}
+
+function toggleBanDuration() {
+  if (!moderationAction || !banDuration) return;
+  const isBan = moderationAction.value === 'ban';
+  banDuration.disabled = !isBan;
+  banDuration.required = isBan;
+  banDuration.placeholder = isBan ? 'Ban minutes' : 'Ban minutes';
+}
+
+if (moderationAction) {
+  moderationAction.addEventListener('change', toggleBanDuration);
+  toggleBanDuration();
+}
+
+if (moderationSubmitTop && moderationForm) {
+  moderationSubmitTop.addEventListener('click', () => {
+    moderationForm.requestSubmit();
+  });
+}
+
+if (moderationForm) {
+  moderationForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(moderationForm);
+    const payload = Object.fromEntries(formData.entries());
+    if (payload.action !== 'ban') {
+      delete payload.duration_minutes;
+    }
+
+    const response = await fetch(moderationForm.action, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(payload),
     });
-  }
 
-  function setActiveFilter(button) {
-    filterButtons.forEach(btn => btn.classList.toggle('active', btn === button));
-    const filter = button.textContent.trim().toLowerCase();
-    updateFilter(filter === 'all' ? 'all' : filter);
-  }
-
-  filterButtons.forEach(button => {
-    button.addEventListener('click', () => setActiveFilter(button));
-  });
-
-  const searchButton = document.querySelector('.search-box button');
-
-  function refreshCurrentFilter() {
-    const activeButton = document.querySelector('.filter-group .active');
-    const filter = activeButton ? activeButton.textContent.trim().toLowerCase() : 'all';
-    updateFilter(filter === 'all' ? 'all' : filter);
-  }
-
-  searchInput.addEventListener('input', refreshCurrentFilter);
-  searchButton?.addEventListener('click', refreshCurrentFilter);
-
-  document.querySelectorAll('.action-btn').forEach(button => {
-    button.addEventListener('click', () => {
-      const row = button.closest('.user-row');
-      const userId = row?.dataset?.userId;
-      const userName = row?.dataset?.userName || 'the user';
-      activeAction = button.dataset?.action || button.textContent.trim().toLowerCase();
-      modalBackdrop.hidden = false;
-      modalBackdrop.querySelector('h2').textContent = 'Confirm Action';
-      modalBackdrop.querySelector('p').textContent = `Are you sure you want to ${activeAction} ${userName}?`;
-      // attach selected target to confirm button dataset
-      confirmButton.dataset.targetUserId = userId;
-      confirmButton.dataset.targetAction = activeAction;
-    });
-  });
-
-  cancelButton.addEventListener('click', () => {
-    modalBackdrop.hidden = true;
-    activeAction = null;
-  });
-
-  confirmButton.addEventListener('click', () => {
-    const userId = confirmButton.dataset.targetUserId;
-    const action = confirmButton.dataset.targetAction;
-    if (userId && action) {
-      fetch('/moderation/action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, action }),
-      })
-        .then(res => res.json())
-        .then(json => {
-          if (json?.success) {
-            // Optionally remove or update the row
-            const row = document.querySelector(`.user-row[data-user-id="${userId}"]`);
-            if (action === 'kick' && row) {
-              row.remove();
-            }
-          } else {
-            console.error('Action failed', json);
-          }
-        })
-        .catch(err => console.error('Request error', err));
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setStatus(data.message || 'Unable to apply moderation action.', true);
+      return;
     }
-    modalBackdrop.hidden = true;
-    activeAction = null;
-  });
 
-  modalBackdrop.addEventListener('click', event => {
-    if (event.target === modalBackdrop) {
-      modalBackdrop.hidden = true;
-      activeAction = null;
-    }
+    setStatus(data.message || 'Action applied successfully.');
+    moderationForm.reset();
+    toggleBanDuration();
   });
+}
 
-  document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && !modalBackdrop.hidden) {
-      modalBackdrop.hidden = true;
-      activeAction = null;
-    }
-  });
-});
+// Auto-select room if provided in URL (?room_code=XXXX)
+try {
+  const params = new URLSearchParams(window.location.search);
+  const pre = params.get('room_code');
+  if (pre) {
+    const sel = moderationForm.querySelector('[name="room_code"]');
+    if (sel) sel.value = pre;
+  }
+} catch (err) {
+  // ignore
+}
