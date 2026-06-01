@@ -39,16 +39,13 @@
           <input type="hidden" name="room_code" id="room-code-value" value="{{ room_code }}">
           <input type="hidden" name="is_private" id="is-private-value" value="0">
 
-          <div class="input-box">
-            <span>🏷️</span>
-            <input type="text" name="room_name" placeholder="Room name" required>
-          </div>
+          <input type="text" class="input" name="room_name" placeholder="Room name" required>
 
           <label class="label">Your Room Code</label>
 
-          <div class="code-grid">
+          <div class="room-code">
             {% for char in room_code %}
-            <input type="text" maxlength="1" value="{{ char }}" readonly>
+            <div class="code-box">{{ char }}</div>
             {% endfor %}
           </div>
 
