@@ -202,3 +202,21 @@ def update_user_profile(user_id, first_name, last_name, school, address, bio):
             return cursor.rowcount
     finally:
         connection.close()
+
+
+def get_all_users(limit=200):
+    """Return basic user info for moderation views.
+
+    Returns list of dicts with keys: id, username, avatar_url, first_name, last_name
+    """
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id, username, avatar_url, first_name, last_name "
+                "FROM users ORDER BY created_at DESC LIMIT %s",
+                (limit,),
+            )
+            return cursor.fetchall()
+    finally:
+        connection.close()

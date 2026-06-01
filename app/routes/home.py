@@ -10,7 +10,7 @@ from app.models import (
 )
 from app.models.message_vote import MessageVote
 from app.controllers import MessageVoteController
-from app.models.database import get_user_by_id, update_user_avatar, update_user_profile
+from app.models.database import get_user_by_id, update_user_avatar, update_user_profile, get_all_users
 import random
 import os
 import uuid
@@ -165,26 +165,17 @@ def profile():
 
 @bp.route('/moderation')
 def moderation():
-    moderation_users = [
-        {
-            'name': 'Jane Doe',
+    rows = get_all_users()
+    moderation_users = []
+    for r in rows:
+        display_name = r.get('username') or ((r.get('first_name') or '') + ' ' + (r.get('last_name') or '')).strip() or 'User'
+        moderation_users.append({
+            'name': display_name,
             'role': 'Participant',
             'status': 'Online',
-            'avatar': 'images/default_user_icon.jpg',
-        },
-        {
-            'name': 'Alex Rivera',
-            'role': 'Moderator',
-            'status': 'Muted',
-            'avatar': 'images/default_user_icon.jpg',
-        },
-        {
-            'name': 'Samir Patel',
-            'role': 'Participant',
-            'status': 'Online',
-            'avatar': 'images/default_user_icon.jpg',
-        },
-    ]
+            'avatar': r.get('avatar_url') or 'images/default_user_icon.jpg',
+        })
+
     return render_template('moderation.html', moderation_users=moderation_users)
 
 
