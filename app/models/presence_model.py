@@ -1,29 +1,28 @@
 from app.models.base_model import BaseModel
-from app.models.database import ensure_database_exists, get_database_connection
+from app.models.database import ensure_database_exists
 
 
 class RoomPresenceModel(BaseModel):
+    @property
+    def table(self):
+        return 'room_presence'
+
     def create_room_presence_table(self):
         ensure_database_exists()
-        connection = get_database_connection()
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "CREATE TABLE IF NOT EXISTS room_presence ("
-                    "id INT AUTO_INCREMENT PRIMARY KEY,"
-                    "user_id INT NOT NULL,"
-                    "room_id INT NOT NULL,"
-                    "username VARCHAR(50) NOT NULL,"
-                    "status VARCHAR(10) NOT NULL DEFAULT 'offline',"
-                    "last_seen TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,"
-                    "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
-                    "UNIQUE KEY uq_room_user (user_id, room_id),"
-                    "INDEX idx_room_presence_room (room_id),"
-                    "INDEX idx_room_presence_user (user_id)"
-                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-                )
-        finally:
-            connection.close()
+        return self.execute(
+            "CREATE TABLE IF NOT EXISTS room_presence ("
+            "id INT AUTO_INCREMENT PRIMARY KEY,"
+            "user_id INT NOT NULL,"
+            "room_id INT NOT NULL,"
+            "username VARCHAR(50) NOT NULL,"
+            "status VARCHAR(10) NOT NULL DEFAULT 'offline',"
+            "last_seen TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,"
+            "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+            "UNIQUE KEY uq_room_user (user_id, room_id),"
+            "INDEX idx_room_presence_room (room_id),"
+            "INDEX idx_room_presence_user (user_id)"
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+        )
 
     def set_presence(self, user_id, room_id, username, status):
         self.create_room_presence_table()

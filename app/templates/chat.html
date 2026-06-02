@@ -4,18 +4,20 @@
 
 {% block head %}
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/vote.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 {% endblock %}
 
-{% block topbar_title %}{{ room.name if room.name else 'Room ' ~ room_code }}{% endblock %}
+{% block topbar_title %}{% endblock %}
 
 {% block content %}
-  <div class="chat-section">
-
+  <div class="chat-layout">
+    <div class="chat-section">
     <div class="chat-header">
       <div class="header-left">
-        <h2>Private Room: {{ room.name if room.name else 'Room ' ~ room_code }} 🔒</h2>
+        <h2>
+          {{ room.name if room.name else 'Room ' ~ room_code }}
+          {% if room.is_private %}<i class="fa-solid fa-lock" style="font-size: 0.7em; margin-left: 8px; color: #7a8194;" title="Private Room"></i>{% endif %}
+        </h2>
         {% if room.subject_tags %}
         <div class="room-tags">
           {% for tag in room.subject_tags.split(',') %}
@@ -26,51 +28,39 @@
           {% endfor %}
         </div>
         {% endif %}
-        <div class="online">● 3 members online</div>
+        
       </div>
 
       <div class="header-actions">
         <button class="action-btn">📞</button>
         <button class="action-btn">🎥</button>
         <button class="action-btn">➕</button>
+        <a class="action-btn" href="{{ url_for('home.moderation') }}?room_code={{ room_code }}">Moderate</a>
       </div>
     </div>
 
     <div class="chat-body" id="chatBody">
       {% for msg in messages %}
-      <div class="message received" 
-           data-sender="{{ msg.username }}" 
-           data-message-id="{{ msg.id }}">
-          <div class="message-bubble">
-              <div class="message-username">{{ msg.username }}</div>
-              <div class="message-content">{{ msg.content }}</div>
-              <div class="message-time">{{ msg.time_label }}</div>
+      <div class="message received" data-sender="{{ msg.username }}" data-message-id="{{ msg.id }}">
+        <div class="message-bubble">
+          <div class="message-username">{{ msg.username }}</div>
+          <div class="message-body">
+            <div class="message-content">{{ msg.content }}</div>
+            <div class="message-votes {% if (msg.upvotes|default(0)|int) > 0 or (msg.downvotes|default(0)|int) > 0 %}has-votes{% endif %}" data-message-id="{{ msg.id }}">
+              <button class="vote-button upvote{% if msg.user_vote == 'upvote' %} active{% endif %}" type="button" data-vote-type="upvote">▲</button>
+              <span class="vote-count" data-vote-type="upvotes">{{ 0 if msg.upvotes in [None, 'None', ''] else msg.upvotes }}</span>
+              <button class="vote-button downvote{% if msg.user_vote == 'downvote' %} active{% endif %}" type="button" data-vote-type="downvote">▼</button>
+              <span class="vote-count" data-vote-type="downvotes">{{ 0 if msg.downvotes in [None, 'None', ''] else msg.downvotes }}</span>
+            </div>
           </div>
-
-          <!-- Upvote / Downvote -->
-          <div class="vote-container">
-              <button class="vote-btn upvote-btn" 
-                      data-vote="up"
-                      data-message-id="{{ msg.id }}">
-                  👍
-              </button>
-              
-              <span class="vote-score">
-                  {{ msg.net_score | default(0) }}
-              </span>
-              
-              <button class="vote-btn downvote-btn" 
-                      data-vote="down"
-                      data-message-id="{{ msg.id }}">
-                  👎
-              </button>
-          </div>
+          <div class="message-time">{{ msg.time_label }}</div>
+        </div>
       </div>
       {% endfor %}
     </div>
 
     <div class="chat-input">
-      <button class="icon-btn">😀</button>
+      <button class="icon-btn" id="emojiBtn">😀</button>
       <label class="icon-btn">
         📎
         <input type="file" hidden id="imageInput" accept="image/*">
@@ -80,7 +70,7 @@
     </div>
   </div>
 
-  <div class="right-panel">
+    <div class="right-panel">
     {% set total_members = (online_members | length if online_members else 0) + (offline_members | length if offline_members else 0) %}
     <h3 id="memberCount">Members ({{ total_members }})</h3>
 
@@ -118,21 +108,11 @@
         <div class="offline-dot"></div>
       </div>
       {% endfor %}
-    {% else %}
-      <div class="member offline">
-        <div class="member-left">
-          <div class="member-avatar">–</div>
-          <div class="member-name">No users have joined offline</div>
-        </div>
-      </div>
     {% endif %}
     </div>
 
-    <div class="section-title">GROUP SETTINGS</div>
-    <div class="setting">👥 Add People</div>
-    <div class="setting">📞 Voice Call</div>
-    <div class="setting">🎥 Video Call</div>
-    <div class="setting">⚙ Group Info</div>
+
+    </div>
   </div>
 {% endblock %}
 
@@ -140,7 +120,8 @@
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
 // Use logged-in username only
-const displayName = "{{ current_user.username if current_user else '' }}";
+const displayName = "{{ current_user.username }}";
+const userId = "{{ current_user.id }}";
 const userProfile = document.getElementById('userProfile');
 if (userProfile) {
   const hasImage = userProfile.querySelector('img');
@@ -175,8 +156,8 @@ const onlineMembersContainer = document.getElementById('onlineMembers');
 const offlineMembersContainer = document.getElementById('offlineMembers');
 const chatMenuButton = document.getElementById('chatMenuButton');
 const chatMenu = document.getElementById('chatMenu');
-const initialOnlineMembers = {{ online_members | tojson | safe }};
-const initialOfflineMembers = {{ offline_members | tojson | safe }};
+const initialOnlineMembers = JSON.parse('{{ (online_members or []) | tojson | safe }}');
+const initialOfflineMembers = JSON.parse('{{ (offline_members or []) | tojson | safe }}');
 
 /* SOCKET CONNECTION */
 socket.on('connect', () => {
@@ -202,9 +183,44 @@ if (onlineMembersContainer || offlineMembersContainer) {
 }
 
 socket.on('receive_message', (data) => {
-  if (data.username !== displayName) {
-        addMessageToUI(data.message, 'received', data.username);
+  const type = data.username === displayName ? 'sent' : 'received';
+  addMessageToUI(data.message, type, data.username, data.message_id);
+});
+
+// Update vote counts when another client votes
+socket.on('vote_update', (data) => {
+  try {
+    console.log('socket vote_update received', data);
+    // Only process updates for the current room
+    if (data.room_code && data.room_code !== roomCode) return;
+    const messageId = String(data.message_id);
+    const votes = data;
+    const votesDiv = document.querySelector(`.message-votes[data-message-id="${messageId}"]`);
+    if (!votesDiv) return;
+    const upEl = votesDiv.querySelector('.vote-count[data-vote-type="upvotes"]');
+    const downEl = votesDiv.querySelector('.vote-count[data-vote-type="downvotes"]');
+    const upBtn = votesDiv.querySelector('.vote-button.upvote');
+    const downBtn = votesDiv.querySelector('.vote-button.downvote');
+    if (upEl) upEl.innerText = votes.upvotes || 0;
+    if (downEl) downEl.innerText = votes.downvotes || 0;
+    if ((votes.upvotes || 0) > 0 || (votes.downvotes || 0) > 0) {
+      votesDiv.classList.add('has-votes');
+    } else {
+      votesDiv.classList.remove('has-votes');
     }
+
+    if (String(data.actor_user_id || '') === String(userId || '')) {
+      if (data.action === 'remove_vote') {
+        if (upBtn) upBtn.classList.remove('active');
+        if (downBtn) downBtn.classList.remove('active');
+      } else {
+        if (upBtn) upBtn.classList.toggle('active', data.vote_type === 'upvote');
+        if (downBtn) downBtn.classList.toggle('active', data.vote_type === 'downvote');
+      }
+    }
+  } catch (err) {
+    console.error('vote_update handling error', err);
+  }
 });
 
 if (chatMenuButton && chatMenu) {
@@ -234,27 +250,36 @@ function sendMessage(){
   const text = messageInput.value.trim();
   if(text === '') return;
   socket.emit('send_message', { room: roomCode, message: text, username: displayName });
-  addMessageToUI(text, 'sent', displayName);
   messageInput.value = '';
 }
 
-function addMessageToUI(text, type, sender){
+function addMessageToUI(text, type, sender, messageId = null){
   const message = document.createElement('div');
   message.classList.add('message', type);
+  if (messageId) {
+    message.dataset.messageId = messageId;
+  }
+  message.dataset.sender = sender;
   let senderHTML = '';
   if (type === 'received') {
-      senderHTML = `<div class="message-username">${sender}</div>`;
+    senderHTML = `<div class="message-username">${sender}</div>`;
   }
+  const voteControls = messageId ? `
+      <div class="message-votes" data-message-id="${messageId}">
+        <button class="vote-button upvote" type="button" data-vote-type="upvote">▲</button>
+        <span class="vote-count" data-vote-type="upvotes">0</span>
+        <button class="vote-button downvote" type="button" data-vote-type="downvote">▼</button>
+        <span class="vote-count" data-vote-type="downvotes">0</span>
+      </div>
+    ` : '';
   message.innerHTML = `
     <div class="message-bubble">
       ${senderHTML}
-      ${text}
+      <div class="message-body">
+        <div class="message-content">${text}</div>
+        ${voteControls}
+      </div>
       <div class="message-time">${getTime()}</div>
-    </div>
-    <div class="vote-container">
-      <button class="vote-btn upvote-btn" data-vote="up">👍</button>
-      <span class="vote-score">0</span>
-      <button class="vote-btn downvote-btn" data-vote="down">👎</button>
     </div>
   `;
   chatBody.appendChild(message);
@@ -262,8 +287,11 @@ function addMessageToUI(text, type, sender){
 }
 
 sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keypress', function(e){
-  if(e.key === 'Enter') sendMessage();
+messageInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    sendMessage();
+  }
 });
 
 function renderPresenceLists(onlineUsers, offlineUsers) {
@@ -314,61 +342,10 @@ function renderPresenceLists(onlineUsers, offlineUsers) {
               `;
               offlineMembersContainer.appendChild(member);
           });
-      } else {
-          offlineMembersContainer.innerHTML = `
-            <div class="member offline">
-              <div class="member-left">
-                <div class="member-avatar">–</div>
-                <div class="member-name">No users have joined offline</div>
-              </div>
-            </div>
-          `;
       }
     }
 }
 
-chatBody.addEventListener('click', function(event) {
-  const button = event.target.closest('.vote-btn');
-  if (!button) return;
-  const message = button.closest('.message');
-  if (!message) return;
-
-  const scoreSpan = message.querySelector('.vote-score');
-  const upButton = message.querySelector('.upvote-btn');
-  const downButton = message.querySelector('.downvote-btn');
-  let score = Number(scoreSpan.textContent.trim()) || 0;
-  const voteType = button.dataset.vote;
-
-  if (voteType === 'up') {
-      if (button.classList.contains('active')) {
-          button.classList.remove('active');
-          score -= 1;
-      } else {
-          if (downButton.classList.contains('active')) {
-              downButton.classList.remove('active');
-              score += 2;
-          } else {
-              score += 1;
-          }
-          button.classList.add('active');
-      }
-  } else if (voteType === 'down') {
-      if (button.classList.contains('active')) {
-          button.classList.remove('active');
-          score += 1;
-      } else {
-          if (upButton.classList.contains('active')) {
-              upButton.classList.remove('active');
-              score -= 2;
-          } else {
-              score -= 1;
-          }
-          button.classList.add('active');
-      }
-  }
-
-  scoreSpan.textContent = score;
-});
 
 imageInput.addEventListener('change', function(){
   const file = this.files[0];
@@ -381,20 +358,17 @@ imageInput.addEventListener('change', function(){
       <img src="${imageURL}" class="message-image">
       <div class="message-time">${getTime()}</div>
     </div>
-    <div class="vote-container">
-      <button class="vote-btn upvote-btn" data-vote="up">👍</button>
-      <span class="vote-score">0</span>
-      <button class="vote-btn downvote-btn" data-vote="down">👎</button>
-    </div>
   `;
   chatBody.appendChild(message);
   scrollBottom();
 });
 
-emojiBtn.addEventListener('click', () => {
-  messageInput.value += '😊';
-  messageInput.focus();
-});
+if (emojiBtn) {
+  emojiBtn.addEventListener('click', () => {
+    messageInput.value += '😊';
+    messageInput.focus();
+  });
+}
 
 function getTime(){
   const now = new Date();
@@ -404,9 +378,43 @@ function getTime(){
 function scrollBottom(){
     chatBody.scrollTop = chatBody.scrollHeight;
 }
-</script>
 
-// === VOTE SYSTEM JAVASCRIPT ===
-<script src="{{ url_for('static', filename='js/vote.js') }}"></script>
+scrollBottom();
+
+// Voting logic
+chatBody.addEventListener('click', async (e) => {
+  const voteBtn = e.target.closest('.vote-button');
+  if (!voteBtn) return;
+  if (!userId) {
+    alert("You must be logged in to vote.");
+    return;
+  }
+
+  const messageVotesDiv = voteBtn.closest('.message-votes');
+  if (!messageVotesDiv) return;
+  
+  const messageId = messageVotesDiv.dataset.messageId;
+  const voteType = voteBtn.dataset.voteType; // 'upvote' or 'downvote'
+  const isRemoving = voteBtn.classList.contains('active');
+  socket.emit('vote_message', {
+    message_id: messageId,
+    vote_type: voteType,
+    action: isRemoving ? 'remove_vote' : 'vote'
+  });
+});
+
+socket.on('vote_error', (data) => {
+  console.error('Vote error:', data?.message || data);
+});
+
+socket.on('moderation_action', (data) => {
+  if (!data || data.room_code !== roomCode) return;
+  if (data.username !== displayName) return;
+
+  alert(data.message || `You were ${data.action}ed from this room.`);
+  socket.disconnect();
+  window.location.href = "{{ url_for('home.index') }}";
+});
+</script>
 
 {% endblock %}

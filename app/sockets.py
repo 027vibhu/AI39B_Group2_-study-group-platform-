@@ -1,7 +1,11 @@
 from flask import session, request
-from flask_socketio import disconnect, join_room, emit
+from flask_socketio import join_room, emit
 from app import socketio
-from app.models import create_message, get_room_by_code, set_user_online, set_user_offline
+from app.models.message import create_message
+from app.models.message_vote import create_or_update_vote, get_vote_count, remove_vote
+from app.models.room import get_room_by_code, get_room_by_id, is_user_banned_from_room
+from app.models.message import get_message_by_id
+from app.models.presence_model import set_user_online, set_user_offline, get_online_users, get_offline_users
 
 # Track joined sockets so disconnect can update presence
 _active_presence = {}
@@ -22,7 +26,12 @@ def _broadcast_presence(room_code, room_id):
 @socketio.on('join')
 def handle_join(data):
     room_code = data.get('room')
-    username = data.get('username', 'Guest')
+    user_id = session.get('user_id')
+    if not user_id:
+        emit('moderation_action', {'action': 'auth_required', 'room_code': room_code, 'message': 'Login required.'})
+        return
+
+    username = data.get('username') or ''
     if not room_code:
         return
 
@@ -30,7 +39,18 @@ def handle_join(data):
     if not room:
         return
 
-    user_id = session.get('user_id') or 0
+    if is_user_banned_from_room(username, room_code, room.get('name')):
+        emit(
+            'moderation_action',
+            {
+                'action': 'ban',
+                'room_code': room_code,
+                'username': username,
+                'message': 'You are banned from this room.',
+            },
+        )
+        return
+
     join_room(room_code)
     set_user_online(user_id, room['id'], username)
     _active_presence[request.sid] = {
@@ -63,15 +83,79 @@ def handle_disconnect():
 def handle_send_message(data):
     room_code = data.get('room')
     message_content = data.get('message')
-    username = data.get('username', 'Guest')
-
-    if not room_code or not message_content:
+    user_id = session.get('user_id')
+    if not user_id:
+        emit('moderation_action', {'action': 'auth_required', 'room_code': room_code, 'message': 'Login required.'})
         return
 
-    room = get_room_by_code(room_code)
-    if not room:
+    username = data.get('username') or ''
+    if room_code and message_content:
+        room = get_room_by_code(room_code)
+        if room:
+            if is_user_banned_from_room(username, room_code, room.get('name')):
+                emit(
+                    'moderation_action',
+                    {
+                        'action': 'ban',
+                        'room_code': room_code,
+                        'username': username,
+                        'message': 'You are banned from this room.',
+                    },
+                )
+                return
+
+            # Save message to database
+            message_id = create_message(room['id'], username, message_content)
+
+            print(f"Message from {username} to room {room_code}: {message_content}")
+            emit('receive_message', {
+                'message': message_content,
+                'username': username,
+                'message_id': message_id,
+            }, room=room_code)
+
+
+@socketio.on('vote_message')
+def handle_vote_message(data):
+    user_id = session.get('user_id')
+    if not user_id:
+        emit('vote_error', {'message': 'Authentication required'})
         return
 
-    create_message(room['id'], username, message_content)
-    print(f"Message from {username} to room {room_code}: {message_content}")
-    emit('receive_message', {'message': message_content, 'username': username}, room=room_code)
+    message_id = data.get('message_id')
+    vote_type = data.get('vote_type')
+    action = data.get('action') or 'vote'
+
+    if not message_id:
+        emit('vote_error', {'message': 'message_id is required'})
+        return
+
+    msg = get_message_by_id(message_id)
+    if not msg:
+        emit('vote_error', {'message': 'Message not found'})
+        return
+
+    room = get_room_by_id(msg.get('room_id'))
+    if not room or not room.get('code'):
+        emit('vote_error', {'message': 'Room not found'})
+        return
+
+    if action == 'remove_vote':
+        remove_vote(message_id, user_id)
+    else:
+        if vote_type not in ('upvote', 'downvote'):
+            emit('vote_error', {'message': 'Invalid vote type'})
+            return
+        create_or_update_vote(message_id, user_id, vote_type)
+
+    votes = get_vote_count(message_id)
+    payload = {
+        'message_id': message_id,
+        'upvotes': votes.get('upvotes', 0),
+        'downvotes': votes.get('downvotes', 0),
+        'room_code': room.get('code'),
+        'actor_user_id': user_id,
+        'vote_type': None if action == 'remove_vote' else vote_type,
+        'action': action,
+    }
+    emit('vote_update', payload, room=room.get('code'))
