@@ -1,0 +1,134 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Browse Rooms{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/browse_rooms.css') }}">
+{% endblock %}
+{% block topbar_title %}{% endblock %}
+
+{% block nav %}
+  <a href="{{ url_for('home.index') }}" class="nav-item">
+    <i class="fa-solid fa-house"></i>
+    Dashboard
+  </a>
+  <a href="{{ url_for('home.create_room') }}" class="nav-item">
+    <i class="fa-solid fa-plus"></i>
+    Create Room
+  </a>
+  <a href="{{ url_for('home.join_room') }}" class="nav-item">
+    <i class="fa-solid fa-comments"></i>
+    Join Room
+  </a>
+  <a href="{{ url_for('home.browse_rooms') }}" class="nav-item active">
+    <i class="fa-solid fa-compass"></i>
+    Browse Rooms
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="blur1"></div>
+<div class="blur2"></div>
+
+<div class="container">
+
+    <div class="left">
+        <div class="left-content">
+            <h2>Discover Study Rooms</h2>
+            <p>
+                Join collaborative learning spaces where students
+                discuss problems, solve assignments together,
+                share answers and prepare for exams in real-time.
+            </p>
+
+            <div class="stats"></div>
+
+        </div>
+    </div>
+
+    <div class="right">
+
+        <div class="right-header">
+            <h2>Available Rooms</h2>
+            <input type="text" class="search" placeholder="Search rooms..." aria-label="Search rooms">
+        </div>
+
+        <div class="rooms">
+            {% if rooms %}
+                {% for room in rooms %}
+                    <div class="room">
+                        <div class="room-left">
+                            <div class="icon">{{ room.name[:1]|upper }}</div>
+                            <div class="room-info">
+                                <h3>{{ room.name }}</h3>
+                                <span>#{{ room.code }}</span>
+                                {% if room.subject_tags %}
+                                <div class="room-tags">
+                                    {% for tag in room.subject_tags.split(',') %}
+                                        {% set clean_tag = tag.strip() %}
+                                        {% if clean_tag %}
+                                        <span class="room-tag">{{ clean_tag }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <a href="{{ url_for('home.chat', room_code=room.code) }}" class="join-btn" aria-label="Join Room">Join Room</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="room empty-room">
+                    <div class="room-info">
+                        <h3>No public rooms available</h3>
+                        <p>Try creating a room or check back later.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const search = document.querySelector('.search');
+  const rooms = Array.from(document.querySelectorAll('.room'));
+
+  if (search) {
+    search.addEventListener('input', function (e) {
+      const q = e.target.value.trim().toLowerCase();
+      rooms.forEach(room => {
+        const title = room.querySelector('.room-info h3')?.textContent.trim().toLowerCase() || '';
+        const id = room.querySelector('.room-info span')?.textContent.trim().toLowerCase() || '';
+        if (title.includes(q) || id.includes(q)) {
+          room.style.display = '';
+        } else {
+          room.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.join-btn');
+    if (!btn) return;
+    const room = btn.closest('.room');
+    const title = room?.querySelector('.room-info h3')?.textContent.trim() || 'Room';
+    const code = room?.querySelector('.room-info span')?.textContent.trim() || '';
+    console.log('Join clicked:', title, code);
+    const notice = document.createElement('div');
+    notice.textContent = `Joining ${title} ${code}`;
+    notice.style.position = 'fixed';
+    notice.style.right = '20px';
+    notice.style.bottom = '20px';
+    notice.style.background = 'rgba(0,0,0,0.8)';
+    notice.style.color = 'white';
+    notice.style.padding = '10px 14px';
+    notice.style.borderRadius = '8px';
+    notice.style.zIndex = 9999;
+    document.body.appendChild(notice);
+    setTimeout(() => notice.remove(), 1800);
+  });
+});
+</script>
+{% endblock %}

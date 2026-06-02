@@ -10,4 +10,3 @@ class Config:
     DB_NAME = os.environ.get('DB_NAME') or 'study_group_db'
     DB_PORT = int(os.environ.get('DB_PORT') or 3306)
     
-    # SQLAlchemy settings removed (PyMySQL only)

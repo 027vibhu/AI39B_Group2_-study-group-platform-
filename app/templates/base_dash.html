@@ -1,19 +1,19 @@
 {% extends "base_sidebar.html" %}
 
 {% block nav %}
-  <a href="#" class="nav-item">
+  <a href="{{ url_for('home.index') }}" class="nav-item {% if request.endpoint == 'home.index' %}active{% endif %}">
     <i class="fa-solid fa-house"></i>
     Dashboard
   </a>
-  <a href="{{ url_for('home.create_room') }}" class="nav-item">
+  <a href="{{ url_for('home.create_room') }}" class="nav-item {% if request.endpoint == 'home.create_room' %}active{% endif %}">
     <i class="fa-solid fa-plus"></i>
     Create Room
   </a>
-  <a href="{{ url_for('home.join_room') }}" class="nav-item">
+  <a href="{{ url_for('home.join_room') }}" class="nav-item {% if request.endpoint == 'home.join_room' %}active{% endif %}">
     <i class="fa-solid fa-comments"></i>
     Join Room
   </a>
-  <a href="#" class="nav-item">
+  <a href="{{ url_for('home.browse_rooms') }}" class="nav-item {% if request.endpoint == 'home.browse_rooms' %}active{% endif %}">
     <i class="fa-solid fa-compass"></i>
     Browse Rooms
   </a>
