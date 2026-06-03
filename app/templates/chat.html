@@ -32,10 +32,9 @@
       </div>
 
       <div class="header-actions">
-        <button class="action-btn">📞</button>
-        <button class="action-btn">🎥</button>
-        <button class="action-btn">➕</button>
-        <a class="action-btn" href="{{ url_for('home.moderation') }}?room_code={{ room_code }}">Moderate</a>
+        <a class="action-btn" href="{{ url_for('home.moderation') }}?room_code={{ room_code }}" title="Moderate room" aria-label="Moderate room">
+          <i class="fa-solid fa-hammer" aria-hidden="true"></i>
+        </a>
       </div>
     </div>
 
@@ -60,13 +59,17 @@
     </div>
 
     <div class="chat-input">
-      <button class="icon-btn" id="emojiBtn">😀</button>
+      <button class="icon-btn" id="emojiBtn" type="button" aria-label="Insert emoji" title="Insert emoji">
+        <i class="fa-solid fa-face-smile" aria-hidden="true"></i>
+      </button>
       <label class="icon-btn">
-        📎
+        <i class="fa-solid fa-paperclip" aria-hidden="true"></i>
         <input type="file" hidden id="imageInput" accept="image/*">
       </label>
       <input type="text" class="input-box" id="messageInput" placeholder="Type a message...">
-      <button class="send-btn" id="sendBtn">➤</button>
+      <button class="send-btn" id="sendBtn" type="button" aria-label="Send message" title="Send message">
+        <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+      </button>
     </div>
   </div>
 
