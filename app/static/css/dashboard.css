@@ -144,20 +144,45 @@ body{
 
 .folder-preview-header{
   display:flex;
-  flex-direction:column;
-  gap:4px;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
   margin-bottom:12px;
 }
 
-.folder-preview-header span{
+.preview-title{
+  display:block;
   font-size:13px;
   font-weight:700;
   color:#3f4670;
 }
 
-.folder-preview-header small{
+.preview-subtitle{
+  display:block;
+  margin-top:4px;
   font-size:12px;
   color:#7a7f9e;
+}
+
+.preview-add-file-btn{
+  border:none;
+  border-radius:14px;
+  padding:10px 16px;
+  background:#4b527b;
+  color:#ffffff;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  transition:0.2s ease;
+}
+
+.preview-add-file-btn:hover:enabled{
+  background:#3b425f;
+}
+
+.preview-add-file-btn:disabled{
+  background:#d1d4e8;
+  cursor:not-allowed;
 }
 
 .preview-files{
@@ -214,7 +239,9 @@ body{
 }
 
 .folder-item{
-  display:block;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
   padding:12px 14px;
   border-radius:14px;
   background:#ffffff;
@@ -223,6 +250,20 @@ body{
   text-decoration:none;
   border:1px solid rgba(75,82,123,0.08);
   transition:0.2s ease, transform 0.2s ease;
+}
+
+.folder-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:28px;
+  height:28px;
+  padding:0 10px;
+  border-radius:999px;
+  background:#eef1ff;
+  color:#3f4670;
+  font-size:12px;
+  font-weight:700;
 }
 
 .folder-item:hover,

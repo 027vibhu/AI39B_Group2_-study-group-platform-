@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const folderCountLabel = document.querySelector('.folder-count');
   const fileCountLabel = document.querySelector('.file-count');
   const previewFiles = document.querySelector('.preview-files');
+  const addFileBtn = document.querySelector('.preview-add-file-btn');
 
   const folderFiles = {
     'Course Notes': ['Lecture 1.pdf', 'Lecture 2.pdf', 'Summary.md'],
@@ -11,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
     'Resources': ['Exam Tips.pdf', 'Formula Sheet.pdf']
   };
 
-  if (!addFolderBtn || !foldersWrapper || !folderCountLabel || !fileCountLabel || !previewFiles) return;
+  if (!addFolderBtn || !foldersWrapper || !folderCountLabel || !fileCountLabel || !previewFiles || !addFileBtn) return;
 
   const updateFolderCount = () => {
     const count = foldersWrapper.querySelectorAll('.folder-item').length;
@@ -22,8 +23,20 @@ document.addEventListener('DOMContentLoaded', function () {
     fileCountLabel.textContent = `${files.length} file${files.length === 1 ? '' : 's'}`;
   };
 
-  const renderPreviewFiles = (files) => {
+  const renderPreviewFiles = (folderName, files) => {
     previewFiles.innerHTML = '';
+    if (!folderName) {
+      const empty = document.createElement('div');
+      empty.className = 'preview-empty';
+      empty.textContent = 'Select a folder to preview files.';
+      previewFiles.appendChild(empty);
+      addFileBtn.disabled = true;
+      updateFileCount([]);
+      return;
+    }
+
+    addFileBtn.disabled = false;
+
     if (!files || files.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'preview-empty';
@@ -54,14 +67,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const getFolderName = (folderLink) => folderLink.dataset.folderName || folderLink.textContent.trim();
 
+  let currentFolderName = null;
+
   const setFolderHandlers = (folderLink) => {
     folderLink.addEventListener('click', (event) => {
       event.preventDefault();
       foldersWrapper.querySelectorAll('.folder-item').forEach(item => item.classList.remove('active'));
       folderLink.classList.add('active');
 
-      const folderName = getFolderName(folderLink);
-      renderPreviewFiles(folderFiles[folderName] || []);
+      currentFolderName = getFolderName(folderLink);
+      renderPreviewFiles(currentFolderName, folderFiles[currentFolderName] || []);
     });
   };
 
@@ -76,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (folderElements.length > 0) {
     folderElements[0].click();
   } else {
-    renderPreviewFiles([]);
+    renderPreviewFiles(null, []);
   }
 
   addFolderBtn.addEventListener('click', () => {
@@ -104,7 +119,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
     foldersWrapper.querySelectorAll('.folder-item').forEach(item => item.classList.remove('active'));
     foldersWrapper.appendChild(folderLink);
-    renderPreviewFiles([]);
+    currentFolderName = normalized;
+    renderPreviewFiles(currentFolderName, []);
     updateFolderCount();
+  });
+
+  addFileBtn.addEventListener('click', () => {
+    if (!currentFolderName) return;
+
+    const fileName = window.prompt('Enter a file name:');
+    if (!fileName) return;
+
+    const normalizedName = fileName.trim();
+    if (!normalizedName) return;
+
+    folderFiles[currentFolderName] = folderFiles[currentFolderName] || [];
+    folderFiles[currentFolderName].push(normalizedName);
+
+    const activeFolder = foldersWrapper.querySelector('.folder-item.active');
+    if (activeFolder) {
+      updateBadge(activeFolder, folderFiles[currentFolderName]);
+    }
+    renderPreviewFiles(currentFolderName, folderFiles[currentFolderName]);
   });
 });
