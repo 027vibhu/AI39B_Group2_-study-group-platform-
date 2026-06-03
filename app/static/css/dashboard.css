@@ -164,7 +164,14 @@ body{
   font-weight:600;
   text-decoration:none;
   border:1px solid rgba(75,82,123,0.08);
-  transition:0.2s ease;
+  transition:0.2s ease, transform 0.2s ease;
+}
+
+.folder-item:hover,
+.folder-item.active{
+  background:#eef1ff;
+  border-color:#dbe2ff;
+  transform:translateX(3px);
 }
 
 .folder-item:hover{

@@ -1,8 +1,25 @@
 document.addEventListener('DOMContentLoaded', function () {
   const addFolderBtn = document.querySelector('.folder-add-btn');
   const foldersWrapper = document.querySelector('.folders');
+  const folderCountLabel = document.querySelector('.folder-count');
 
-  if (!addFolderBtn || !foldersWrapper) return;
+  if (!addFolderBtn || !foldersWrapper || !folderCountLabel) return;
+
+  const updateFolderCount = () => {
+    const count = foldersWrapper.querySelectorAll('.folder-item').length;
+    folderCountLabel.textContent = `${count} folder${count === 1 ? '' : 's'}`;
+  };
+
+  const setFolderHandlers = (folderLink) => {
+    folderLink.addEventListener('click', (event) => {
+      event.preventDefault();
+      foldersWrapper.querySelectorAll('.folder-item').forEach(item => item.classList.remove('active'));
+      folderLink.classList.add('active');
+    });
+  };
+
+  foldersWrapper.querySelectorAll('.folder-item').forEach(setFolderHandlers);
+  updateFolderCount();
 
   addFolderBtn.addEventListener('click', () => {
     const folderName = window.prompt('Enter a new folder name:');
@@ -22,10 +39,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const folderLink = document.createElement('a');
     folderLink.href = '#';
-    folderLink.className = 'folder-item';
+    folderLink.className = 'folder-item active';
     folderLink.textContent = normalized;
-    folderLink.addEventListener('click', (event) => event.preventDefault());
+    setFolderHandlers(folderLink);
 
+    foldersWrapper.querySelectorAll('.folder-item').forEach(item => item.classList.remove('active'));
     foldersWrapper.appendChild(folderLink);
+    updateFolderCount();
   });
 });
