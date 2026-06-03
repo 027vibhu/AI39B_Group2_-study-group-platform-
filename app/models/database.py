@@ -267,6 +267,13 @@ class Database:
             pass
 
         try:
+            from app.models.chat_attachment import create_attachment, ensure_table_exists
+
+            ensure_table_exists()
+        except Exception:
+            pass
+
+        try:
             from app.models.database import create_room_actions_table
 
             create_room_actions_table()
