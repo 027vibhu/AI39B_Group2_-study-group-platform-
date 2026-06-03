@@ -32,10 +32,9 @@
       </div>
 
       <div class="header-actions">
-        <button class="action-btn">📞</button>
-        <button class="action-btn">🎥</button>
-        <button class="action-btn">➕</button>
-        <a class="action-btn" href="{{ url_for('home.moderation') }}?room_code={{ room_code }}">Moderate</a>
+        <a class="action-btn" href="{{ url_for('home.moderation') }}?room_code={{ room_code }}" title="Moderate room" aria-label="Moderate room">
+          <i class="fa-solid fa-hammer" aria-hidden="true"></i>
+        </a>
       </div>
     </div>
 
@@ -62,13 +61,63 @@
     <div class="upload-list" id="uploadList" aria-live="polite"></div>
 
     <div class="chat-input" id="chatInput">
-      <button class="icon-btn" id="emojiBtn">😀</button>
+      <button class="icon-btn" id="emojiBtn" type="button" aria-label="Insert emoji" title="Insert emoji">
+        <i class="fa-solid fa-face-smile" aria-hidden="true"></i>
+      </button>
       <label class="icon-btn" id="fileLabel">
-        📎
+        <i class="fa-solid fa-paperclip" aria-hidden="true"></i>
         <input type="file" hidden id="fileInput" accept="image/*,application/pdf" multiple>
       </label>
       <input type="text" class="input-box" id="messageInput" placeholder="Type a message...">
-      <button class="send-btn" id="sendBtn">➤</button>
+      <button class="send-btn" id="sendBtn" type="button" aria-label="Send message" title="Send message">
+        <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div class="emoji-picker" id="emojiPicker" aria-label="Emoji picker" aria-hidden="true">
+      <button type="button" class="emoji-item">😀</button>
+      <button type="button" class="emoji-item">😁</button>
+      <button type="button" class="emoji-item">😂</button>
+      <button type="button" class="emoji-item">🤣</button>
+      <button type="button" class="emoji-item">😃</button>
+      <button type="button" class="emoji-item">😄</button>
+      <button type="button" class="emoji-item">😅</button>
+      <button type="button" class="emoji-item">😆</button>
+      <button type="button" class="emoji-item">😉</button>
+      <button type="button" class="emoji-item">😊</button>
+      <button type="button" class="emoji-item">😋</button>
+      <button type="button" class="emoji-item">😎</button>
+      <button type="button" class="emoji-item">😍</button>
+      <button type="button" class="emoji-item">😘</button>
+      <button type="button" class="emoji-item">🥰</button>
+      <button type="button" class="emoji-item">🤩</button>
+      <button type="button" class="emoji-item">🤔</button>
+      <button type="button" class="emoji-item">🙃</button>
+      <button type="button" class="emoji-item">😴</button>
+      <button type="button" class="emoji-item">😬</button>
+      <button type="button" class="emoji-item">😇</button>
+      <button type="button" class="emoji-item">🤗</button>
+      <button type="button" class="emoji-item">😡</button>
+      <button type="button" class="emoji-item">😭</button>
+      <button type="button" class="emoji-item">👍</button>
+      <button type="button" class="emoji-item">👎</button>
+      <button type="button" class="emoji-item">🙏</button>
+      <button type="button" class="emoji-item">👏</button>
+      <button type="button" class="emoji-item">🔥</button>
+      <button type="button" class="emoji-item">✨</button>
+      <button type="button" class="emoji-item">💯</button>
+      <button type="button" class="emoji-item">🎉</button>
+      <button type="button" class="emoji-item">❤️</button>
+      <button type="button" class="emoji-item">💙</button>
+      <button type="button" class="emoji-item">💚</button>
+      <button type="button" class="emoji-item">💜</button>
+      <button type="button" class="emoji-item">🧠</button>
+      <button type="button" class="emoji-item">💡</button>
+      <button type="button" class="emoji-item">🚀</button>
+      <button type="button" class="emoji-item">📌</button>
+      <button type="button" class="emoji-item">📎</button>
+      <button type="button" class="emoji-item">✅</button>
+      <button type="button" class="emoji-item">❗</button>
+      <button type="button" class="emoji-item">⚡</button>
     </div>
   </div>
 
@@ -183,6 +232,7 @@ const chatBody = document.getElementById('chatBody');
 const fileInput = document.getElementById('fileInput');
 const uploadList = document.getElementById('uploadList');
 const emojiBtn = document.getElementById('emojiBtn');
+const emojiPicker = document.getElementById('emojiPicker');
 const memberStatus = document.getElementById('memberStatus');
 const memberCount = document.getElementById('memberCount');
 const onlineMembersContainer = document.getElementById('onlineMembers');
@@ -462,9 +512,58 @@ function handleFileUpload(file){
 }
 
 if (emojiBtn) {
-  emojiBtn.addEventListener('click', () => {
-    messageInput.value += '😊';
-    messageInput.focus();
+  const closeEmojiPicker = () => {
+    if (!emojiPicker) return;
+    emojiPicker.classList.remove('open');
+    emojiPicker.setAttribute('aria-hidden', 'true');
+    emojiBtn.setAttribute('aria-expanded', 'false');
+  };
+
+  const openEmojiPicker = () => {
+    if (!emojiPicker) return;
+    emojiPicker.classList.add('open');
+    emojiPicker.setAttribute('aria-hidden', 'false');
+    emojiBtn.setAttribute('aria-expanded', 'true');
+  };
+
+  emojiBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!emojiPicker) return;
+    const isOpen = emojiPicker.classList.contains('open');
+    if (isOpen) {
+      closeEmojiPicker();
+    } else {
+      openEmojiPicker();
+    }
+  });
+
+  if (emojiPicker) {
+    emojiPicker.addEventListener('click', (event) => {
+      const emojiButton = event.target.closest('.emoji-item');
+      if (!emojiButton) return;
+      const emoji = emojiButton.textContent;
+      const start = messageInput.selectionStart ?? messageInput.value.length;
+      const end = messageInput.selectionEnd ?? messageInput.value.length;
+      const currentValue = messageInput.value;
+      messageInput.value = currentValue.slice(0, start) + emoji + currentValue.slice(end);
+      messageInput.focus();
+      const cursorPosition = start + emoji.length;
+      messageInput.setSelectionRange(cursorPosition, cursorPosition);
+      closeEmojiPicker();
+    });
+  }
+
+  document.addEventListener('click', (event) => {
+    if (!emojiPicker || !emojiPicker.classList.contains('open')) return;
+    if (emojiPicker.contains(event.target) || emojiBtn.contains(event.target)) return;
+    closeEmojiPicker();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeEmojiPicker();
+    }
   });
 }
 

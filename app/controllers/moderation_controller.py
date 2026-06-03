@@ -24,7 +24,8 @@ class ModerationController(BaseController):
             role = session.get('role')
             if role in ('admin', 'moderator'):
                 can_moderate = True
-                owned_rooms = get_joined_rooms_for_user(user_id) or []
+                owned_rooms = get_owned_rooms_for_user(user_id) or []
+                joined_rooms = get_joined_rooms_for_user(user_id) or []
             else:
                 # check ownership of any joined rooms
                 owned_rooms = get_owned_rooms_for_user(user_id) or []
@@ -32,8 +33,6 @@ class ModerationController(BaseController):
                     if r.get('owner_id') == user_id:
                         can_moderate = True
                         break
-
-            joined_rooms = get_joined_rooms_for_user(user_id) or []
 
         selected_room_code = None
         room_code = None
