@@ -69,7 +69,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let currentFolderName = null;
 
+  const removeFolder = (folderLink) => {
+    const folderName = getFolderName(folderLink);
+    if (currentFolderName === folderName) {
+      currentFolderName = null;
+      renderPreviewFiles(null, []);
+    }
+
+    delete folderFiles[folderName];
+    folderLink.remove();
+    updateFolderCount();
+  };
+
   const setFolderHandlers = (folderLink) => {
+    const removeBtn = folderLink.querySelector('.folder-remove-btn');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        removeFolder(folderLink);
+      });
+    }
+
     folderLink.addEventListener('click', (event) => {
       event.preventDefault();
       foldersWrapper.querySelectorAll('.folder-item').forEach(item => item.classList.remove('active'));
@@ -102,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!normalized) return;
 
     const duplicate = Array.from(foldersWrapper.querySelectorAll('.folder-item')).some(item =>
-      item.textContent.trim().toLowerCase() === normalized.toLowerCase()
+      (item.dataset.folderName || item.textContent.trim()).toLowerCase() === normalized.toLowerCase()
     );
 
     if (duplicate) {
@@ -114,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
     folderLink.href = '#';
     folderLink.className = 'folder-item active';
     folderLink.dataset.folderName = normalized;
-    folderLink.innerHTML = `${normalized} <span class="folder-badge">0</span>`;
+    folderLink.innerHTML = `<span class="folder-item-label">${normalized}</span><span class="folder-badge">0</span><button class="folder-remove-btn" type="button" aria-label="Remove folder">×</button>`;
     setFolderHandlers(folderLink);
 
     foldersWrapper.querySelectorAll('.folder-item').forEach(item => item.classList.remove('active'));

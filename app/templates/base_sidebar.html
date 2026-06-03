@@ -42,9 +42,21 @@
       </div>
       {% block file_organizer %}
       <div class="folders">
-        <a href="#" class="folder-item" data-folder-name="Course Notes">Course Notes <span class="folder-badge">3</span></a>
-        <a href="#" class="folder-item" data-folder-name="Assignments">Assignments <span class="folder-badge">2</span></a>
-        <a href="#" class="folder-item" data-folder-name="Resources">Resources <span class="folder-badge">2</span></a>
+        <a href="#" class="folder-item" data-folder-name="Course Notes">
+          <span class="folder-item-label">Course Notes</span>
+          <span class="folder-badge">3</span>
+          <button class="folder-remove-btn" type="button" aria-label="Remove folder">×</button>
+        </a>
+        <a href="#" class="folder-item" data-folder-name="Assignments">
+          <span class="folder-item-label">Assignments</span>
+          <span class="folder-badge">2</span>
+          <button class="folder-remove-btn" type="button" aria-label="Remove folder">×</button>
+        </a>
+        <a href="#" class="folder-item" data-folder-name="Resources">
+          <span class="folder-item-label">Resources</span>
+          <span class="folder-badge">2</span>
+          <button class="folder-remove-btn" type="button" aria-label="Remove folder">×</button>
+        </a>
       </div>
       <div class="folder-preview">
         <div class="folder-preview-header">

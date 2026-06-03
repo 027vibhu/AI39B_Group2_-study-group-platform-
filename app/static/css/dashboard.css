@@ -250,6 +250,12 @@ body{
   text-decoration:none;
   border:1px solid rgba(75,82,123,0.08);
   transition:0.2s ease, transform 0.2s ease;
+  gap:10px;
+}
+
+.folder-item-label{
+  flex:1;
+  text-align:left;
 }
 
 .folder-badge{
@@ -264,6 +270,24 @@ body{
   color:#3f4670;
   font-size:12px;
   font-weight:700;
+}
+
+.folder-remove-btn{
+  border:none;
+  background:transparent;
+  color:#a0a4b8;
+  font-size:18px;
+  font-weight:700;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  cursor:pointer;
+  transition:0.2s ease;
+}
+
+.folder-remove-btn:hover{
+  background:rgba(75,82,123,0.08);
+  color:#4b527b;
 }
 
 .folder-item:hover,
