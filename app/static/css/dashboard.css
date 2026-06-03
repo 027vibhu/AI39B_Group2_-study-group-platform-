@@ -111,6 +111,27 @@ body{
   gap:10px;
 }
 
+.file-organizer-actions{
+  margin-bottom:14px;
+}
+
+.folder-add-btn{
+  width:100%;
+  padding:12px 14px;
+  font-size:14px;
+  font-weight:700;
+  border:none;
+  border-radius:14px;
+  background:#4b527b;
+  color:#ffffff;
+  cursor:pointer;
+  transition:0.2s ease;
+}
+
+.folder-add-btn:hover{
+  background:#3b425f;
+}
+
 .folder-item{
   display:block;
   padding:12px 14px;
