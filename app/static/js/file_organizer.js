@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const previewFiles = document.querySelector('.preview-files');
   const addFileBtn = document.querySelector('.preview-add-file-btn');
   const folderSearch = document.querySelector('.folder-search');
+  const folderNoResults = document.querySelector('.folder-no-results');
 
   const folderFiles = {
     'Course Notes': ['Lecture 1.pdf', 'Lecture 2.pdf', 'Summary.md'],
@@ -13,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     'Resources': ['Exam Tips.pdf', 'Formula Sheet.pdf']
   };
 
-  if (!addFolderBtn || !foldersWrapper || !folderCountLabel || !fileCountLabel || !previewFiles || !addFileBtn || !folderSearch) return;
+  if (!addFolderBtn || !foldersWrapper || !folderCountLabel || !fileCountLabel || !previewFiles || !addFileBtn || !folderSearch || !folderNoResults) return;
 
   const updateFolderCount = () => {
     const count = foldersWrapper.querySelectorAll('.folder-item').length;
@@ -104,6 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
     delete folderFiles[folderName];
     folderLink.remove();
     updateFolderCount();
+    updateSearchResults();
   };
 
   const setFolderHandlers = (folderLink) => {
@@ -140,13 +142,35 @@ document.addEventListener('DOMContentLoaded', function () {
     renderPreviewFiles(null, []);
   }
 
-  folderSearch.addEventListener('input', (event) => {
-    const query = event.target.value.trim().toLowerCase();
+  const updateSearchResults = () => {
+    const query = folderSearch.value.trim().toLowerCase();
+    let visible = 0;
+    let firstVisible = null;
+
     foldersWrapper.querySelectorAll('.folder-item').forEach(item => {
       const label = item.dataset.folderName?.toLowerCase() || item.textContent.trim().toLowerCase();
-      item.style.display = label.includes(query) ? '' : 'none';
+      const matches = label.includes(query);
+      item.style.display = matches ? '' : 'none';
+      if (matches) {
+        visible += 1;
+        if (!firstVisible) firstVisible = item;
+      }
     });
-  });
+
+    folderNoResults.classList.toggle('hidden', visible > 0);
+
+    const activeItem = foldersWrapper.querySelector('.folder-item.active');
+    if (activeItem && activeItem.style.display === 'none') {
+      if (firstVisible) {
+        firstVisible.click();
+      } else {
+        currentFolderName = null;
+        renderPreviewFiles(null, []);
+      }
+    }
+  };
+
+  folderSearch.addEventListener('input', updateSearchResults);
 
   addFolderBtn.addEventListener('click', () => {
     const folderName = window.prompt('Enter a new folder name:');
@@ -176,6 +200,8 @@ document.addEventListener('DOMContentLoaded', function () {
     currentFolderName = normalized;
     renderPreviewFiles(currentFolderName, []);
     updateFolderCount();
+    folderSearch.value = '';
+    updateSearchResults();
   });
 
   addFileBtn.addEventListener('click', () => {
