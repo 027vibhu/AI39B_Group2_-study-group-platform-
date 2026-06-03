@@ -228,6 +228,23 @@ body{
   font-size:12px;
 }
 
+.preview-remove-file-btn{
+  border:none;
+  background:transparent;
+  color:#a0a4b8;
+  font-size:16px;
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  cursor:pointer;
+  transition:0.2s ease;
+}
+
+.preview-remove-file-btn:hover{
+  background:rgba(75,82,123,0.08);
+  color:#4b527b;
+}
+
 .preview-empty{
   padding:16px;
   border-radius:14px;

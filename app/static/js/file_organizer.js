@@ -47,10 +47,34 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    files.forEach(fileName => {
+    files.forEach((fileName, index) => {
       const fileEl = document.createElement('div');
       fileEl.className = 'preview-file';
-      fileEl.innerHTML = `<span>${fileName}</span><small>${fileName.split('.').pop().toUpperCase()}</small>`;
+      fileEl.innerHTML = `
+        <div>
+          <span>${fileName}</span>
+          <small>${fileName.split('.').pop().toUpperCase()}</small>
+        </div>
+        <button class="preview-remove-file-btn" type="button" aria-label="Remove file">✕</button>
+      `;
+
+      const removeBtn = fileEl.querySelector('.preview-remove-file-btn');
+      removeBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const activeFolder = currentFolderName;
+        if (!activeFolder) return;
+        folderFiles[activeFolder] = folderFiles[activeFolder] || [];
+        folderFiles[activeFolder].splice(index, 1);
+
+        const activeFolderLink = foldersWrapper.querySelector('.folder-item.active');
+        if (activeFolderLink) {
+          updateBadge(activeFolderLink, folderFiles[activeFolder]);
+        }
+
+        renderPreviewFiles(activeFolder, folderFiles[activeFolder]);
+      });
+
       previewFiles.appendChild(fileEl);
     });
     updateFileCount(files);
