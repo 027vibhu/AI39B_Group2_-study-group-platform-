@@ -105,6 +105,25 @@ body{
   line-height:1.5;
 }
 
+.folder-search-wrapper{
+  margin-bottom:14px;
+}
+
+.folder-search{
+  width:100%;
+  padding:12px 14px;
+  border-radius:14px;
+  border:1px solid rgba(75,82,123,0.14);
+  background:#ffffff;
+  outline:none;
+  color:#3f4670;
+  font-size:14px;
+}
+
+.folder-search:focus{
+  border-color:#4b527b;
+}
+
 .file-organizer-meta{
   display:flex;
   justify-content:space-between;
