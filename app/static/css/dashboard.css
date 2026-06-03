@@ -105,6 +105,29 @@ body{
   line-height:1.5;
 }
 
+.file-organizer-meta{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+  color:#6c728f;
+  font-size:12px;
+}
+
+.file-organizer-meta span{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 10px;
+  border-radius:12px;
+  background:rgba(75,82,123,0.06);
+}
+
+.folder-count,
+.file-count{
+  font-weight:600;
+}
+
 .folders{
   display:flex;
   flex-direction:column;
