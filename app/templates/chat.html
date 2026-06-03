@@ -59,11 +59,13 @@
       {% endfor %}
     </div>
 
-    <div class="chat-input">
+    <div class="upload-list" id="uploadList" aria-live="polite"></div>
+
+    <div class="chat-input" id="chatInput">
       <button class="icon-btn" id="emojiBtn">😀</button>
-      <label class="icon-btn">
+      <label class="icon-btn" id="fileLabel">
         📎
-        <input type="file" hidden id="imageInput" accept="image/*">
+        <input type="file" hidden id="fileInput" accept="image/*,application/pdf" multiple>
       </label>
       <input type="text" class="input-box" id="messageInput" placeholder="Type a message...">
       <button class="send-btn" id="sendBtn">➤</button>
@@ -148,7 +150,8 @@ const roomCode = "{{ room_code }}";
 const sendBtn = document.getElementById('sendBtn');
 const messageInput = document.getElementById('messageInput');
 const chatBody = document.getElementById('chatBody');
-const imageInput = document.getElementById('imageInput');
+const fileInput = document.getElementById('fileInput');
+const uploadList = document.getElementById('uploadList');
 const emojiBtn = document.getElementById('emojiBtn');
 const memberStatus = document.getElementById('memberStatus');
 const memberCount = document.getElementById('memberCount');
@@ -347,21 +350,86 @@ function renderPresenceLists(onlineUsers, offlineUsers) {
 }
 
 
-imageInput.addEventListener('change', function(){
-  const file = this.files[0];
-  if(!file) return;
-  const imageURL = URL.createObjectURL(file);
-  const message = document.createElement('div');
-  message.classList.add('message','sent');
-  message.innerHTML = `
-    <div class="message-bubble">
-      <img src="${imageURL}" class="message-image">
-      <div class="message-time">${getTime()}</div>
-    </div>
-  `;
-  chatBody.appendChild(message);
-  scrollBottom();
+fileInput.addEventListener('change', function(){
+  const files = Array.from(this.files || []);
+  if (!files.length) return;
+  files.forEach(file => handleFileUpload(file));
+  // clear input to allow re-selecting same files
+  this.value = '';
 });
+
+// Drag & drop support on chat input area
+const chatInputEl = document.getElementById('chatInput');
+['dragenter','dragover'].forEach(evt => {
+  chatInputEl.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); chatInputEl.classList.add('drag-over'); });
+});
+['dragleave','drop'].forEach(evt => {
+  chatInputEl.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); chatInputEl.classList.remove('drag-over'); });
+});
+chatInputEl.addEventListener('drop', (e) => {
+  const dt = e.dataTransfer;
+  const files = Array.from(dt.files || []);
+  files.forEach(f => handleFileUpload(f));
+});
+
+function handleFileUpload(file){
+  const id = 'upload-' + Math.random().toString(36).slice(2,9);
+  const item = document.createElement('div');
+  item.className = 'upload-item';
+  item.id = id;
+
+  const isImage = file.type.startsWith('image/');
+  const thumb = document.createElement('div');
+  thumb.className = 'upload-thumb';
+  if (isImage) {
+    const url = URL.createObjectURL(file);
+    thumb.innerHTML = `<img src="${url}" alt="${file.name}">`;
+  } else {
+    thumb.textContent = file.name.split('.').pop().toUpperCase();
+  }
+
+  const meta = document.createElement('div');
+  meta.className = 'upload-meta';
+  meta.innerHTML = `<div class="upload-file-name">${file.name}</div><div class="upload-actions"><button class="upload-send-btn">Send</button><button class="upload-remove-btn">Remove</button></div><div class="upload-progress"><div class="upload-progress-bar" style="width:0%"></div></div>`;
+
+  item.appendChild(thumb);
+  item.appendChild(meta);
+  uploadList.appendChild(item);
+
+  const sendBtn = item.querySelector('.upload-send-btn');
+  const removeBtn = item.querySelector('.upload-remove-btn');
+  const progressBar = item.querySelector('.upload-progress-bar');
+
+  removeBtn.addEventListener('click', () => { item.remove(); });
+
+  sendBtn.addEventListener('click', () => {
+    sendBtn.disabled = true;
+    // read file as data URL and emit via socket
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      const dataUrl = ev.target.result;
+      // show progress simulation
+      let progress = 0;
+      const intv = setInterval(() => {
+        progress = Math.min(100, progress + Math.floor(Math.random()*20)+10);
+        progressBar.style.width = progress + '%';
+        if (progress >= 100) {
+          clearInterval(intv);
+          // emit file to server
+          socket.emit('send_file', { room: roomCode, filename: file.name, data: dataUrl, username: displayName });
+          // add message to UI
+          if (isImage) {
+            addMessageToUI(`<img src="${dataUrl}" class=\"message-image\">`, 'sent', displayName);
+          } else {
+            addMessageToUI(`<a href=\"${dataUrl}\" download=\"${file.name}\">${file.name}</a>`, 'sent', displayName);
+          }
+          item.remove();
+        }
+      }, 200);
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 if (emojiBtn) {
   emojiBtn.addEventListener('click', () => {
