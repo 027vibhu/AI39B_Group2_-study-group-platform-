@@ -451,6 +451,18 @@ body{
   .sidebar{
     width:100%;
   }
+  .file-organizer,
+  .folder-preview{
+    margin-left:0;
+    margin-right:0;
+  }
+  .file-organizer-meta{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  .folder-add-btn{
+    width:100%;
+  }
   .topbar h1{
     font-size:30px;
   }

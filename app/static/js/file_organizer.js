@@ -53,9 +53,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   };
 
-  foldersWrapper.querySelectorAll('.folder-item').forEach(setFolderHandlers);
+  const folderElements = Array.from(foldersWrapper.querySelectorAll('.folder-item'));
+  folderElements.forEach(setFolderHandlers);
   updateFolderCount();
-  renderPreviewFiles([]);
+  if (folderElements.length > 0) {
+    folderElements[0].click();
+  } else {
+    renderPreviewFiles([]);
+  }
 
   addFolderBtn.addEventListener('click', () => {
     const folderName = window.prompt('Enter a new folder name:');
