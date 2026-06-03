@@ -44,7 +44,7 @@ class HomeRoutes:
         self.bp.route('/profile/update', methods=['POST'])(self.update_profile)
         self.bp.route('/profile/avatar', methods=['POST'])(self.update_avatar)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
-        self.bp.route('/create_workspace')(self.create_workspace)
+        
 
 
         return self.bp
@@ -346,11 +346,7 @@ class HomeRoutes:
         return render_template('createroom.html', room_code=self._generate_unique_room_code())
     
 
-    def create_workspace(self):
-        return render_template(
-        'create_workspace.html',
-        room_code=self._generate_unique_room_code()
-    )
+    
 
 
 # Expose blueprint

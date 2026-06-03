@@ -25,54 +25,9 @@
     </div>
 
     <div class="nav">
-      {% block nav %}{% endblock %}
-    </div>
-
-    <div class="file-organizer">
-      <div class="file-organizer-header">
-        <h3>Organize Files</h3>
-        <p>Manage folders and study documents.</p>
-      </div>
-      <div class="folder-search-wrapper">
-        <input type="search" class="folder-search" placeholder="Search folders..." aria-label="Search folders">
-      </div>
-      <div class="file-organizer-meta">
-        <span class="folder-count">3 folders</span>
-        <span class="file-count">12 files</span>
-      </div>
-      <div class="file-organizer-actions">
-        <button class="folder-add-btn" type="button">+ New Folder</button>
-      </div>
-      {% block file_organizer %}
-      <div class="folders">
-        <a href="#" class="folder-item" data-folder-name="Course Notes">
-          <span class="folder-item-label">Course Notes</span>
-          <span class="folder-badge">3</span>
-          <button class="folder-remove-btn" type="button" aria-label="Remove folder">×</button>
-        </a>
-        <a href="#" class="folder-item" data-folder-name="Assignments">
-          <span class="folder-item-label">Assignments</span>
-          <span class="folder-badge">2</span>
-          <button class="folder-remove-btn" type="button" aria-label="Remove folder">×</button>
-        </a>
-        <a href="#" class="folder-item" data-folder-name="Resources">
-          <span class="folder-item-label">Resources</span>
-          <span class="folder-badge">2</span>
-          <button class="folder-remove-btn" type="button" aria-label="Remove folder">×</button>
-        </a>
-      </div>
-      <div class="folder-preview">
-        <div class="folder-preview-header">
-          <div>
-            <span class="preview-title">Folder Preview</span>
-            <small class="preview-subtitle">Select a folder to preview files.</small>
-          </div>
-          <button class="preview-add-file-btn" type="button" disabled>+ Add File</button>
-        </div>
-        <div class="preview-files">
-          <div class="preview-empty">No folder selected</div>
-        </div>
-      </div>
+      {% block nav %}
+        <a href="#" class="nav-item" id="homeLink">Home</a>
+        <a href="#" class="nav-item" id="roomsLink">Rooms</a>
       {% endblock %}
     </div>
 
@@ -144,6 +99,17 @@
         if (event.key === 'Escape') {
           closeMenu();
         }
+      });
+    }
+  </script>
+  <script>
+    const filesToggle = document.getElementById('filesToggle');
+    const fileOrganizer = document.getElementById('fileOrganizer');
+    if (filesToggle && fileOrganizer) {
+      filesToggle.addEventListener('click', () => {
+        const isExpanded = filesToggle.getAttribute('aria-expanded') === 'true';
+        filesToggle.setAttribute('aria-expanded', String(!isExpanded));
+        fileOrganizer.classList.toggle('hidden', isExpanded);
       });
     }
   </script>

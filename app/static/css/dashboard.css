@@ -124,6 +124,20 @@ body{
   border-color:#4b527b;
 }
 
+.folder-no-results{
+  margin-top:10px;
+  padding:12px 14px;
+  border-radius:14px;
+  background:#ffeff5;
+  color:#9b3454;
+  font-size:13px;
+  border:1px solid rgba(155,52,84,0.12);
+}
+
+.hidden{
+  display:none;
+}
+
 .file-organizer-meta{
   display:flex;
   justify-content:space-between;
