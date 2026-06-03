@@ -84,6 +84,50 @@ body{
   cursor:pointer;
 }
 
+.file-organizer{
+  margin-top:20px;
+  padding:18px 16px;
+  border-radius:20px;
+  background:#f8f8ff;
+  border:1px solid rgba(75,82,123,0.08);
+}
+
+.file-organizer-header h3{
+  margin-bottom:6px;
+  font-size:15px;
+  color:#3f4670;
+}
+
+.file-organizer-header p{
+  margin-bottom:14px;
+  font-size:13px;
+  color:#7a7f9e;
+  line-height:1.5;
+}
+
+.folders{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.folder-item{
+  display:block;
+  padding:12px 14px;
+  border-radius:14px;
+  background:#ffffff;
+  color:#4b527b;
+  font-weight:600;
+  text-decoration:none;
+  border:1px solid rgba(75,82,123,0.08);
+  transition:0.2s ease;
+}
+
+.folder-item:hover{
+  background:#eef1ff;
+  border-color:#dbe2ff;
+}
+
 .nav-item:hover{
   background:#f3f4fa;
   color:#4b527b;

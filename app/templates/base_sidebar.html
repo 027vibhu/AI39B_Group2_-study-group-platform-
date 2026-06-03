@@ -28,6 +28,20 @@
       {% block nav %}{% endblock %}
     </div>
 
+    <div class="file-organizer">
+      <div class="file-organizer-header">
+        <h3>Organize Files</h3>
+        <p>Manage folders and study documents.</p>
+      </div>
+      {% block file_organizer %}
+      <div class="folders">
+        <a href="#" class="folder-item">Course Notes</a>
+        <a href="#" class="folder-item">Assignments</a>
+        <a href="#" class="folder-item">Resources</a>
+      </div>
+      {% endblock %}
+    </div>
+
     <div class="rooms">
       {% block rooms %}
         {% block browse_rooms %}{% endblock %}
