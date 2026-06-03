@@ -71,27 +71,25 @@
 
                 <div class="room-code">
 
-                    <span>3</span>
-                    <span>2</span>
-                    <span>9</span>
-                    <span>0</span>
-                    <span>4</span>
-                    <span>4</span>
+             {% for digit in room_code %}
+             <span>{{ digit }}</span>
+             {% endfor %}
 
-                </div>
+             </div>
 
                 <div class="public-room">
 
-                    <label>
-                        Public Room
-                    </label>
+    <div>
+        <strong>Public Room</strong>
+        <p>Listed in Browse Rooms and open to anyone</p>
+    </div>
 
-                    <input
-                        type="checkbox"
-                        name="is_public"
-                    >
+    <label class="switch">
+        <input type="checkbox" name="is_public">
+        <span class="slider"></span>
+    </label>
 
-                </div>
+</div>
 
                 <button type="submit">
                     Create Room
