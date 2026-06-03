@@ -42,19 +42,36 @@ document.addEventListener('DOMContentLoaded', function () {
     updateFileCount(files);
   };
 
+  const updateBadge = (folderLink, files) => {
+    let badge = folderLink.querySelector('.folder-badge');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'folder-badge';
+      folderLink.appendChild(badge);
+    }
+    badge.textContent = files.length;
+  };
+
+  const getFolderName = (folderLink) => folderLink.dataset.folderName || folderLink.textContent.trim();
+
   const setFolderHandlers = (folderLink) => {
     folderLink.addEventListener('click', (event) => {
       event.preventDefault();
       foldersWrapper.querySelectorAll('.folder-item').forEach(item => item.classList.remove('active'));
       folderLink.classList.add('active');
 
-      const folderName = folderLink.textContent.trim();
+      const folderName = getFolderName(folderLink);
       renderPreviewFiles(folderFiles[folderName] || []);
     });
   };
 
   const folderElements = Array.from(foldersWrapper.querySelectorAll('.folder-item'));
-  folderElements.forEach(setFolderHandlers);
+  folderElements.forEach(folderLink => {
+    const name = getFolderName(folderLink);
+    updateBadge(folderLink, folderFiles[name] || []);
+    setFolderHandlers(folderLink);
+  });
+
   updateFolderCount();
   if (folderElements.length > 0) {
     folderElements[0].click();
@@ -81,7 +98,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const folderLink = document.createElement('a');
     folderLink.href = '#';
     folderLink.className = 'folder-item active';
-    folderLink.textContent = normalized;
+    folderLink.dataset.folderName = normalized;
+    folderLink.innerHTML = `${normalized} <span class="folder-badge">0</span>`;
     setFolderHandlers(folderLink);
 
     foldersWrapper.querySelectorAll('.folder-item').forEach(item => item.classList.remove('active'));
