@@ -1,11 +1,11 @@
-from flask import Blueprint, render_template, redirect, url_for, session, request, current_app, flash, jsonify
+from flask import Blueprint, render_template, redirect, url_for, session, request, current_app, flash, jsonify, send_from_directory
 from app.models.room import (
     create_room as create_room_record,
     create_user_room,
     delete_room_by_code,
-    log_moderation_action,
     get_joined_rooms_for_user,
     get_room_by_code,
+    get_room_by_id,
     is_user_banned_from_room,
     is_user_in_room,
 )
@@ -14,6 +14,7 @@ from app.models.presence_model import get_online_users, get_offline_users
 from app.models.message_vote import get_vote_count, get_user_vote
 from app.controllers import MessageVoteController
 from app.models.database import get_user_by_id, get_user_by_username, update_user_avatar, update_user_profile
+from app.models.shared_file import create_shared_file, get_shared_file_by_id, get_shared_files_for_room
 import random
 import os
 import uuid
@@ -35,6 +36,10 @@ class HomeRoutes:
         self.bp.route('/browse_rooms')(self.browse_rooms)
         self.bp.route('/create')(self.create)
         self.bp.route('/chat/<room_code>')(self.chat)
+        self.bp.route('/chat/<room_code>/shared-files', methods=['GET'])(self.list_shared_files)
+        self.bp.route('/chat/<room_code>/shared-files', methods=['POST'])(self.upload_shared_file)
+        self.bp.route('/files/<int:file_id>/download')(self.download_shared_file)
+        self.bp.route('/files/<int:file_id>/view')(self.view_shared_file)
         self.bp.route('/message/<int:message_id>/vote', methods=['POST'])(self.vote_message)
         self.bp.route('/chat/<room_code>/delete', methods=['POST'])(self.delete_chat)
         self.bp.context_processor(self.inject_joined_rooms)
@@ -146,6 +151,127 @@ class HomeRoutes:
             messages=messages,
             online_members=online_members,
             offline_members=offline_members,
+        )
+
+    def _get_shared_file_upload_dir(self):
+        upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'shared_files')
+        os.makedirs(upload_dir, exist_ok=True)
+        return upload_dir
+
+    def _authorize_room_access(self, room, user_id):
+        if not room:
+            return False
+        if room['is_private'] and not is_user_in_room(user_id, room['id']):
+            return False
+        return True
+
+    def list_shared_files(self, room_code):
+        room = get_room_by_code(room_code)
+        if not room:
+            return jsonify({'error': 'Room not found'}), 404
+
+        user_id = session.get('user_id')
+        if not self._authorize_room_access(room, user_id):
+            return jsonify({'error': 'Access denied'}), 403
+
+        shared_files = get_shared_files_for_room(room['id'])
+        files = [
+            {
+                'id': item['id'],
+                'original_filename': item['original_filename'],
+                'uploader_username': item['uploader_username'],
+                'mime_type': item['mime_type'],
+                'file_size': item['file_size'],
+                'uploaded_at': item['uploaded_at'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(item['uploaded_at'], 'strftime') else item['uploaded_at'],
+                'download_url': url_for('home.download_shared_file', file_id=item['id']),
+                'view_url': url_for('home.view_shared_file', file_id=item['id']),
+            }
+            for item in shared_files
+        ]
+        return jsonify({'status': 'success', 'files': files}), 200
+
+    def upload_shared_file(self, room_code):
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+
+        room = get_room_by_code(room_code)
+        if not room:
+            return "Room not found", 404
+
+        if room['is_private'] and not is_user_in_room(user_id, room['id']):
+            return "Access denied", 403
+
+        current_user = get_user_by_id(user_id)
+        if not current_user:
+            session.clear()
+            return redirect(url_for('auth.login'))
+
+        file = request.files.get('shared_file')
+        if not file or not file.filename:
+            flash('Please select a file to share.', 'warning')
+            return redirect(url_for('home.chat', room_code=room_code))
+
+        original_filename = secure_filename(file.filename)
+        if not original_filename:
+            flash('Invalid file name.', 'warning')
+            return redirect(url_for('home.chat', room_code=room_code))
+
+        _, ext = os.path.splitext(original_filename)
+        stored_filename = f"{uuid.uuid4().hex}{ext}"
+        upload_dir = self._get_shared_file_upload_dir()
+        saved_path = os.path.join(upload_dir, stored_filename)
+        file.save(saved_path)
+
+        mime_type = file.mimetype or 'application/octet-stream'
+        file_size = os.path.getsize(saved_path)
+
+        create_shared_file(room['id'], current_user['username'], original_filename, stored_filename, mime_type, file_size)
+
+        flash('File shared successfully.', 'success')
+        return redirect(url_for('home.chat', room_code=room_code))
+
+    def _load_shared_file_for_user(self, file_id, user_id):
+        file_record = get_shared_file_by_id(file_id)
+        if not file_record:
+            return None, None
+        room = get_room_by_id(file_record['room_id'])
+        if not self._authorize_room_access(room, user_id):
+            return None, room
+        return file_record, room
+
+    def download_shared_file(self, file_id):
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+
+        file_record, _ = self._load_shared_file_for_user(file_id, user_id)
+        if not file_record:
+            return "File not found or access denied", 404
+
+        upload_dir = self._get_shared_file_upload_dir()
+        return send_from_directory(
+            upload_dir,
+            file_record['stored_filename'],
+            as_attachment=True,
+            attachment_filename=file_record['original_filename'],
+        )
+
+    def view_shared_file(self, file_id):
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+
+        file_record, _ = self._load_shared_file_for_user(file_id, user_id)
+        if not file_record:
+            return "File not found or access denied", 404
+
+        upload_dir = self._get_shared_file_upload_dir()
+        return send_from_directory(
+            upload_dir,
+            file_record['stored_filename'],
+            as_attachment=False,
+            mimetype=file_record['mime_type'],
         )
 
     def vote_message(self, message_id):

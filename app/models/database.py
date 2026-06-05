@@ -281,6 +281,13 @@ class Database:
             pass
 
         try:
+            from app.models.shared_file import create_shared_files_table
+
+            create_shared_files_table()
+        except Exception:
+            pass
+
+        try:
             from app.models.presence_model import room_presence_model
 
             room_presence_model.create_room_presence_table()
