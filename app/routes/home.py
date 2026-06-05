@@ -20,6 +20,7 @@ import uuid
 from werkzeug.utils import secure_filename
 from app.controllers.moderation_controller import ModerationController
 from app.controllers.browse_rooms_controller import BrowseRoomsController
+from app.controllers.note_controller import NoteController
 
 class HomeRoutes:
     def __init__(self):
@@ -43,15 +44,10 @@ class HomeRoutes:
         self.bp.route('/moderation/action', methods=['POST'])(self.moderation_action)
         self.bp.route('/profile/update', methods=['POST'])(self.update_profile)
         self.bp.route('/profile/avatar', methods=['POST'])(self.update_avatar)
+        self.bp.route('/notes')(self.notes)
+        self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
-        
 
-
-        return self.bp
-
-    def require_login_for_protected_pages(self):
-        if request.endpoint is None:
-            return None
 
         if request.endpoint.startswith('static'):
             return None
@@ -319,6 +315,14 @@ class HomeRoutes:
         update_user_avatar(user_id, avatar_url)
 
         return redirect(url_for('home.profile'))
+
+    def notes(self):
+        controller = NoteController()
+        return controller.list_notes()
+
+    def upload_note(self):
+        controller = NoteController()
+        return controller.upload_note()
 
     def create_room(self):
         if request.method == 'POST':
