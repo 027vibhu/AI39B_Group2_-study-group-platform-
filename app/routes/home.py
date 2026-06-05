@@ -22,6 +22,14 @@ from werkzeug.utils import secure_filename
 from app.controllers.moderation_controller import ModerationController
 from app.controllers.browse_rooms_controller import BrowseRoomsController
 
+ALLOWED_SHARED_FILE_EXTENSIONS = {
+    '.png', '.jpg', '.jpeg', '.gif', '.webp',
+    '.pdf', '.doc', '.docx', '.ppt', '.pptx',
+    '.xls', '.xlsx', '.csv', '.txt', '.md',
+    '.zip', '.rar', '.7z'
+}
+MAX_SHARED_FILE_SIZE = 25 * 1024 * 1024  # 25MB
+
 class HomeRoutes:
     def __init__(self):
         self.bp = Blueprint('home', __name__)
@@ -218,13 +226,23 @@ class HomeRoutes:
             return redirect(url_for('home.chat', room_code=room_code))
 
         _, ext = os.path.splitext(original_filename)
+        ext = ext.lower()
+        if ext not in ALLOWED_SHARED_FILE_EXTENSIONS:
+            flash('Unsupported file type. Please upload a document, image, or compressed archive.', 'warning')
+            return redirect(url_for('home.chat', room_code=room_code))
+
         stored_filename = f"{uuid.uuid4().hex}{ext}"
         upload_dir = self._get_shared_file_upload_dir()
         saved_path = os.path.join(upload_dir, stored_filename)
         file.save(saved_path)
 
-        mime_type = file.mimetype or 'application/octet-stream'
         file_size = os.path.getsize(saved_path)
+        if file_size > MAX_SHARED_FILE_SIZE:
+            os.remove(saved_path)
+            flash('File is too large. Maximum allowed size is 25 MB.', 'warning')
+            return redirect(url_for('home.chat', room_code=room_code))
+
+        mime_type = file.mimetype or 'application/octet-stream'
 
         create_shared_file(room['id'], current_user['username'], original_filename, stored_filename, mime_type, file_size)
 
