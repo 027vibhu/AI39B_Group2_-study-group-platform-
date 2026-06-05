@@ -61,10 +61,11 @@
 
     <div class="chat-input">
       <button class="icon-btn" id="emojiBtn">😀</button>
-      <label class="icon-btn">
-        📎
-        <input type="file" hidden id="imageInput" accept="image/*">
-      </label>
+      <form id="sharedFileForm" action="{{ url_for('home.upload_shared_file', room_code=room_code) }}" method="POST" enctype="multipart/form-data" class="shared-file-form">
+        <label class="icon-btn" for="sharedFileInput">📎</label>
+        <input type="file" hidden id="sharedFileInput" name="shared_file">
+        <button class="icon-btn" type="submit">⬆️</button>
+      </form>
       <input type="text" class="input-box" id="messageInput" placeholder="Type a message...">
       <button class="send-btn" id="sendBtn">➤</button>
     </div>
@@ -95,6 +96,9 @@
       </div>
     {% endif %}
     </div>
+
+    <div class="section-title">Shared Files</div>
+    <div id="sharedFilesList" class="shared-files-list">Loading shared files...</div>
 
     <div class="section-title">Offline</div>
     <div id="offlineMembers">
@@ -148,7 +152,8 @@ const roomCode = "{{ room_code }}";
 const sendBtn = document.getElementById('sendBtn');
 const messageInput = document.getElementById('messageInput');
 const chatBody = document.getElementById('chatBody');
-const imageInput = document.getElementById('imageInput');
+const sharedFileInput = document.getElementById('sharedFileInput');
+const sharedFilesList = document.getElementById('sharedFilesList');
 const emojiBtn = document.getElementById('emojiBtn');
 const memberStatus = document.getElementById('memberStatus');
 const memberCount = document.getElementById('memberCount');
@@ -347,21 +352,60 @@ function renderPresenceLists(onlineUsers, offlineUsers) {
 }
 
 
-imageInput.addEventListener('change', function(){
-  const file = this.files[0];
-  if(!file) return;
-  const imageURL = URL.createObjectURL(file);
-  const message = document.createElement('div');
-  message.classList.add('message','sent');
-  message.innerHTML = `
-    <div class="message-bubble">
-      <img src="${imageURL}" class="message-image">
-      <div class="message-time">${getTime()}</div>
-    </div>
-  `;
-  chatBody.appendChild(message);
-  scrollBottom();
-});
+function renderSharedFiles(files) {
+  if (!sharedFilesList) return;
+  if (!files || files.length === 0) {
+    sharedFilesList.innerHTML = '<div class="shared-files-empty">No shared files yet.</div>';
+    return;
+  }
+
+  sharedFilesList.innerHTML = '';
+  files.forEach((file) => {
+    const item = document.createElement('div');
+    item.className = 'shared-file-item';
+    item.innerHTML = `
+      <div class="shared-file-name">${file.original_filename}</div>
+      <div class="shared-file-meta">Uploaded by ${file.uploader_username} · ${file.uploaded_at}</div>
+      <div class="shared-file-actions">
+        <a href="${file.download_url}" class="file-action" target="_blank" rel="noopener noreferrer">Download</a>
+        <a href="${file.view_url}" class="file-action" target="_blank" rel="noopener noreferrer">View</a>
+      </div>
+    `;
+    sharedFilesList.appendChild(item);
+  });
+}
+
+async function loadSharedFiles() {
+  if (!sharedFilesList) return;
+  try {
+    const response = await fetch(`/chat/${roomCode}/shared-files`);
+    if (!response.ok) {
+      sharedFilesList.innerHTML = '<div class="shared-files-error">Unable to load shared files.</div>';
+      return;
+    }
+    const json = await response.json();
+    if (json.status !== 'success') {
+      sharedFilesList.innerHTML = `<div class="shared-files-error">${json.error || 'Unable to load shared files.'}</div>`;
+      return;
+    }
+    renderSharedFiles(json.files || []);
+  } catch (err) {
+    sharedFilesList.innerHTML = '<div class="shared-files-error">Unable to load shared files.</div>';
+  }
+}
+
+if (sharedFilesList) {
+  loadSharedFiles();
+}
+
+if (sharedFileInput) {
+  sharedFileInput.addEventListener('change', () => {
+    const form = document.getElementById('sharedFileForm');
+    if (form && sharedFileInput.files.length > 0) {
+      form.submit();
+    }
+  });
+}
 
 if (emojiBtn) {
   emojiBtn.addEventListener('click', () => {
