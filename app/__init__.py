@@ -3,7 +3,9 @@ from flask_socketio import SocketIO
 from config import Config
 from app.routes.roomroutes import room_bp
 
-socketio = SocketIO()
+# Use a compatible async mode for the current environment.
+# threading is the safest fallback when eventlet/gevent are unavailable or unsupported.
+socketio = SocketIO(async_mode='threading')
 
 def create_app():
 
