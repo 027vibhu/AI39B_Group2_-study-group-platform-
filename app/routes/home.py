@@ -48,6 +48,11 @@ class HomeRoutes:
         self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
 
+        return self.bp
+
+    def require_login_for_protected_pages(self):
+        if request.endpoint is None:
+            return None
 
         if request.endpoint.startswith('static'):
             return None

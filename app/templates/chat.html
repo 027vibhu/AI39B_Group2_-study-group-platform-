@@ -30,11 +30,12 @@
         {% endif %}
         
       </div>
+    </div>
 
-      <div class="header-actions">
-        <a class="action-btn" href="{{ url_for('home.moderation') }}?room_code={{ room_code }}" title="Moderate room" aria-label="Moderate room">
-          <i class="fa-solid fa-hammer" aria-hidden="true"></i>
-        </a>
+    <div class="notification-panel">
+      <div class="section-title">Room Activity</div>
+      <div id="notificationList" class="notification-list">
+        <div class="notification-empty">Loading recent join/leave activity…</div>
       </div>
     </div>
 
@@ -233,6 +234,8 @@ const fileInput = document.getElementById('fileInput');
 const uploadList = document.getElementById('uploadList');
 const emojiBtn = document.getElementById('emojiBtn');
 const emojiPicker = document.getElementById('emojiPicker');
+const notificationList = document.getElementById('notificationList');
+const notificationApiUrl = "{{ url_for('join_leave_notification.get_room_notifications', room_id=room.id) }}";
 const memberStatus = document.getElementById('memberStatus');
 const memberCount = document.getElementById('memberCount');
 const onlineMembersContainer = document.getElementById('onlineMembers');
@@ -258,11 +261,60 @@ socket.on('status', (data) => {
 socket.on('presence_update', (data) => {
     if (data && data.online !== undefined && data.offline !== undefined) {
         renderPresenceLists(data.online, data.offline);
+        loadNotifications();
     }
+});
+
+socket.on('notification_update', (data) => {
+    if (!data || data.room_code !== roomCode) return;
+    loadNotifications();
 });
 
 if (onlineMembersContainer || offlineMembersContainer) {
     renderPresenceLists(initialOnlineMembers, initialOfflineMembers);
+}
+
+loadNotifications();
+
+function loadNotifications() {
+  if (!notificationApiUrl || !notificationList) return;
+  fetch(notificationApiUrl)
+    .then((response) => response.json())
+    .then((data) => {
+      if (data?.status !== 'success' || !Array.isArray(data.notifications)) {
+        throw new Error(data?.message || 'Could not load notifications');
+      }
+      renderNotifications(data.notifications);
+    })
+    .catch((error) => {
+      console.error('Notification load error:', error);
+      if (notificationList) {
+        notificationList.innerHTML = '<div class="notification-empty">Unable to load room activity.</div>';
+      }
+    });
+}
+
+function renderNotifications(items) {
+  if (!notificationList) return;
+  if (!items.length) {
+    notificationList.innerHTML = '<div class="notification-empty">No recent join or leave activity.</div>';
+    return;
+  }
+
+  notificationList.innerHTML = items
+    .slice(0, 10)
+    .map((item) => {
+      const label = item.action_type === 'join' ? 'joined' : 'left';
+      const time = item.created_at ? new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      const message = item.message || `${item.username} has ${label} the room.`;
+      return `
+        <div class="notification-item ${item.action_type}">
+          <div class="notification-text">${message}</div>
+          <div class="notification-time">${time}</div>
+        </div>
+      `;
+    })
+    .join('');
 }
 
 socket.on('receive_message', (data) => {

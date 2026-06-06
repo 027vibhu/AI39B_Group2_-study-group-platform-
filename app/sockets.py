@@ -6,6 +6,7 @@ from app.models.message_vote import create_or_update_vote, get_vote_count, remov
 from app.models.room import get_room_by_code, get_room_by_id, is_user_banned_from_room
 from app.models.message import get_message_by_id
 from app.models.presence_model import set_user_online, set_user_offline, get_online_users, get_offline_users
+from app.models.join_leave_notification import add_join_leave_notification
 
 # Track joined sockets so disconnect can update presence
 _active_presence = {}
@@ -53,6 +54,13 @@ def handle_join(data):
 
     join_room(room_code)
     set_user_online(user_id, room['id'], username)
+    add_join_leave_notification(
+        room['id'],
+        user_id,
+        username,
+        'join',
+        f'{username} has entered the room',
+    )
     _active_presence[request.sid] = {
         'user_id': user_id,
         'room_id': room['id'],
@@ -61,6 +69,12 @@ def handle_join(data):
     }
 
     print(f"{username} joined room: {room_code}")
+    emit('notification_update', {
+        'room_code': room_code,
+        'username': username,
+        'action_type': 'join',
+        'message': f'{username} has entered the room',
+    }, room=room_code)
     emit('status', {'msg': f'{username} has entered the room', 'username': username}, room=room_code)
     _broadcast_presence(room_code, room['id'])
 
@@ -72,6 +86,19 @@ def handle_disconnect():
         return
 
     set_user_offline(presence['user_id'], presence['room_id'], presence['username'])
+    add_join_leave_notification(
+        presence['room_id'],
+        presence['user_id'],
+        presence['username'],
+        'leave',
+        f"{presence['username']} has left the room",
+    )
+    emit('notification_update', {
+        'room_code': presence['room_code'],
+        'username': presence['username'],
+        'action_type': 'leave',
+        'message': f"{presence['username']} has left the room",
+    }, room=presence['room_code'])
     emit(
         'status',
         {'msg': f"{presence['username']} has left the room", 'username': presence['username']},
