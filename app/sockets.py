@@ -106,12 +106,15 @@ def handle_send_message(data):
 
             # Save message to database
             message_id = create_message(room['id'], username, message_content)
+            saved_message = get_message_by_id(message_id)
+            time_label = saved_message.get('time_label') if saved_message else ''
 
             print(f"Message from {username} to room {room_code}: {message_content}")
             emit('receive_message', {
                 'message': message_content,
                 'username': username,
                 'message_id': message_id,
+                'time_label': time_label,
             }, room=room_code)
 
 
