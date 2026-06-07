@@ -1,64 +1,42 @@
-<<<<<<< HEAD
-from flask import Blueprint, render_template, redirect, url_for, session, request, current_app, flash
-from app.models import (
-=======
-from flask import Blueprint, render_template, redirect, url_for, session, request, current_app, flash, jsonify
+from flask import Blueprint, render_template, redirect, url_for, session, request, current_app, flash, jsonify, send_from_directory
 from app.models.room import (
     create_room as create_room_record,
->>>>>>> 60ab2a74498b01c2f9451141b9df7fa3c555ab46
     create_user_room,
     delete_room_by_code,
-    log_moderation_action,
     get_joined_rooms_for_user,
     get_room_by_code,
+    get_room_by_id,
     is_user_banned_from_room,
     is_user_in_room,
+    log_room_action,
+    log_moderation_action
 )
-<<<<<<< HEAD
-from app.models.database import get_user_by_id, update_user_avatar, update_user_profile
-from app.controllers.room_controller import RoomController
-=======
 from app.models.message import get_messages_for_room
 from app.models.presence_model import get_online_users, get_offline_users
 from app.models.message_vote import get_vote_count, get_user_vote
-from app.controllers import MessageVoteController
+from app.controllers.message_vote_controller import MessageVoteController
 from app.models.database import get_user_by_id, get_user_by_username, update_user_avatar, update_user_profile
-import random
->>>>>>> 60ab2a74498b01c2f9451141b9df7fa3c555ab46
-import os
-import uuid
-from werkzeug.utils import secure_filename
+from app.models.shared_file import create_shared_file, get_shared_file_by_id, get_shared_files_for_room
 from app.controllers.moderation_controller import ModerationController
 from app.controllers.browse_rooms_controller import BrowseRoomsController
 from app.controllers.note_controller import NoteController
+from app import socketio
+import random
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
-<<<<<<< HEAD
-from datetime import datetime
+ALLOWED_SHARED_FILE_EXTENSIONS = {
+    '.png', '.jpg', '.jpeg', '.gif', '.webp',
+    '.pdf', '.doc', '.docx', '.ppt', '.pptx',
+    '.xls', '.xlsx', '.csv', '.txt', '.md',
+    '.zip', '.rar', '.7z'
+}
+MAX_SHARED_FILE_SIZE = 25 * 1024 * 1024  # 25MB
 
-
-# Lightweight view wrapper so templates can use both dict-style and attribute access
-class UserView:
-    def __init__(self, d):
-        self._d = d or {}
-
-    def get(self, key, default=None):
-        return self._d.get(key, default)
-
-    def __getattr__(self, name):
-        val = self._d.get(name)
-        if name == 'created_at' and isinstance(val, str):
-            try:
-                return datetime.fromisoformat(val)
-            except Exception:
-                return val
-        return val
-
-bp = Blueprint('home', __name__)
-=======
 class HomeRoutes:
     def __init__(self):
         self.bp = Blueprint('home', __name__)
->>>>>>> 60ab2a74498b01c2f9451141b9df7fa3c555ab46
 
     def register(self):
         # before_request
@@ -70,6 +48,10 @@ class HomeRoutes:
         self.bp.route('/browse_rooms')(self.browse_rooms)
         self.bp.route('/create')(self.create)
         self.bp.route('/chat/<room_code>')(self.chat)
+        self.bp.route('/chat/<room_code>/shared-files', methods=['GET'])(self.list_shared_files)
+        self.bp.route('/chat/<room_code>/shared-files', methods=['POST'])(self.upload_shared_file)
+        self.bp.route('/files/<int:file_id>/download')(self.download_shared_file)
+        self.bp.route('/files/<int:file_id>/view')(self.view_shared_file)
         self.bp.route('/message/<int:message_id>/vote', methods=['POST'])(self.vote_message)
         self.bp.route('/chat/<room_code>/delete', methods=['POST'])(self.delete_chat)
         self.bp.context_processor(self.inject_joined_rooms)
@@ -137,167 +119,10 @@ class HomeRoutes:
             if not get_room_by_code(code):
                 return code
 
-<<<<<<< HEAD
-
-@bp.route('/join_room')
-def join_room():
-    return render_template('join_room.html')
-
-
-def _remember_joined_room(room_code):
-    joined_room_codes = session.get('joined_room_codes', [])
-    if room_code not in joined_room_codes:
-        joined_room_codes.insert(0, room_code)
-        session['joined_room_codes'] = joined_room_codes[:8]
-        session.modified = True
-
-
-def _remember_joined_room_for_user(user_id, room_id):
-    create_user_room(user_id, room_id)
-
-
-@bp.route('/create')
-def create():
-    return redirect(url_for('home.create_room'))
-
-
-@bp.route('/chat/<room_code>')
-def chat(room_code):
-    room = get_room_by_code(room_code)
-    if not room:
-        return "Room not found", 404
-
-    user_id = session.get('user_id')
-    if user_id:
-        _remember_joined_room_for_user(user_id, room['id'])
-    else:
-        _remember_joined_room(room_code)
-    
-    # Fetch previous messages
-    messages = get_messages_for_room(room['id'])
-    
-    return render_template('chat.html', room=room, room_code=room_code, messages=messages)
-
-
-@bp.route('/chat/<room_code>/delete', methods=['POST'])
-def delete_chat(room_code):
-    delete_room_by_code(room_code)
-    return redirect(url_for('home.profile'))
-
-
-@bp.context_processor
-def inject_joined_rooms():
-    user_id = session.get('user_id')
-    joined_rooms = get_joined_rooms_for_user(user_id) if user_id else []
-
-    current_room_code = None
-    if request.endpoint == 'home.chat':
-        current_room_code = request.view_args.get('room_code') if request.view_args else None
-
-    current_user = None
-    if user_id:
-        user_rec = get_user_by_id(user_id)
-        if user_rec:
-            current_user = UserView(user_rec)
-        else:
-            current_user = None
-
-    return {
-        'joined_rooms': joined_rooms,
-        'current_room_code': current_room_code,
-        'current_user': current_user,
-    }
-
-
-@bp.route('/profile')
-def profile():
-    user_id = session.get('user_id')
-    if not user_id:
-        return redirect(url_for('auth.login'))
-
-    user = get_user_by_id(user_id)
-    if not user:
-        session.clear()
-        return redirect(url_for('auth.login'))
-
-    # Wrap into the shared `UserView` so templates can access fields
-    user_view = UserView(user)
-    return render_template('profile.html', user=user_view)
-
-
-@bp.route('/moderation')
-def moderation():
-    return render_template('moderation.html')
-
-
-@bp.route('/profile/update', methods=['POST'])
-def update_profile():
-    user_id = session.get('user_id')
-    if not user_id:
-        return redirect(url_for('auth.login'))
-
-    first_name = (request.form.get('first_name') or '').strip()
-    last_name = (request.form.get('last_name') or '').strip()
-    school = (request.form.get('school') or '').strip()
-    address = (request.form.get('address') or '').strip()
-    bio = (request.form.get('bio') or '').strip()
-
-    update_user_profile(user_id, first_name, last_name, school, address, bio)
-    flash('Profile updated successfully.', 'success')
-    return redirect(url_for('home.profile'))
-
-
-@bp.route('/profile/avatar', methods=['POST'])
-def update_avatar():
-    user_id = session.get('user_id')
-    if not user_id:
-        return redirect(url_for('auth.login'))
-
-    file = request.files.get('avatar')
-    if not file or not file.filename:
-        return redirect(url_for('home.profile'))
-
-    filename = secure_filename(file.filename)
-    _, ext = os.path.splitext(filename.lower())
-    allowed_ext = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
-    if ext not in allowed_ext:
-        return redirect(url_for('home.profile'))
-
-    upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'avatars')
-    os.makedirs(upload_dir, exist_ok=True)
-    stored_name = f"{uuid.uuid4().hex}{ext}"
-    file.save(os.path.join(upload_dir, stored_name))
-
-    avatar_url = f"uploads/avatars/{stored_name}"
-    update_user_avatar(user_id, avatar_url)
-
-    return redirect(url_for('home.profile'))
-
-
-room_controller = RoomController()
-
-
-@bp.route('/create_room', methods=['GET', 'POST'])
-def create_room():
-    if request.method == 'POST':
-        room_name = request.form.get('room_name', '').strip()
-        subject_tag = request.form.get('subject_tag', '').strip()
-        submitted_code = (request.form.get('room_code') or '').strip().upper()
-
-        is_private = request.form.get('is_private') == '1'
-
-        new_room = room_controller.create_room(
-            room_name,
-            subject_tag,
-            submitted_code,
-            is_private,
-        )
-=======
     def chat(self, room_code):
         room = get_room_by_code(room_code)
         if not room:
             return "Room not found", 404
->>>>>>> 60ab2a74498b01c2f9451141b9df7fa3c555ab46
 
         user_id = session.get('user_id')
         if not user_id:
@@ -322,13 +147,6 @@ def create_room():
         elif user_id:
             self._remember_joined_room_for_user(user_id, room['id'])
         else:
-<<<<<<< HEAD
-            _remember_joined_room(new_room['code'])
-
-        return redirect(url_for('home.chat', room_code=new_room['code']))
-
-    return render_template('createroom.html', room_code=room_controller.generate_unique_room_code())
-=======
             self._remember_joined_room(room_code)
 
         messages = get_messages_for_room(room['id'])
@@ -347,6 +165,137 @@ def create_room():
             messages=messages,
             online_members=online_members,
             offline_members=offline_members,
+        )
+
+    def _get_shared_file_upload_dir(self):
+        upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'shared_files')
+        os.makedirs(upload_dir, exist_ok=True)
+        return upload_dir
+
+    def _authorize_room_access(self, room, user_id):
+        if not room:
+            return False
+        if room['is_private'] and not is_user_in_room(user_id, room['id']):
+            return False
+        return True
+
+    def list_shared_files(self, room_code):
+        room = get_room_by_code(room_code)
+        if not room:
+            return jsonify({'error': 'Room not found'}), 404
+
+        user_id = session.get('user_id')
+        if not self._authorize_room_access(room, user_id):
+            return jsonify({'error': 'Access denied'}), 403
+
+        shared_files = get_shared_files_for_room(room['id'])
+        files = [
+            {
+                'id': item['id'],
+                'original_filename': item['original_filename'],
+                'uploader_username': item['uploader_username'],
+                'mime_type': item['mime_type'],
+                'file_size': item['file_size'],
+                'uploaded_at': item['uploaded_at'].strftime('%Y-%m-%d %H:%M:%S') if hasattr(item['uploaded_at'], 'strftime') else item['uploaded_at'],
+                'download_url': url_for('home.download_shared_file', file_id=item['id']),
+                'view_url': url_for('home.view_shared_file', file_id=item['id']),
+            }
+            for item in shared_files
+        ]
+        return jsonify({'status': 'success', 'files': files}), 200
+
+    def upload_shared_file(self, room_code):
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+
+        room = get_room_by_code(room_code)
+        if not room:
+            return "Room not found", 404
+
+        if room['is_private'] and not is_user_in_room(user_id, room['id']):
+            return "Access denied", 403
+
+        current_user = get_user_by_id(user_id)
+        if not current_user:
+            session.clear()
+            return redirect(url_for('auth.login'))
+
+        file = request.files.get('shared_file')
+        if not file or not file.filename:
+            flash('Please select a file to share.', 'warning')
+            return redirect(url_for('home.chat', room_code=room_code))
+
+        original_filename = secure_filename(file.filename)
+        if not original_filename:
+            flash('Invalid file name.', 'warning')
+            return redirect(url_for('home.chat', room_code=room_code))
+
+        _, ext = os.path.splitext(original_filename)
+        ext = ext.lower()
+        if ext not in ALLOWED_SHARED_FILE_EXTENSIONS:
+            flash('Unsupported file type. Please upload a document, image, or compressed archive.', 'warning')
+            return redirect(url_for('home.chat', room_code=room_code))
+
+        stored_filename = f"{uuid.uuid4().hex}{ext}"
+        upload_dir = self._get_shared_file_upload_dir()
+        saved_path = os.path.join(upload_dir, stored_filename)
+        file.save(saved_path)
+
+        file_size = os.path.getsize(saved_path)
+        if file_size > MAX_SHARED_FILE_SIZE:
+            os.remove(saved_path)
+            flash('File is too large. Maximum allowed size is 25 MB.', 'warning')
+            return redirect(url_for('home.chat', room_code=room_code))
+
+        mime_type = file.mimetype or 'application/octet-stream'
+
+        create_shared_file(room['id'], current_user['username'], original_filename, stored_filename, mime_type, file_size)
+
+        flash('File shared successfully.', 'success')
+        return redirect(url_for('home.chat', room_code=room_code))
+
+    def _load_shared_file_for_user(self, file_id, user_id):
+        file_record = get_shared_file_by_id(file_id)
+        if not file_record:
+            return None, None
+        room = get_room_by_id(file_record['room_id'])
+        if not self._authorize_room_access(room, user_id):
+            return None, room
+        return file_record, room
+
+    def download_shared_file(self, file_id):
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+
+        file_record, _ = self._load_shared_file_for_user(file_id, user_id)
+        if not file_record:
+            return "File not found or access denied", 404
+
+        upload_dir = self._get_shared_file_upload_dir()
+        return send_from_directory(
+            upload_dir,
+            file_record['stored_filename'],
+            as_attachment=True,
+            attachment_filename=file_record['original_filename'],
+        )
+
+    def view_shared_file(self, file_id):
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+
+        file_record, _ = self._load_shared_file_for_user(file_id, user_id)
+        if not file_record:
+            return "File not found or access denied", 404
+
+        upload_dir = self._get_shared_file_upload_dir()
+        return send_from_directory(
+            upload_dir,
+            file_record['stored_filename'],
+            as_attachment=False,
+            mimetype=file_record['mime_type'],
         )
 
     def vote_message(self, message_id):
@@ -542,7 +491,6 @@ def create_room():
             user_id = session.get('user_id')
             new_room = create_room_record(code, room_name or f'Room {code}', is_private, subject_tags, owner_id=user_id)
 
-            user_id = session.get('user_id')
             if user_id:
                 self._remember_joined_room_for_user(user_id, new_room['id'])
             else:
@@ -551,11 +499,6 @@ def create_room():
             return redirect(url_for('home.chat', room_code=code))
 
         return render_template('createroom.html', room_code=self._generate_unique_room_code())
-    
-
-    
-
 
 # Expose blueprint
 bp = HomeRoutes().register()
->>>>>>> 60ab2a74498b01c2f9451141b9df7fa3c555ab46

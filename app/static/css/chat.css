@@ -562,6 +562,68 @@
   text-transform:uppercase;
 }
 
+.shared-file-form{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.shared-files-list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.shared-file-item{
+  background:#f4f6fb;
+  border-radius:14px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.shared-file-name{
+  font-weight:700;
+  color:#1f2430;
+  word-break:break-all;
+}
+
+.shared-file-meta{
+  font-size:12px;
+  color:#6b7280;
+}
+
+.shared-file-actions{
+  display:flex;
+  gap:8px;
+}
+
+.file-action{
+  text-decoration:none;
+  font-size:13px;
+  color:#49507a;
+  background:#ffffff;
+  border:1px solid #d8dbe7;
+  padding:8px 12px;
+  border-radius:12px;
+  transition:0.2s ease;
+}
+
+.file-action:hover{
+  background:#eef2ff;
+  border-color:#cbd3f2;
+}
+
+.shared-files-empty,
+.shared-files-error{
+  color:#6b7280;
+  font-size:13px;
+  padding:12px 14px;
+  border-radius:14px;
+  background:#f8fafc;
+}
+
 .card.files{
   margin-top:24px;
   padding:20px;
