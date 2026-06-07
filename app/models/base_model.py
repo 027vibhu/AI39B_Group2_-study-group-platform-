@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-class BaseModel:
-    """Base model class for shared model behavior."""
-
-    def __init__(self):
-        pass
-=======
 from abc import ABC, abstractmethod
 
 
@@ -83,4 +76,3 @@ class BaseModel(ABC):
             return db.fetch_all(query, params)
         finally:
             db.close()
->>>>>>> 60ab2a74498b01c2f9451141b9df7fa3c555ab46

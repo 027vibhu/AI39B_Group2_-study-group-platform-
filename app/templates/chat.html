@@ -3,11 +3,19 @@
 {% block title %}LOREVIA Chat{% endblock %}
 
 {% block head %}
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/subject_tags.css') }}">
 {% endblock %}
 
-{% block topbar_title %}{% endblock %}
+{% block topbar_title %}
+  <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+    <span>Room: {{ room.name if room.name else room_code }}</span>
+    <a href="{{ url_for('home.moderation', room_code=room_code) }}" class="moderation-btn" title="Moderation Panel" style="margin-right: 24px;">
+       <i class="fa-solid fa-shield-halved"></i> M
+    </a>
+  </div>
+{% endblock %}
 
 {% block content %}
   <div class="chat-layout">
@@ -30,14 +38,16 @@
         {% endif %}
         
       </div>
-    </div>
 
-    <div class="notification-panel">
-      <div class="section-title">Room Activity</div>
-      <div id="notificationList" class="notification-list">
-        <div class="notification-empty">Loading recent join/leave activity…</div>
+      <div class="header-actions">
+        <a href="{{ url_for('home.moderation', room_code=room_code) }}" class="moderation-btn" title="Moderation Panel">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span style="margin-left: 6px;">M</span>
+        </a>
       </div>
     </div>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
     <div class="chat-body" id="chatBody">
       {% for msg in messages %}
@@ -65,23 +75,15 @@
       <button class="icon-btn" id="emojiBtn" type="button" aria-label="Insert emoji" title="Insert emoji">
         <i class="fa-solid fa-face-smile" aria-hidden="true"></i>
       </button>
-      
-      <form id="sharedFileForm" action="{{ url_for('home.upload_shared_file', room_code=room_code) }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 8px;">
-        <label class="icon-btn" for="sharedFileInput" title="Share a file">
-          <i class="fa-solid fa-paperclip" aria-hidden="true"></i>
-        </label>
-        <input type="file" hidden id="sharedFileInput" name="shared_file">
-        <button class="icon-btn" type="submit" title="Upload shared file" id="uploadFileBtn" style="display: none;">
-          <i class="fa-solid fa-upload"></i>
-        </button>
-      </form>
-
+      <label class="icon-btn" id="fileLabel">
+        <i class="fa-solid fa-paperclip" aria-hidden="true"></i>
+        <input type="file" hidden id="fileInput" accept="image/*,application/pdf" multiple>
+      </label>
       <input type="text" class="input-box" id="messageInput" placeholder="Type a message...">
       <button class="send-btn" id="sendBtn" type="button" aria-label="Send message" title="Send message">
         <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
       </button>
     </div>
-    
     <div class="emoji-picker" id="emojiPicker" aria-label="Emoji picker" aria-hidden="true">
       <button type="button" class="emoji-item">😀</button>
       <button type="button" class="emoji-item">😁</button>
@@ -156,9 +158,6 @@
     {% endif %}
     </div>
 
-    <div class="section-title">Shared Files</div>
-    <div id="sharedFilesList" class="shared-files-list">Loading shared files...</div>
-
     <div class="section-title">Offline</div>
     <div id="offlineMembers">
     {% if offline_members %}
@@ -172,6 +171,37 @@
       </div>
       {% endfor %}
     {% endif %}
+    </div>
+
+    <div class="card files">
+      <h3>Files</h3>
+      <input class="search" placeholder="Search files...">
+      <div class="file-list">
+        <div class="file">
+          <div class="file-icon">📄</div>
+          <div class="file-meta">
+            <span class="file-name">Lecture 1.pdf</span>
+            <span class="file-size">PDF • 1.2 MB</span>
+          </div>
+          <div class="menu">⋮</div>
+        </div>
+        <div class="file">
+          <div class="file-icon">📄</div>
+          <div class="file-meta">
+            <span class="file-name">Lecture 2.pdf</span>
+            <span class="file-size">PDF • 980 KB</span>
+          </div>
+          <div class="menu">⋮</div>
+        </div>
+        <div class="file">
+          <div class="file-icon">📘</div>
+          <div class="file-meta">
+            <span class="file-name">Summary.md</span>
+            <span class="file-size">MD • 4 KB</span>
+          </div>
+          <div class="menu">⋮</div>
+        </div>
+      </div>
     </div>
 
     </div>
@@ -210,18 +240,24 @@ const roomCode = "{{ room_code }}";
 const sendBtn = document.getElementById('sendBtn');
 const messageInput = document.getElementById('messageInput');
 const chatBody = document.getElementById('chatBody');
-const sharedFileInput = document.getElementById('sharedFileInput');
-const sharedFilesList = document.getElementById('sharedFilesList');
+const fileInput = document.getElementById('fileInput');
+const uploadList = document.getElementById('uploadList');
 const emojiBtn = document.getElementById('emojiBtn');
 const emojiPicker = document.getElementById('emojiPicker');
-const notificationList = document.getElementById('notificationList');
-const notificationApiUrl = "{{ url_for('join_leave_notification.get_room_notifications', room_id=room.id) }}";
 const memberStatus = document.getElementById('memberStatus');
 const memberCount = document.getElementById('memberCount');
 const onlineMembersContainer = document.getElementById('onlineMembers');
 const offlineMembersContainer = document.getElementById('offlineMembers');
+const chatMenuButton = document.getElementById('chatMenuButton');
+const chatMenu = document.getElementById('chatMenu');
 const initialOnlineMembers = JSON.parse('{{ (online_members or []) | tojson | safe }}');
 const initialOfflineMembers = JSON.parse('{{ (offline_members or []) | tojson | safe }}');
+
+// Set to track users who are already members of this room (online or offline) when we load/update
+const knownMembers = new Set([
+  ...initialOnlineMembers.map(m => m.username.toLowerCase()),
+  ...initialOfflineMembers.map(m => m.username.toLowerCase())
+]);
 
 /* SOCKET CONNECTION */
 socket.on('connect', () => {
@@ -239,60 +275,58 @@ socket.on('status', (data) => {
 socket.on('presence_update', (data) => {
     if (data && data.online !== undefined && data.offline !== undefined) {
         renderPresenceLists(data.online, data.offline);
-        loadNotifications();
+        
+        // Add updated presence members to knownMembers
+        data.online.forEach(u => knownMembers.add(u.username.toLowerCase()));
+        data.offline.forEach(u => knownMembers.add(u.username.toLowerCase()));
     }
 });
 
 socket.on('notification_update', (data) => {
     if (!data || data.room_code !== roomCode) return;
-    loadNotifications();
+    
+    // Show toast for other users
+    if (data.username && data.username.toLowerCase() !== displayName.toLowerCase()) {
+        const usernameLower = data.username.toLowerCase();
+        
+        // Only trigger toast for 'join' action of a user who is not already a member
+        if (data.action_type === 'join' && !knownMembers.has(usernameLower)) {
+            knownMembers.add(usernameLower);
+            showToast(data.message || `${data.username} has joined the room.`, 'join');
+        } else if (data.action_type === 'leave') {
+            // Optional: You might want to show leave toasts always or filter them too
+            // For now, let's just show join for new users as requested.
+        }
+    }
 });
 
 if (onlineMembersContainer || offlineMembersContainer) {
     renderPresenceLists(initialOnlineMembers, initialOfflineMembers);
 }
 
-loadNotifications();
+function showToast(message, actionType) {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
 
-function loadNotifications() {
-  if (!notificationApiUrl || !notificationList) return;
-  fetch(notificationApiUrl)
-    .then((response) => response.json())
-    .then((data) => {
-      if (data?.status !== 'success' || !Array.isArray(data.notifications)) {
-        throw new Error(data?.message || 'Could not load notifications');
-      }
-      renderNotifications(data.notifications);
-    })
-    .catch((error) => {
-      console.error('Notification load error:', error);
-      if (notificationList) {
-        notificationList.innerHTML = '<div class="notification-empty">Unable to load room activity.</div>';
-      }
-    });
-}
+  const toast = document.createElement('div');
+  toast.className = `toast-item ${actionType}`;
 
-function renderNotifications(items) {
-  if (!notificationList) return;
-  if (!items.length) {
-    notificationList.innerHTML = '<div class="notification-empty">No recent join or leave activity.</div>';
-    return;
-  }
+  const iconClass = actionType === 'join' ? 'fa-solid fa-circle-user' : 'fa-solid fa-circle-xmark';
 
-  notificationList.innerHTML = items
-    .slice(0, 10)
-    .map((item) => {
-      const label = item.action_type === 'join' ? 'joined' : 'left';
-      const time = item.created_at ? new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-      const message = item.message || `${item.username} has ${label} the room.`;
-      return `
-        <div class="notification-item ${item.action_type}">
-          <div class="notification-text">${message}</div>
-          <div class="notification-time">${time}</div>
-        </div>
-      `;
-    })
-    .join('');
+  toast.innerHTML = `
+    <i class="${iconClass} toast-icon"></i>
+    <div class="toast-message">${message}</div>
+  `;
+
+  container.appendChild(toast);
+
+  // Auto-remove toast after 5 seconds (4.7s visible + 0.3s fade out animation)
+  setTimeout(() => {
+    toast.style.animation = 'toastFadeOut 0.3s forwards';
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
+  }, 4700);
 }
 
 socket.on('receive_message', (data) => {
@@ -335,6 +369,28 @@ socket.on('vote_update', (data) => {
     console.error('vote_update handling error', err);
   }
 });
+
+if (chatMenuButton && chatMenu) {
+  const closeChatMenu = () => {
+    chatMenuButton.setAttribute('aria-expanded', 'false');
+    chatMenu.setAttribute('aria-hidden', 'true');
+  };
+
+  chatMenuButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const isOpen = chatMenuButton.getAttribute('aria-expanded') === 'true';
+    chatMenuButton.setAttribute('aria-expanded', String(!isOpen));
+    chatMenu.setAttribute('aria-hidden', String(isOpen));
+  });
+
+  document.addEventListener('click', closeChatMenu);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeChatMenu();
+    }
+  });
+}
 
 /* SEND MESSAGE */
 function sendMessage(){
@@ -437,58 +493,85 @@ function renderPresenceLists(onlineUsers, offlineUsers) {
     }
 }
 
-function renderSharedFiles(files) {
-  if (!sharedFilesList) return;
-  if (!files || files.length === 0) {
-    sharedFilesList.innerHTML = '<div class="shared-files-empty">No shared files yet.</div>';
-    return;
+
+fileInput.addEventListener('change', function(){
+  const files = Array.from(this.files || []);
+  if (!files.length) return;
+  files.forEach(file => handleFileUpload(file));
+  // clear input to allow re-selecting same files
+  this.value = '';
+});
+
+// Drag & drop support on chat input area
+const chatInputEl = document.getElementById('chatInput');
+['dragenter','dragover'].forEach(evt => {
+  chatInputEl.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); chatInputEl.classList.add('drag-over'); });
+});
+['dragleave','drop'].forEach(evt => {
+  chatInputEl.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); chatInputEl.classList.remove('drag-over'); });
+});
+chatInputEl.addEventListener('drop', (e) => {
+  const dt = e.dataTransfer;
+  const files = Array.from(dt.files || []);
+  files.forEach(f => handleFileUpload(f));
+});
+
+function handleFileUpload(file){
+  const id = 'upload-' + Math.random().toString(36).slice(2,9);
+  const item = document.createElement('div');
+  item.className = 'upload-item';
+  item.id = id;
+
+  const isImage = file.type.startsWith('image/');
+  const thumb = document.createElement('div');
+  thumb.className = 'upload-thumb';
+  if (isImage) {
+    const url = URL.createObjectURL(file);
+    thumb.innerHTML = `<img src="${url}" alt="${file.name}">`;
+  } else {
+    thumb.textContent = file.name.split('.').pop().toUpperCase();
   }
 
-  sharedFilesList.innerHTML = '';
-  files.forEach((file) => {
-    const item = document.createElement('div');
-    item.className = 'shared-file-item';
-    item.innerHTML = `
-      <div class="shared-file-name">${file.original_filename}</div>
-      <div class="shared-file-meta">Uploaded by ${file.uploader_username} · ${file.uploaded_at}</div>
-      <div class="shared-file-actions">
-        <a href="${file.download_url}" class="file-action" target="_blank" rel="noopener noreferrer">Download</a>
-        <a href="${file.view_url}" class="file-action" target="_blank" rel="noopener noreferrer">View</a>
-      </div>
-    `;
-    sharedFilesList.appendChild(item);
-  });
-}
+  const meta = document.createElement('div');
+  meta.className = 'upload-meta';
+  meta.innerHTML = `<div class="upload-file-name">${file.name}</div><div class="upload-actions"><button class="upload-send-btn">Send</button><button class="upload-remove-btn">Remove</button></div><div class="upload-progress"><div class="upload-progress-bar" style="width:0%"></div></div>`;
 
-async function loadSharedFiles() {
-  if (!sharedFilesList) return;
-  try {
-    const response = await fetch(`/chat/${roomCode}/shared-files`);
-    if (!response.ok) {
-      sharedFilesList.innerHTML = '<div class="shared-files-error">Unable to load shared files.</div>';
-      return;
-    }
-    const json = await response.json();
-    if (json.status !== 'success') {
-      sharedFilesList.innerHTML = `<div class="shared-files-error">${json.error || 'Unable to load shared files.'}</div>`;
-      return;
-    }
-    renderSharedFiles(json.files || []);
-  } catch (err) {
-    sharedFilesList.innerHTML = '<div class="shared-files-error">Unable to load shared files.</div>';
-  }
-}
+  item.appendChild(thumb);
+  item.appendChild(meta);
+  uploadList.appendChild(item);
 
-if (sharedFilesList) {
-  loadSharedFiles();
-}
+  const sendBtn = item.querySelector('.upload-send-btn');
+  const removeBtn = item.querySelector('.upload-remove-btn');
+  const progressBar = item.querySelector('.upload-progress-bar');
 
-if (sharedFileInput) {
-  sharedFileInput.addEventListener('change', () => {
-    const uploadBtn = document.getElementById('uploadFileBtn');
-    if (uploadBtn) {
-      uploadBtn.style.display = 'flex';
-    }
+  removeBtn.addEventListener('click', () => { item.remove(); });
+
+  sendBtn.addEventListener('click', () => {
+    sendBtn.disabled = true;
+    // read file as data URL and emit via socket
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      const dataUrl = ev.target.result;
+      // show progress simulation
+      let progress = 0;
+      const intv = setInterval(() => {
+        progress = Math.min(100, progress + Math.floor(Math.random()*20)+10);
+        progressBar.style.width = progress + '%';
+        if (progress >= 100) {
+          clearInterval(intv);
+          // emit file to server
+          socket.emit('send_file', { room: roomCode, filename: file.name, data: dataUrl, username: displayName });
+          // add message to UI
+          if (isImage) {
+            addMessageToUI(`<img src="${dataUrl}" class=\"message-image\">`, 'sent', displayName);
+          } else {
+            addMessageToUI(`<a href=\"${dataUrl}\" download=\"${file.name}\">${file.name}</a>`, 'sent', displayName);
+          }
+          item.remove();
+        }
+      }, 200);
+    };
+    reader.readAsDataURL(file);
   });
 }
 
@@ -594,4 +677,5 @@ socket.on('moderation_action', (data) => {
   window.location.href = "{{ url_for('home.index') }}";
 });
 </script>
+
 {% endblock %}

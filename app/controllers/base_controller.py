@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-class BaseController:
-    """Base controller class for shared controller behavior."""
-
-    def __init__(self):
-        pass
-=======
 from flask import render_template, redirect, url_for, session, request, flash
 
 
@@ -35,4 +28,3 @@ class BaseController:
     def flash_and_redirect(self, msg, category, endpoint):
         flash(msg, category)
         return redirect(url_for(endpoint))
->>>>>>> 60ab2a74498b01c2f9451141b9df7fa3c555ab46

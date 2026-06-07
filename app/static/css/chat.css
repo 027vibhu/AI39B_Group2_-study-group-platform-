@@ -17,12 +17,15 @@
 .topbar{
   height:64px;
   margin-bottom:0;
+  display: flex;
+  align-items: center;
   justify-content:space-between;
   gap:12px;
 }
 
 .topbar h1{
-  display:none;
+  font-size: 24px;
+  color: #1f2430;
 }
 
 
@@ -54,55 +57,6 @@
   justify-content:space-between;
   align-items:center;
   background:#fbfbfe;
-}
-
-.notification-panel{
-  padding:20px 26px;
-  border-bottom:1px solid #eef0f5;
-  background:#fbfbfe;
-}
-
-.notification-list{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  margin-top:12px;
-}
-
-.notification-item{
-  padding:14px 18px;
-  border-radius:16px;
-  background:#f4f6fb;
-  color:#1f2430;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  font-size:13px;
-}
-
-.notification-item.join{
-  border-left:4px solid #10b981;
-}
-
-.notification-item.leave{
-  border-left:4px solid #ef4444;
-}
-
-.notification-text{
-  flex:1;
-  line-height:1.4;
-}
-
-.notification-time{
-  color:#6b7280;
-  font-size:12px;
-  white-space:nowrap;
-}
-
-.notification-empty{
-  color:#6b7280;
-  font-size:13px;
 }
 
 .header-left h2{
@@ -139,6 +93,8 @@
 .header-actions{
   display:flex;
   gap:12px;
+  position: relative;
+  z-index: 10;
 }
 
 .action-btn{
@@ -161,6 +117,28 @@
 .action-btn:hover{
   background:#49507a;
   color:#fff;
+}
+
+.moderation-btn {
+  background: #49507a !important;
+  color: white !important;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 18px;
+  box-shadow: 0 4px 12px rgba(73, 80, 122, 0.3);
+  transition: 0.2s ease;
+}
+
+.moderation-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(73, 80, 122, 0.4);
+  background: #3f4670 !important;
 }
 
 .chat-body{
@@ -562,68 +540,6 @@
   text-transform:uppercase;
 }
 
-.shared-file-form{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.shared-files-list{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-
-.shared-file-item{
-  background:#f4f6fb;
-  border-radius:14px;
-  padding:14px;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.shared-file-name{
-  font-weight:700;
-  color:#1f2430;
-  word-break:break-all;
-}
-
-.shared-file-meta{
-  font-size:12px;
-  color:#6b7280;
-}
-
-.shared-file-actions{
-  display:flex;
-  gap:8px;
-}
-
-.file-action{
-  text-decoration:none;
-  font-size:13px;
-  color:#49507a;
-  background:#ffffff;
-  border:1px solid #d8dbe7;
-  padding:8px 12px;
-  border-radius:12px;
-  transition:0.2s ease;
-}
-
-.file-action:hover{
-  background:#eef2ff;
-  border-color:#cbd3f2;
-}
-
-.shared-files-empty,
-.shared-files-error{
-  color:#6b7280;
-  font-size:13px;
-  padding:12px 14px;
-  border-radius:14px;
-  background:#f8fafc;
-}
-
 .card.files{
   margin-top:24px;
   padding:20px;
@@ -719,5 +635,96 @@
   .right-panel{
     max-width:none;
     width:100%;
+  }
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toast-item {
+  min-width: 280px;
+  max-width: 380px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #1f2430;
+  box-shadow: 0 12px 30px rgba(24, 32, 56, 0.16);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  pointer-events: auto;
+  animation: toastFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-left: 4px solid #f4f6fb;
+}
+
+.toast-item.join {
+  border-left-color: #10b981;
+}
+
+.toast-item.leave {
+  border-left-color: #ef4444;
+}
+
+.toast-icon {
+  font-size: 18px;
+}
+
+.toast-item.join .toast-icon {
+  color: #10b981;
+}
+
+.toast-item.leave .toast-icon {
+  color: #ef4444;
+}
+
+.toast-message {
+  flex: 1;
+  line-height: 1.4;
+}
+
+@keyframes toastFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@media(max-width:1100px){
+  .toast-container {
+    top: auto;
+    bottom: 24px;
+    right: 24px;
+    left: 24px;
+    align-items: center;
+  }
+  
+  .toast-item {
+    width: 100%;
   }
 }
