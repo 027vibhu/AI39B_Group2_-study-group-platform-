@@ -1,6 +1,11 @@
+<<<<<<< HEAD
+from flask import Blueprint, render_template, redirect, url_for, session, request, current_app, flash
+from app.models import (
+=======
 from flask import Blueprint, render_template, redirect, url_for, session, request, current_app, flash, jsonify
 from app.models.room import (
     create_room as create_room_record,
+>>>>>>> 60ab2a74498b01c2f9451141b9df7fa3c555ab46
     create_user_room,
     delete_room_by_code,
     log_moderation_action,
@@ -9,21 +14,50 @@ from app.models.room import (
     is_user_banned_from_room,
     is_user_in_room,
 )
+<<<<<<< HEAD
+from app.models.database import get_user_by_id, update_user_avatar, update_user_profile
+from app.controllers.room_controller import RoomController
+=======
 from app.models.message import get_messages_for_room
 from app.models.presence_model import get_online_users, get_offline_users
 from app.models.message_vote import get_vote_count, get_user_vote
 from app.controllers import MessageVoteController
 from app.models.database import get_user_by_id, get_user_by_username, update_user_avatar, update_user_profile
 import random
+>>>>>>> 60ab2a74498b01c2f9451141b9df7fa3c555ab46
 import os
 import uuid
 from werkzeug.utils import secure_filename
 from app.controllers.moderation_controller import ModerationController
 from app.controllers.browse_rooms_controller import BrowseRoomsController
 
+<<<<<<< HEAD
+from datetime import datetime
+
+
+# Lightweight view wrapper so templates can use both dict-style and attribute access
+class UserView:
+    def __init__(self, d):
+        self._d = d or {}
+
+    def get(self, key, default=None):
+        return self._d.get(key, default)
+
+    def __getattr__(self, name):
+        val = self._d.get(name)
+        if name == 'created_at' and isinstance(val, str):
+            try:
+                return datetime.fromisoformat(val)
+            except Exception:
+                return val
+        return val
+
+bp = Blueprint('home', __name__)
+=======
 class HomeRoutes:
     def __init__(self):
         self.bp = Blueprint('home', __name__)
+>>>>>>> 60ab2a74498b01c2f9451141b9df7fa3c555ab46
 
     def register(self):
         # before_request
@@ -100,10 +134,167 @@ class HomeRoutes:
             if not get_room_by_code(code):
                 return code
 
+<<<<<<< HEAD
+
+@bp.route('/join_room')
+def join_room():
+    return render_template('join_room.html')
+
+
+def _remember_joined_room(room_code):
+    joined_room_codes = session.get('joined_room_codes', [])
+    if room_code not in joined_room_codes:
+        joined_room_codes.insert(0, room_code)
+        session['joined_room_codes'] = joined_room_codes[:8]
+        session.modified = True
+
+
+def _remember_joined_room_for_user(user_id, room_id):
+    create_user_room(user_id, room_id)
+
+
+@bp.route('/create')
+def create():
+    return redirect(url_for('home.create_room'))
+
+
+@bp.route('/chat/<room_code>')
+def chat(room_code):
+    room = get_room_by_code(room_code)
+    if not room:
+        return "Room not found", 404
+
+    user_id = session.get('user_id')
+    if user_id:
+        _remember_joined_room_for_user(user_id, room['id'])
+    else:
+        _remember_joined_room(room_code)
+    
+    # Fetch previous messages
+    messages = get_messages_for_room(room['id'])
+    
+    return render_template('chat.html', room=room, room_code=room_code, messages=messages)
+
+
+@bp.route('/chat/<room_code>/delete', methods=['POST'])
+def delete_chat(room_code):
+    delete_room_by_code(room_code)
+    return redirect(url_for('home.profile'))
+
+
+@bp.context_processor
+def inject_joined_rooms():
+    user_id = session.get('user_id')
+    joined_rooms = get_joined_rooms_for_user(user_id) if user_id else []
+
+    current_room_code = None
+    if request.endpoint == 'home.chat':
+        current_room_code = request.view_args.get('room_code') if request.view_args else None
+
+    current_user = None
+    if user_id:
+        user_rec = get_user_by_id(user_id)
+        if user_rec:
+            current_user = UserView(user_rec)
+        else:
+            current_user = None
+
+    return {
+        'joined_rooms': joined_rooms,
+        'current_room_code': current_room_code,
+        'current_user': current_user,
+    }
+
+
+@bp.route('/profile')
+def profile():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+
+    user = get_user_by_id(user_id)
+    if not user:
+        session.clear()
+        return redirect(url_for('auth.login'))
+
+    # Wrap into the shared `UserView` so templates can access fields
+    user_view = UserView(user)
+    return render_template('profile.html', user=user_view)
+
+
+@bp.route('/moderation')
+def moderation():
+    return render_template('moderation.html')
+
+
+@bp.route('/profile/update', methods=['POST'])
+def update_profile():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+
+    first_name = (request.form.get('first_name') or '').strip()
+    last_name = (request.form.get('last_name') or '').strip()
+    school = (request.form.get('school') or '').strip()
+    address = (request.form.get('address') or '').strip()
+    bio = (request.form.get('bio') or '').strip()
+
+    update_user_profile(user_id, first_name, last_name, school, address, bio)
+    flash('Profile updated successfully.', 'success')
+    return redirect(url_for('home.profile'))
+
+
+@bp.route('/profile/avatar', methods=['POST'])
+def update_avatar():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+
+    file = request.files.get('avatar')
+    if not file or not file.filename:
+        return redirect(url_for('home.profile'))
+
+    filename = secure_filename(file.filename)
+    _, ext = os.path.splitext(filename.lower())
+    allowed_ext = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
+    if ext not in allowed_ext:
+        return redirect(url_for('home.profile'))
+
+    upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'avatars')
+    os.makedirs(upload_dir, exist_ok=True)
+    stored_name = f"{uuid.uuid4().hex}{ext}"
+    file.save(os.path.join(upload_dir, stored_name))
+
+    avatar_url = f"uploads/avatars/{stored_name}"
+    update_user_avatar(user_id, avatar_url)
+
+    return redirect(url_for('home.profile'))
+
+
+room_controller = RoomController()
+
+
+@bp.route('/create_room', methods=['GET', 'POST'])
+def create_room():
+    if request.method == 'POST':
+        room_name = request.form.get('room_name', '').strip()
+        subject_tag = request.form.get('subject_tag', '').strip()
+        submitted_code = (request.form.get('room_code') or '').strip().upper()
+
+        is_private = request.form.get('is_private') == '1'
+
+        new_room = room_controller.create_room(
+            room_name,
+            subject_tag,
+            submitted_code,
+            is_private,
+        )
+=======
     def chat(self, room_code):
         room = get_room_by_code(room_code)
         if not room:
             return "Room not found", 404
+>>>>>>> 60ab2a74498b01c2f9451141b9df7fa3c555ab46
 
         user_id = session.get('user_id')
         if not user_id:
@@ -128,6 +319,13 @@ class HomeRoutes:
         elif user_id:
             self._remember_joined_room_for_user(user_id, room['id'])
         else:
+<<<<<<< HEAD
+            _remember_joined_room(new_room['code'])
+
+        return redirect(url_for('home.chat', room_code=new_room['code']))
+
+    return render_template('createroom.html', room_code=room_controller.generate_unique_room_code())
+=======
             self._remember_joined_room(room_code)
 
         messages = get_messages_for_room(room['id'])
@@ -346,3 +544,4 @@ class HomeRoutes:
 
 # Expose blueprint
 bp = HomeRoutes().register()
+>>>>>>> 60ab2a74498b01c2f9451141b9df7fa3c555ab46
