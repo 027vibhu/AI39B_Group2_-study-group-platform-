@@ -187,7 +187,7 @@ if (onlineMembersContainer || offlineMembersContainer) {
 
 socket.on('receive_message', (data) => {
   const type = data.username === displayName ? 'sent' : 'received';
-  addMessageToUI(data.message, type, data.username, data.message_id);
+  addMessageToUI(data.message, type, data.username, data.message_id, data.time_label);
 });
 
 // Update vote counts when another client votes
@@ -256,7 +256,7 @@ function sendMessage(){
   messageInput.value = '';
 }
 
-function addMessageToUI(text, type, sender, messageId = null){
+function addMessageToUI(text, type, sender, messageId = null, timeLabel = null){
   const message = document.createElement('div');
   message.classList.add('message', type);
   if (messageId) {
@@ -282,7 +282,7 @@ function addMessageToUI(text, type, sender, messageId = null){
         <div class="message-content">${text}</div>
         ${voteControls}
       </div>
-      <div class="message-time">${getTime()}</div>
+      <div class="message-time">${timeLabel || getTime()}</div>
     </div>
   `;
   chatBody.appendChild(message);

@@ -60,7 +60,14 @@ def get_messages_for_room(room_id):
 
 
 def get_message_by_id(message_id):
-    return _message_model.fetch_one(
+    message = _message_model.fetch_one(
         "SELECT id, room_id, username, content, timestamp FROM message WHERE id = %s LIMIT 1",
         (message_id,)
     )
+    if message:
+        timestamp = message.get('timestamp')
+        if timestamp and hasattr(timestamp, 'strftime'):
+            message['time_label'] = timestamp.strftime('%I:%M %p')
+        else:
+            message['time_label'] = ''
+    return message
