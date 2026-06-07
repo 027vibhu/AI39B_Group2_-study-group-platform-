@@ -1,0 +1,66 @@
+{% extends 'base_dash.html' %}
+
+{% block title %}My Notes - LOREVIA{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block topbar_title %}My Notes{% endblock %}
+
+{% block content %}
+  <section class="notes-wrapper">
+    <div class="notes-header">
+      <h2>Upload Study Notes</h2>
+      <p>Upload PDFs that you want to keep in your account.</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form class="note-upload-form" method="POST" action="{{ url_for('home.upload_note') }}" enctype="multipart/form-data">
+      <div class="input-group">
+        <label for="title">Title</label>
+        <input type="text" name="title" id="title" placeholder="Add a title for the note">
+      </div>
+      <div class="input-group">
+        <label for="description">Description</label>
+        <textarea name="description" id="description" placeholder="Optional description"></textarea>
+      </div>
+      <div class="input-group">
+        <label for="pdf">PDF File</label>
+        <input type="file" name="pdf" id="pdf" accept="application/pdf" required>
+      </div>
+      <button type="submit" class="save-btn">Upload Note</button>
+    </form>
+
+    <div class="note-list">
+      <h3>Your Uploaded Notes</h3>
+      {% if notes %}
+        <div class="note-items">
+          {% for note in notes %}
+            <div class="note-card">
+              <div class="note-card-header">
+                <h4>{{ note.title }}</h4>
+                <span>{{ note.created_at.strftime('%b %d, %Y') }}</span>
+              </div>
+              {% if note.description %}
+                <p>{{ note.description }}</p>
+              {% endif %}
+              <a href="{{ url_for('static', filename=note.pdf_url) }}" target="_blank" rel="noopener noreferrer" class="view-link">
+                View PDF
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">No notes uploaded yet. Use the form above to add your first PDF.</p>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

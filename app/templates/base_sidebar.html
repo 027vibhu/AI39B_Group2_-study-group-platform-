@@ -25,7 +25,10 @@
     </div>
 
     <div class="nav">
-      {% block nav %}{% endblock %}
+      {% block nav %}
+        <a href="#" class="nav-item" id="homeLink">Home</a>
+        <a href="#" class="nav-item" id="roomsLink">Rooms</a>
+      {% endblock %}
     </div>
 
     <div class="rooms">
@@ -71,6 +74,7 @@
   </div>
 
   {% block scripts %}{% endblock %}
+  <script src="{{ url_for('static', filename='js/file_organizer.js') }}"></script>
   <script>
     const profileMenu = document.getElementById('profileMenu');
     const profileButton = document.getElementById('userProfile');
@@ -95,6 +99,17 @@
         if (event.key === 'Escape') {
           closeMenu();
         }
+      });
+    }
+  </script>
+  <script>
+    const filesToggle = document.getElementById('filesToggle');
+    const fileOrganizer = document.getElementById('fileOrganizer');
+    if (filesToggle && fileOrganizer) {
+      filesToggle.addEventListener('click', () => {
+        const isExpanded = filesToggle.getAttribute('aria-expanded') === 'true';
+        filesToggle.setAttribute('aria-expanded', String(!isExpanded));
+        fileOrganizer.classList.toggle('hidden', isExpanded);
       });
     }
   </script>

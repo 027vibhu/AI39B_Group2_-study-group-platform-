@@ -17,6 +17,10 @@
     <i class="fa-solid fa-compass"></i>
     Browse Rooms
   </a>
+  <a href="{{ url_for('home.notes') }}" class="nav-item {% if request.endpoint == 'home.notes' %}active{% endif %}">
+    <i class="fa-solid fa-file-pdf"></i>
+    Notes
+  </a>
 {% endblock %}
 
 {% block rooms %}

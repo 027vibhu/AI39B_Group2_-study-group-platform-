@@ -281,6 +281,13 @@ class Database:
             pass
 
         try:
+            from app.models.join_leave_notification import create_join_leave_notifications_table
+
+            create_join_leave_notifications_table()
+        except Exception:
+            pass
+
+        try:
             from app.models.presence_model import room_presence_model
 
             room_presence_model.create_room_presence_table()
