@@ -222,18 +222,26 @@ class HomeRoutes:
             return redirect(url_for('auth.login'))
 
         file = request.files.get('shared_file')
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.accept_mimetypes.values()
+
         if not file or not file.filename:
+            if is_ajax:
+                return jsonify({'error': 'Please select a file to share.'}), 400
             flash('Please select a file to share.', 'warning')
             return redirect(url_for('home.chat', room_code=room_code))
 
         original_filename = secure_filename(file.filename)
         if not original_filename:
+            if is_ajax:
+                return jsonify({'error': 'Invalid file name.'}), 400
             flash('Invalid file name.', 'warning')
             return redirect(url_for('home.chat', room_code=room_code))
 
         _, ext = os.path.splitext(original_filename)
         ext = ext.lower()
         if ext not in ALLOWED_SHARED_FILE_EXTENSIONS:
+            if is_ajax:
+                return jsonify({'error': 'Unsupported file type.'}), 400
             flash('Unsupported file type. Please upload a document, image, or compressed archive.', 'warning')
             return redirect(url_for('home.chat', room_code=room_code))
 
@@ -245,12 +253,29 @@ class HomeRoutes:
         file_size = os.path.getsize(saved_path)
         if file_size > MAX_SHARED_FILE_SIZE:
             os.remove(saved_path)
+            if is_ajax:
+                return jsonify({'error': 'File is too large. Maximum allowed size is 25 MB.'}), 400
             flash('File is too large. Maximum allowed size is 25 MB.', 'warning')
             return redirect(url_for('home.chat', room_code=room_code))
 
         mime_type = file.mimetype or 'application/octet-stream'
 
-        create_shared_file(room['id'], current_user['username'], original_filename, stored_filename, mime_type, file_size)
+        file_id = create_shared_file(room['id'], current_user['username'], original_filename, stored_filename, mime_type, file_size)
+
+        # Broadcast the file upload to all clients in the room
+        socketio.emit('file_uploaded', {
+            'room_code': room_code,
+            'id': file_id,
+            'original_filename': original_filename,
+            'uploader_username': current_user['username'],
+            'mime_type': mime_type,
+            'file_size': file_size,
+            'download_url': url_for('home.download_shared_file', file_id=file_id),
+            'view_url': url_for('home.view_shared_file', file_id=file_id),
+        }, room=room_code)
+
+        if is_ajax:
+            return jsonify({'status': 'success', 'message': 'File shared successfully.'}), 200
 
         flash('File shared successfully.', 'success')
         return redirect(url_for('home.chat', room_code=room_code))

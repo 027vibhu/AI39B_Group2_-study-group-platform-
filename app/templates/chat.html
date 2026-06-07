@@ -9,34 +9,33 @@
 {% endblock %}
 
 {% block topbar_title %}
-  <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-    <span>Room: {{ room.name if room.name else room_code }}</span>
-    <a href="{{ url_for('home.moderation', room_code=room_code) }}" class="moderation-btn" title="Moderation Panel" style="margin-right: 24px;">
-       <i class="fa-solid fa-shield-halved"></i> M
-    </a>
-  </div>
+<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+  <span>{{ room.name if room.name else room_code }}</span>
+
+</div>
 {% endblock %}
 
 {% block content %}
-  <div class="chat-layout">
-    <div class="chat-section">
+<div class="chat-layout">
+  <div class="chat-section">
     <div class="chat-header">
       <div class="header-left">
         <h2>
           {{ room.name if room.name else 'Room ' ~ room_code }}
-          {% if room.is_private %}<i class="fa-solid fa-lock" style="font-size: 0.7em; margin-left: 8px; color: #7a8194;" title="Private Room"></i>{% endif %}
+          {% if room.is_private %}<i class="fa-solid fa-lock"
+            style="font-size: 0.7em; margin-left: 8px; color: #7a8194;" title="Private Room"></i>{% endif %}
         </h2>
         {% if room.subject_tags %}
         <div class="room-tags">
           {% for tag in room.subject_tags.split(',') %}
-            {% set clean_tag = tag.strip() %}
-            {% if clean_tag %}
-            <span class="room-tag">{{ clean_tag }}</span>
-            {% endif %}
+          {% set clean_tag = tag.strip() %}
+          {% if clean_tag %}
+          <span class="room-tag">{{ clean_tag }}</span>
+          {% endif %}
           {% endfor %}
         </div>
         {% endif %}
-        
+
       </div>
 
       <div class="header-actions">
@@ -56,11 +55,17 @@
           <div class="message-username">{{ msg.username }}</div>
           <div class="message-body">
             <div class="message-content">{{ msg.content }}</div>
-            <div class="message-votes {% if (msg.upvotes|default(0)|int) > 0 or (msg.downvotes|default(0)|int) > 0 %}has-votes{% endif %}" data-message-id="{{ msg.id }}">
-              <button class="vote-button upvote{% if msg.user_vote == 'upvote' %} active{% endif %}" type="button" data-vote-type="upvote">▲</button>
-              <span class="vote-count" data-vote-type="upvotes">{{ 0 if msg.upvotes in [None, 'None', ''] else msg.upvotes }}</span>
-              <button class="vote-button downvote{% if msg.user_vote == 'downvote' %} active{% endif %}" type="button" data-vote-type="downvote">▼</button>
-              <span class="vote-count" data-vote-type="downvotes">{{ 0 if msg.downvotes in [None, 'None', ''] else msg.downvotes }}</span>
+            <div
+              class="message-votes {% if (msg.upvotes|default(0)|int) > 0 or (msg.downvotes|default(0)|int) > 0 %}has-votes{% endif %}"
+              data-message-id="{{ msg.id }}">
+              <button class="vote-button upvote{% if msg.user_vote == 'upvote' %} active{% endif %}" type="button"
+                data-vote-type="upvote">▲</button>
+              <span class="vote-count" data-vote-type="upvotes">{{ 0 if msg.upvotes in [None, 'None', ''] else
+                msg.upvotes }}</span>
+              <button class="vote-button downvote{% if msg.user_vote == 'downvote' %} active{% endif %}" type="button"
+                data-vote-type="downvote">▼</button>
+              <span class="vote-count" data-vote-type="downvotes">{{ 0 if msg.downvotes in [None, 'None', ''] else
+                msg.downvotes }}</span>
             </div>
           </div>
           <div class="message-time">{{ msg.time_label }}</div>
@@ -132,13 +137,14 @@
     </div>
   </div>
 
-    <div class="right-panel">
-    {% set total_members = (online_members | length if online_members else 0) + (offline_members | length if offline_members else 0) %}
+  <div class="right-panel">
+    {% set total_members = (online_members | length if online_members else 0) + (offline_members | length if
+    offline_members else 0) %}
     <h3 id="memberCount">Members ({{ total_members }})</h3>
 
     <div class="section-title">Online</div>
     <div id="onlineMembers">
-    {% if online_members %}
+      {% if online_members %}
       {% for member in online_members %}
       <div class="member">
         <div class="member-left">
@@ -148,19 +154,19 @@
         <div class="green-dot"></div>
       </div>
       {% endfor %}
-    {% else %}
+      {% else %}
       <div class="member offline">
         <div class="member-left">
           <div class="member-avatar">–</div>
           <div class="member-name">No members online</div>
         </div>
       </div>
-    {% endif %}
+      {% endif %}
     </div>
 
     <div class="section-title">Offline</div>
     <div id="offlineMembers">
-    {% if offline_members %}
+      {% if offline_members %}
       {% for member in offline_members %}
       <div class="member">
         <div class="member-left">
@@ -170,248 +176,236 @@
         <div class="offline-dot"></div>
       </div>
       {% endfor %}
-    {% endif %}
+      {% endif %}
     </div>
 
     <div class="card files">
-      <h3>Files</h3>
+      <div class="files-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0; font-size: 18px; color: #1f2430;">Files</h3>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button id="refreshFilesBtn" type="button" title="Refresh Files" style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: #eef1ff; color: #49507a; transition: all 0.2s ease; border: none;">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
+          <label class="file-upload-btn" title="Upload File" style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: #eef1ff; color: #49507a; transition: all 0.2s ease;">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <input type="file" id="sharedFileInput" style="display: none;">
+          </label>
+        </div>
+      </div>
       <input class="search" placeholder="Search files...">
-      <div class="file-list">
-        <div class="file">
-          <div class="file-icon">📄</div>
-          <div class="file-meta">
-            <span class="file-name">Lecture 1.pdf</span>
-            <span class="file-size">PDF • 1.2 MB</span>
-          </div>
-          <div class="menu">⋮</div>
-        </div>
-        <div class="file">
-          <div class="file-icon">📄</div>
-          <div class="file-meta">
-            <span class="file-name">Lecture 2.pdf</span>
-            <span class="file-size">PDF • 980 KB</span>
-          </div>
-          <div class="menu">⋮</div>
-        </div>
-        <div class="file">
-          <div class="file-icon">📘</div>
-          <div class="file-meta">
-            <span class="file-name">Summary.md</span>
-            <span class="file-size">MD • 4 KB</span>
-          </div>
-          <div class="menu">⋮</div>
-        </div>
+      <div class="file-list" id="fileList">
+        <!-- Files will be loaded dynamically via Javascript -->
       </div>
     </div>
 
-    </div>
   </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
-// Use logged-in username only
-const displayName = "{{ current_user.username }}";
-const userId = "{{ current_user.id }}";
-const userProfile = document.getElementById('userProfile');
-if (userProfile) {
-  const hasImage = userProfile.querySelector('img');
-  if (!hasImage) {
-    userProfile.innerText = displayName.charAt(0).toUpperCase();
-  }
-  userProfile.title = displayName;
-}
-
-// Update initial messages style
-document.querySelectorAll('.message').forEach(msg => {
-  if (msg.getAttribute('data-sender') === displayName) {
-        msg.classList.remove('received');
-        msg.classList.add('sent');
-        // Hide sender name for own messages
-        const senderLabel = msg.querySelector('.message-username');
-        if (senderLabel) senderLabel.style.display = 'none';
+  // Use logged-in username only
+  const displayName = "{{ current_user.username }}";
+  const userId = "{{ current_user.id }}";
+  const userProfile = document.getElementById('userProfile');
+  if (userProfile) {
+    const hasImage = userProfile.querySelector('img');
+    if (!hasImage) {
+      userProfile.innerText = displayName.charAt(0).toUpperCase();
     }
-});
+    userProfile.title = displayName;
+  }
 
-const socket = io();
-const roomCode = "{{ room_code }}";
+  // Update initial messages style
+  document.querySelectorAll('.message').forEach(msg => {
+    if (msg.getAttribute('data-sender') === displayName) {
+      msg.classList.remove('received');
+      msg.classList.add('sent');
+      // Hide sender name for own messages
+      const senderLabel = msg.querySelector('.message-username');
+      if (senderLabel) senderLabel.style.display = 'none';
+    }
+  });
 
-const sendBtn = document.getElementById('sendBtn');
-const messageInput = document.getElementById('messageInput');
-const chatBody = document.getElementById('chatBody');
-const fileInput = document.getElementById('fileInput');
-const uploadList = document.getElementById('uploadList');
-const emojiBtn = document.getElementById('emojiBtn');
-const emojiPicker = document.getElementById('emojiPicker');
-const memberStatus = document.getElementById('memberStatus');
-const memberCount = document.getElementById('memberCount');
-const onlineMembersContainer = document.getElementById('onlineMembers');
-const offlineMembersContainer = document.getElementById('offlineMembers');
-const chatMenuButton = document.getElementById('chatMenuButton');
-const chatMenu = document.getElementById('chatMenu');
-const initialOnlineMembers = JSON.parse('{{ (online_members or []) | tojson | safe }}');
-const initialOfflineMembers = JSON.parse('{{ (offline_members or []) | tojson | safe }}');
+  const socket = io();
+  const roomCode = "{{ room_code }}";
 
-// Set to track users who are already members of this room (online or offline) when we load/update
-const knownMembers = new Set([
-  ...initialOnlineMembers.map(m => m.username.toLowerCase()),
-  ...initialOfflineMembers.map(m => m.username.toLowerCase())
-]);
+  const sendBtn = document.getElementById('sendBtn');
+  const messageInput = document.getElementById('messageInput');
+  const chatBody = document.getElementById('chatBody');
+  const fileInput = document.getElementById('fileInput');
+  const uploadList = document.getElementById('uploadList');
+  const emojiBtn = document.getElementById('emojiBtn');
+  const emojiPicker = document.getElementById('emojiPicker');
+  const memberStatus = document.getElementById('memberStatus');
+  const memberCount = document.getElementById('memberCount');
+  const onlineMembersContainer = document.getElementById('onlineMembers');
+  const offlineMembersContainer = document.getElementById('offlineMembers');
+  const chatMenuButton = document.getElementById('chatMenuButton');
+  const chatMenu = document.getElementById('chatMenu');
+  const initialOnlineMembers = JSON.parse('{{ (online_members or []) | tojson | safe }}');
+  const initialOfflineMembers = JSON.parse('{{ (offline_members or []) | tojson | safe }}');
 
-/* SOCKET CONNECTION */
-socket.on('connect', () => {
-  console.log('Connected as ' + displayName);
-  socket.emit('join', { room: roomCode, username: displayName });
-});
+  // Set to track users who are already members of this room (online or offline) when we load/update
+  const knownMembers = new Set([
+    ...initialOnlineMembers.map(m => m.username.toLowerCase()),
+    ...initialOfflineMembers.map(m => m.username.toLowerCase())
+  ]);
 
-socket.on('status', (data) => {
+  /* SOCKET CONNECTION */
+  socket.on('connect', () => {
+    console.log('Connected as ' + displayName);
+    socket.emit('join', { room: roomCode, username: displayName });
+  });
+
+  socket.on('status', (data) => {
     console.log(data.msg);
     if (memberStatus) {
       memberStatus.innerText = "Online";
     }
-});
+  });
 
-socket.on('presence_update', (data) => {
+  socket.on('presence_update', (data) => {
     if (data && data.online !== undefined && data.offline !== undefined) {
-        renderPresenceLists(data.online, data.offline);
-        
-        // Add updated presence members to knownMembers
-        data.online.forEach(u => knownMembers.add(u.username.toLowerCase()));
-        data.offline.forEach(u => knownMembers.add(u.username.toLowerCase()));
-    }
-});
+      renderPresenceLists(data.online, data.offline);
 
-socket.on('notification_update', (data) => {
+      // Add updated presence members to knownMembers
+      data.online.forEach(u => knownMembers.add(u.username.toLowerCase()));
+      data.offline.forEach(u => knownMembers.add(u.username.toLowerCase()));
+    }
+  });
+
+  socket.on('notification_update', (data) => {
     if (!data || data.room_code !== roomCode) return;
-    
+
     // Show toast for other users
     if (data.username && data.username.toLowerCase() !== displayName.toLowerCase()) {
-        const usernameLower = data.username.toLowerCase();
-        
-        // Only trigger toast for 'join' action of a user who is not already a member
-        if (data.action_type === 'join' && !knownMembers.has(usernameLower)) {
-            knownMembers.add(usernameLower);
-            showToast(data.message || `${data.username} has joined the room.`, 'join');
-        } else if (data.action_type === 'leave') {
-            // Optional: You might want to show leave toasts always or filter them too
-            // For now, let's just show join for new users as requested.
-        }
+      const usernameLower = data.username.toLowerCase();
+
+      // Only trigger toast for 'join' action of a user who is not already a member
+      if (data.action_type === 'join' && !knownMembers.has(usernameLower)) {
+        knownMembers.add(usernameLower);
+        showToast(data.message || `${data.username} has joined the room.`, 'join');
+      } else if (data.action_type === 'leave') {
+        // Optional: You might want to show leave toasts always or filter them too
+        // For now, let's just show join for new users as requested.
+      }
     }
-});
+  });
 
-if (onlineMembersContainer || offlineMembersContainer) {
+  if (onlineMembersContainer || offlineMembersContainer) {
     renderPresenceLists(initialOnlineMembers, initialOfflineMembers);
-}
+  }
 
-function showToast(message, actionType) {
-  const container = document.getElementById('toastContainer');
-  if (!container) return;
+  function showToast(message, actionType) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
 
-  const toast = document.createElement('div');
-  toast.className = `toast-item ${actionType}`;
+    const toast = document.createElement('div');
+    toast.className = `toast-item ${actionType}`;
 
-  const iconClass = actionType === 'join' ? 'fa-solid fa-circle-user' : 'fa-solid fa-circle-xmark';
+    const iconClass = actionType === 'join' ? 'fa-solid fa-circle-user' : 'fa-solid fa-circle-xmark';
 
-  toast.innerHTML = `
+    toast.innerHTML = `
     <i class="${iconClass} toast-icon"></i>
     <div class="toast-message">${message}</div>
   `;
 
-  container.appendChild(toast);
+    container.appendChild(toast);
 
-  // Auto-remove toast after 5 seconds (4.7s visible + 0.3s fade out animation)
-  setTimeout(() => {
-    toast.style.animation = 'toastFadeOut 0.3s forwards';
+    // Auto-remove toast after 5 seconds (4.7s visible + 0.3s fade out animation)
     setTimeout(() => {
-      toast.remove();
-    }, 300);
-  }, 4700);
-}
+      toast.style.animation = 'toastFadeOut 0.3s forwards';
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }, 4700);
+  }
 
-socket.on('receive_message', (data) => {
-  const type = data.username === displayName ? 'sent' : 'received';
-  addMessageToUI(data.message, type, data.username, data.message_id, data.time_label);
-});
+  socket.on('receive_message', (data) => {
+    const type = data.username === displayName ? 'sent' : 'received';
+    addMessageToUI(data.message, type, data.username, data.message_id, data.time_label);
+  });
 
-// Update vote counts when another client votes
-socket.on('vote_update', (data) => {
-  try {
-    console.log('socket vote_update received', data);
-    // Only process updates for the current room
-    if (data.room_code && data.room_code !== roomCode) return;
-    const messageId = String(data.message_id);
-    const votes = data;
-    const votesDiv = document.querySelector(`.message-votes[data-message-id="${messageId}"]`);
-    if (!votesDiv) return;
-    const upEl = votesDiv.querySelector('.vote-count[data-vote-type="upvotes"]');
-    const downEl = votesDiv.querySelector('.vote-count[data-vote-type="downvotes"]');
-    const upBtn = votesDiv.querySelector('.vote-button.upvote');
-    const downBtn = votesDiv.querySelector('.vote-button.downvote');
-    if (upEl) upEl.innerText = votes.upvotes || 0;
-    if (downEl) downEl.innerText = votes.downvotes || 0;
-    if ((votes.upvotes || 0) > 0 || (votes.downvotes || 0) > 0) {
-      votesDiv.classList.add('has-votes');
-    } else {
-      votesDiv.classList.remove('has-votes');
-    }
-
-    if (String(data.actor_user_id || '') === String(userId || '')) {
-      if (data.action === 'remove_vote') {
-        if (upBtn) upBtn.classList.remove('active');
-        if (downBtn) downBtn.classList.remove('active');
+  // Update vote counts when another client votes
+  socket.on('vote_update', (data) => {
+    try {
+      console.log('socket vote_update received', data);
+      // Only process updates for the current room
+      if (data.room_code && data.room_code !== roomCode) return;
+      const messageId = String(data.message_id);
+      const votes = data;
+      const votesDiv = document.querySelector(`.message-votes[data-message-id="${messageId}"]`);
+      if (!votesDiv) return;
+      const upEl = votesDiv.querySelector('.vote-count[data-vote-type="upvotes"]');
+      const downEl = votesDiv.querySelector('.vote-count[data-vote-type="downvotes"]');
+      const upBtn = votesDiv.querySelector('.vote-button.upvote');
+      const downBtn = votesDiv.querySelector('.vote-button.downvote');
+      if (upEl) upEl.innerText = votes.upvotes || 0;
+      if (downEl) downEl.innerText = votes.downvotes || 0;
+      if ((votes.upvotes || 0) > 0 || (votes.downvotes || 0) > 0) {
+        votesDiv.classList.add('has-votes');
       } else {
-        if (upBtn) upBtn.classList.toggle('active', data.vote_type === 'upvote');
-        if (downBtn) downBtn.classList.toggle('active', data.vote_type === 'downvote');
+        votesDiv.classList.remove('has-votes');
       }
-    }
-  } catch (err) {
-    console.error('vote_update handling error', err);
-  }
-});
 
-if (chatMenuButton && chatMenu) {
-  const closeChatMenu = () => {
-    chatMenuButton.setAttribute('aria-expanded', 'false');
-    chatMenu.setAttribute('aria-hidden', 'true');
-  };
-
-  chatMenuButton.addEventListener('click', (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const isOpen = chatMenuButton.getAttribute('aria-expanded') === 'true';
-    chatMenuButton.setAttribute('aria-expanded', String(!isOpen));
-    chatMenu.setAttribute('aria-hidden', String(isOpen));
-  });
-
-  document.addEventListener('click', closeChatMenu);
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      closeChatMenu();
+      if (String(data.actor_user_id || '') === String(userId || '')) {
+        if (data.action === 'remove_vote') {
+          if (upBtn) upBtn.classList.remove('active');
+          if (downBtn) downBtn.classList.remove('active');
+        } else {
+          if (upBtn) upBtn.classList.toggle('active', data.vote_type === 'upvote');
+          if (downBtn) downBtn.classList.toggle('active', data.vote_type === 'downvote');
+        }
+      }
+    } catch (err) {
+      console.error('vote_update handling error', err);
     }
   });
-}
 
-/* SEND MESSAGE */
-function sendMessage(){
-  const text = messageInput.value.trim();
-  if(text === '') return;
-  socket.emit('send_message', { room: roomCode, message: text, username: displayName });
-  messageInput.value = '';
-}
+  if (chatMenuButton && chatMenu) {
+    const closeChatMenu = () => {
+      chatMenuButton.setAttribute('aria-expanded', 'false');
+      chatMenu.setAttribute('aria-hidden', 'true');
+    };
 
-function addMessageToUI(text, type, sender, messageId = null, timeLabel = null){
-  const message = document.createElement('div');
-  message.classList.add('message', type);
-  if (messageId) {
-    message.dataset.messageId = messageId;
+    chatMenuButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const isOpen = chatMenuButton.getAttribute('aria-expanded') === 'true';
+      chatMenuButton.setAttribute('aria-expanded', String(!isOpen));
+      chatMenu.setAttribute('aria-hidden', String(isOpen));
+    });
+
+    document.addEventListener('click', closeChatMenu);
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeChatMenu();
+      }
+    });
   }
-  message.dataset.sender = sender;
-  let senderHTML = '';
-  if (type === 'received') {
-    senderHTML = `<div class="message-username">${sender}</div>`;
+
+  /* SEND MESSAGE */
+  function sendMessage() {
+    const text = messageInput.value.trim();
+    if (text === '') return;
+    socket.emit('send_message', { room: roomCode, message: text, username: displayName });
+    messageInput.value = '';
   }
-  const voteControls = messageId ? `
+
+  function addMessageToUI(text, type, sender, messageId = null, timeLabel = null) {
+    const message = document.createElement('div');
+    message.classList.add('message', type);
+    if (messageId) {
+      message.dataset.messageId = messageId;
+    }
+    message.dataset.sender = sender;
+    let senderHTML = '';
+    if (type === 'received') {
+      senderHTML = `<div class="message-username">${sender}</div>`;
+    }
+    const voteControls = messageId ? `
       <div class="message-votes" data-message-id="${messageId}">
         <button class="vote-button upvote" type="button" data-vote-type="upvote">▲</button>
         <span class="vote-count" data-vote-type="upvotes">0</span>
@@ -419,7 +413,7 @@ function addMessageToUI(text, type, sender, messageId = null, timeLabel = null){
         <span class="vote-count" data-vote-type="downvotes">0</span>
       </div>
     ` : '';
-  message.innerHTML = `
+    message.innerHTML = `
     <div class="message-bubble">
       ${senderHTML}
       <div class="message-body">
@@ -429,19 +423,19 @@ function addMessageToUI(text, type, sender, messageId = null, timeLabel = null){
       <div class="message-time">${timeLabel || getTime()}</div>
     </div>
   `;
-  chatBody.appendChild(message);
-  scrollBottom();
-}
-
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    sendMessage();
+    chatBody.appendChild(message);
+    scrollBottom();
   }
-});
 
-function renderPresenceLists(onlineUsers, offlineUsers) {
+  sendBtn.addEventListener('click', sendMessage);
+  messageInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      sendMessage();
+    }
+  });
+
+  function renderPresenceLists(onlineUsers, offlineUsers) {
     if (memberCount) {
       const total = (onlineUsers?.length || 0) + (offlineUsers?.length || 0);
       memberCount.innerText = `Members (${total})`;
@@ -450,20 +444,20 @@ function renderPresenceLists(onlineUsers, offlineUsers) {
     if (onlineMembersContainer) {
       onlineMembersContainer.innerHTML = '';
       if (onlineUsers && onlineUsers.length > 0) {
-          onlineUsers.forEach((user) => {
-              const member = document.createElement('div');
-              member.className = 'member';
-              member.innerHTML = `
+        onlineUsers.forEach((user) => {
+          const member = document.createElement('div');
+          member.className = 'member';
+          member.innerHTML = `
                 <div class="member-left">
                   <div class="member-avatar">${user.username.charAt(0).toUpperCase()}</div>
                   <div class="member-name">${user.username}</div>
                 </div>
                 <div class="green-dot"></div>
               `;
-              onlineMembersContainer.appendChild(member);
-          });
+          onlineMembersContainer.appendChild(member);
+        });
       } else {
-          onlineMembersContainer.innerHTML = `
+        onlineMembersContainer.innerHTML = `
             <div class="member offline">
               <div class="member-left">
                 <div class="member-avatar">–</div>
@@ -477,205 +471,355 @@ function renderPresenceLists(onlineUsers, offlineUsers) {
     if (offlineMembersContainer) {
       offlineMembersContainer.innerHTML = '';
       if (offlineUsers && offlineUsers.length > 0) {
-          offlineUsers.forEach((user) => {
-              const member = document.createElement('div');
-              member.className = 'member';
-              member.innerHTML = `
+        offlineUsers.forEach((user) => {
+          const member = document.createElement('div');
+          member.className = 'member';
+          member.innerHTML = `
                 <div class="member-left">
                   <div class="member-avatar">${user.username.charAt(0).toUpperCase()}</div>
                   <div class="member-name">${user.username}</div>
                 </div>
                 <div class="offline-dot"></div>
               `;
-              offlineMembersContainer.appendChild(member);
-          });
+          offlineMembersContainer.appendChild(member);
+        });
       }
     }
-}
-
-
-fileInput.addEventListener('change', function(){
-  const files = Array.from(this.files || []);
-  if (!files.length) return;
-  files.forEach(file => handleFileUpload(file));
-  // clear input to allow re-selecting same files
-  this.value = '';
-});
-
-// Drag & drop support on chat input area
-const chatInputEl = document.getElementById('chatInput');
-['dragenter','dragover'].forEach(evt => {
-  chatInputEl.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); chatInputEl.classList.add('drag-over'); });
-});
-['dragleave','drop'].forEach(evt => {
-  chatInputEl.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); chatInputEl.classList.remove('drag-over'); });
-});
-chatInputEl.addEventListener('drop', (e) => {
-  const dt = e.dataTransfer;
-  const files = Array.from(dt.files || []);
-  files.forEach(f => handleFileUpload(f));
-});
-
-function handleFileUpload(file){
-  const id = 'upload-' + Math.random().toString(36).slice(2,9);
-  const item = document.createElement('div');
-  item.className = 'upload-item';
-  item.id = id;
-
-  const isImage = file.type.startsWith('image/');
-  const thumb = document.createElement('div');
-  thumb.className = 'upload-thumb';
-  if (isImage) {
-    const url = URL.createObjectURL(file);
-    thumb.innerHTML = `<img src="${url}" alt="${file.name}">`;
-  } else {
-    thumb.textContent = file.name.split('.').pop().toUpperCase();
   }
 
-  const meta = document.createElement('div');
-  meta.className = 'upload-meta';
-  meta.innerHTML = `<div class="upload-file-name">${file.name}</div><div class="upload-actions"><button class="upload-send-btn">Send</button><button class="upload-remove-btn">Remove</button></div><div class="upload-progress"><div class="upload-progress-bar" style="width:0%"></div></div>`;
 
-  item.appendChild(thumb);
-  item.appendChild(meta);
-  uploadList.appendChild(item);
-
-  const sendBtn = item.querySelector('.upload-send-btn');
-  const removeBtn = item.querySelector('.upload-remove-btn');
-  const progressBar = item.querySelector('.upload-progress-bar');
-
-  removeBtn.addEventListener('click', () => { item.remove(); });
-
-  sendBtn.addEventListener('click', () => {
-    sendBtn.disabled = true;
-    // read file as data URL and emit via socket
-    const reader = new FileReader();
-    reader.onload = function(ev){
-      const dataUrl = ev.target.result;
-      // show progress simulation
-      let progress = 0;
-      const intv = setInterval(() => {
-        progress = Math.min(100, progress + Math.floor(Math.random()*20)+10);
-        progressBar.style.width = progress + '%';
-        if (progress >= 100) {
-          clearInterval(intv);
-          // emit file to server
-          socket.emit('send_file', { room: roomCode, filename: file.name, data: dataUrl, username: displayName });
-          // add message to UI
-          if (isImage) {
-            addMessageToUI(`<img src="${dataUrl}" class=\"message-image\">`, 'sent', displayName);
-          } else {
-            addMessageToUI(`<a href=\"${dataUrl}\" download=\"${file.name}\">${file.name}</a>`, 'sent', displayName);
-          }
-          item.remove();
-        }
-      }, 200);
-    };
-    reader.readAsDataURL(file);
+  fileInput.addEventListener('change', function () {
+    const files = Array.from(this.files || []);
+    if (!files.length) return;
+    files.forEach(file => handleFileUpload(file));
+    // clear input to allow re-selecting same files
+    this.value = '';
   });
-}
 
-if (emojiBtn) {
-  const closeEmojiPicker = () => {
-    if (!emojiPicker) return;
-    emojiPicker.classList.remove('open');
-    emojiPicker.setAttribute('aria-hidden', 'true');
-    emojiBtn.setAttribute('aria-expanded', 'false');
-  };
+  // Drag & drop support on chat input area
+  const chatInputEl = document.getElementById('chatInput');
+  ['dragenter', 'dragover'].forEach(evt => {
+    chatInputEl.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); chatInputEl.classList.add('drag-over'); });
+  });
+  ['dragleave', 'drop'].forEach(evt => {
+    chatInputEl.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); chatInputEl.classList.remove('drag-over'); });
+  });
+  chatInputEl.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    const files = Array.from(dt.files || []);
+    files.forEach(f => handleFileUpload(f));
+  });
 
-  const openEmojiPicker = () => {
-    if (!emojiPicker) return;
-    emojiPicker.classList.add('open');
-    emojiPicker.setAttribute('aria-hidden', 'false');
-    emojiBtn.setAttribute('aria-expanded', 'true');
-  };
+  function handleFileUpload(file) {
+    const id = 'upload-' + Math.random().toString(36).slice(2, 9);
+    const item = document.createElement('div');
+    item.className = 'upload-item';
+    item.id = id;
 
-  emojiBtn.addEventListener('click', (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!emojiPicker) return;
-    const isOpen = emojiPicker.classList.contains('open');
-    if (isOpen) {
-      closeEmojiPicker();
+    const isImage = file.type.startsWith('image/');
+    const thumb = document.createElement('div');
+    thumb.className = 'upload-thumb';
+    if (isImage) {
+      const url = URL.createObjectURL(file);
+      thumb.innerHTML = `<img src="${url}" alt="${file.name}">`;
     } else {
-      openEmojiPicker();
+      thumb.textContent = file.name.split('.').pop().toUpperCase();
     }
-  });
 
-  if (emojiPicker) {
-    emojiPicker.addEventListener('click', (event) => {
-      const emojiButton = event.target.closest('.emoji-item');
-      if (!emojiButton) return;
-      const emoji = emojiButton.textContent;
-      const start = messageInput.selectionStart ?? messageInput.value.length;
-      const end = messageInput.selectionEnd ?? messageInput.value.length;
-      const currentValue = messageInput.value;
-      messageInput.value = currentValue.slice(0, start) + emoji + currentValue.slice(end);
-      messageInput.focus();
-      const cursorPosition = start + emoji.length;
-      messageInput.setSelectionRange(cursorPosition, cursorPosition);
-      closeEmojiPicker();
+    const meta = document.createElement('div');
+    meta.className = 'upload-meta';
+    meta.innerHTML = `<div class="upload-file-name">${file.name}</div><div class="upload-actions"><button class="upload-send-btn">Send</button><button class="upload-remove-btn">Remove</button></div><div class="upload-progress"><div class="upload-progress-bar" style="width:0%"></div></div>`;
+
+    item.appendChild(thumb);
+    item.appendChild(meta);
+    uploadList.appendChild(item);
+
+    const sendBtn = item.querySelector('.upload-send-btn');
+    const removeBtn = item.querySelector('.upload-remove-btn');
+    const progressBar = item.querySelector('.upload-progress-bar');
+
+    removeBtn.addEventListener('click', () => { item.remove(); });
+
+    sendBtn.addEventListener('click', () => {
+      sendBtn.disabled = true;
+      // read file as data URL and emit via socket
+      const reader = new FileReader();
+      reader.onload = function (ev) {
+        const dataUrl = ev.target.result;
+        // show progress simulation
+        let progress = 0;
+        const intv = setInterval(() => {
+          progress = Math.min(100, progress + Math.floor(Math.random() * 20) + 10);
+          progressBar.style.width = progress + '%';
+          if (progress >= 100) {
+            clearInterval(intv);
+            // emit file to server
+            socket.emit('send_file', { room: roomCode, filename: file.name, data: dataUrl, username: displayName });
+            // add message to UI
+            if (isImage) {
+              addMessageToUI(`<img src="${dataUrl}" class=\"message-image\">`, 'sent', displayName);
+            } else {
+              addMessageToUI(`<a href=\"${dataUrl}\" download=\"${file.name}\">${file.name}</a>`, 'sent', displayName);
+            }
+            item.remove();
+          }
+        }, 200);
+      };
+      reader.readAsDataURL(file);
     });
   }
 
-  document.addEventListener('click', (event) => {
-    if (!emojiPicker || !emojiPicker.classList.contains('open')) return;
-    if (emojiPicker.contains(event.target) || emojiBtn.contains(event.target)) return;
-    closeEmojiPicker();
-  });
+  if (emojiBtn) {
+    const closeEmojiPicker = () => {
+      if (!emojiPicker) return;
+      emojiPicker.classList.remove('open');
+      emojiPicker.setAttribute('aria-hidden', 'true');
+      emojiBtn.setAttribute('aria-expanded', 'false');
+    };
 
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      closeEmojiPicker();
+    const openEmojiPicker = () => {
+      if (!emojiPicker) return;
+      emojiPicker.classList.add('open');
+      emojiPicker.setAttribute('aria-hidden', 'false');
+      emojiBtn.setAttribute('aria-expanded', 'true');
+    };
+
+    emojiBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!emojiPicker) return;
+      const isOpen = emojiPicker.classList.contains('open');
+      if (isOpen) {
+        closeEmojiPicker();
+      } else {
+        openEmojiPicker();
+      }
+    });
+
+    if (emojiPicker) {
+      emojiPicker.addEventListener('click', (event) => {
+        const emojiButton = event.target.closest('.emoji-item');
+        if (!emojiButton) return;
+        const emoji = emojiButton.textContent;
+        const start = messageInput.selectionStart ?? messageInput.value.length;
+        const end = messageInput.selectionEnd ?? messageInput.value.length;
+        const currentValue = messageInput.value;
+        messageInput.value = currentValue.slice(0, start) + emoji + currentValue.slice(end);
+        messageInput.focus();
+        const cursorPosition = start + emoji.length;
+        messageInput.setSelectionRange(cursorPosition, cursorPosition);
+        closeEmojiPicker();
+      });
     }
-  });
-}
 
-function getTime(){
-  const now = new Date();
-  return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
+    document.addEventListener('click', (event) => {
+      if (!emojiPicker || !emojiPicker.classList.contains('open')) return;
+      if (emojiPicker.contains(event.target) || emojiBtn.contains(event.target)) return;
+      closeEmojiPicker();
+    });
 
-function scrollBottom(){
-    chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-scrollBottom();
-
-// Voting logic
-chatBody.addEventListener('click', async (e) => {
-  const voteBtn = e.target.closest('.vote-button');
-  if (!voteBtn) return;
-  if (!userId) {
-    alert("You must be logged in to vote.");
-    return;
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeEmojiPicker();
+      }
+    });
   }
 
-  const messageVotesDiv = voteBtn.closest('.message-votes');
-  if (!messageVotesDiv) return;
-  
-  const messageId = messageVotesDiv.dataset.messageId;
-  const voteType = voteBtn.dataset.voteType; // 'upvote' or 'downvote'
-  const isRemoving = voteBtn.classList.contains('active');
-  socket.emit('vote_message', {
-    message_id: messageId,
-    vote_type: voteType,
-    action: isRemoving ? 'remove_vote' : 'vote'
+  function getTime() {
+    const now = new Date();
+    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function scrollBottom() {
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  scrollBottom();
+
+  // Voting logic
+  chatBody.addEventListener('click', async (e) => {
+    const voteBtn = e.target.closest('.vote-button');
+    if (!voteBtn) return;
+    if (!userId) {
+      alert("You must be logged in to vote.");
+      return;
+    }
+
+    const messageVotesDiv = voteBtn.closest('.message-votes');
+    if (!messageVotesDiv) return;
+
+    const messageId = messageVotesDiv.dataset.messageId;
+    const voteType = voteBtn.dataset.voteType; // 'upvote' or 'downvote'
+    const isRemoving = voteBtn.classList.contains('active');
+    socket.emit('vote_message', {
+      message_id: messageId,
+      vote_type: voteType,
+      action: isRemoving ? 'remove_vote' : 'vote'
+    });
   });
-});
 
-socket.on('vote_error', (data) => {
-  console.error('Vote error:', data?.message || data);
-});
+  socket.on('vote_error', (data) => {
+    console.error('Vote error:', data?.message || data);
+  });
 
-socket.on('moderation_action', (data) => {
-  if (!data || data.room_code !== roomCode) return;
-  if (data.username !== displayName) return;
+  socket.on('moderation_action', (data) => {
+    if (!data || data.room_code !== roomCode) return;
+    if (data.username !== displayName) return;
 
-  alert(data.message || `You were ${data.action}ed from this room.`);
-  socket.disconnect();
-  window.location.href = "{{ url_for('home.index') }}";
-});
+    alert(data.message || `You were ${data.action}ed from this room.`);
+    socket.disconnect();
+    window.location.href = "{{ url_for('home.index') }}";
+  });
+
+  /* SHARED FILES FUNCTIONALITY */
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  function getFileIcon(filename, mimeType) {
+    const ext = filename.split('.').pop().toLowerCase();
+    if (ext === 'pdf' || mimeType.includes('pdf')) return '📄';
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext) || mimeType.startsWith('image/')) return '🖼️';
+    if (['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md'].includes(ext)) return '📘';
+    if (['zip', 'rar', '7z'].includes(ext)) return '📦';
+    return '📄';
+  }
+
+  const fileListContainer = document.getElementById('fileList');
+
+  function renderFiles(files) {
+    if (!fileListContainer) return;
+    fileListContainer.innerHTML = '';
+
+    if (!files || files.length === 0) {
+      fileListContainer.innerHTML = '<div style="text-align: center; color: #7a8194; font-size: 13px; padding: 10px;">No files shared yet.</div>';
+      return;
+    }
+
+    files.forEach(file => {
+      const fileEl = document.createElement('div');
+      fileEl.className = 'file';
+      fileEl.setAttribute('data-id', file.id);
+
+      const icon = getFileIcon(file.original_filename, file.mime_type || '');
+      const sizeText = formatFileSize(file.file_size);
+      const ext = file.original_filename.split('.').pop().toUpperCase();
+      const metaText = `${ext} • ${sizeText}`;
+
+      fileEl.innerHTML = `
+        <div class="file-icon">${icon}</div>
+        <div class="file-meta">
+          <span class="file-name" title="${file.original_filename}">${file.original_filename}</span>
+          <span class="file-size">${metaText}</span>
+        </div>
+        <div class="file-actions" style="display: flex; gap: 8px;">
+          <a href="${file.download_url}" class="file-action-btn download" title="Download">
+            <i class="fa-solid fa-download"></i>
+          </a>
+          <a href="${file.view_url}" target="_blank" class="file-action-btn view" title="View">
+            <i class="fa-solid fa-eye"></i>
+          </a>
+        </div>
+      `;
+      fileListContainer.appendChild(fileEl);
+    });
+  }
+
+  async function fetchSharedFiles() {
+    try {
+      const res = await fetch(`/chat/${roomCode}/shared-files`);
+      const data = await res.json();
+      if (data.status === 'success' && data.files) {
+        renderFiles(data.files);
+      } else {
+        console.error('Error fetching files:', data.error || 'Unknown error');
+      }
+    } catch (err) {
+      console.error('Error fetching files:', err);
+    }
+  }
+
+  const refreshFilesBtn = document.getElementById('refreshFilesBtn');
+  if (refreshFilesBtn) {
+    refreshFilesBtn.addEventListener('click', () => {
+      refreshFilesBtn.style.transform = 'rotate(180deg)';
+      fetchSharedFiles().then(() => {
+        setTimeout(() => {
+          refreshFilesBtn.style.transform = 'rotate(0deg)';
+        }, 300);
+      });
+    });
+    refreshFilesBtn.style.transition = 'transform 0.3s ease';
+  }
+
+  // Initial load
+  fetchSharedFiles();
+
+  // Search filter
+  const fileSearchInput = document.querySelector('.card.files .search');
+  if (fileSearchInput) {
+    fileSearchInput.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      document.querySelectorAll('#fileList .file').forEach(fileEl => {
+        const name = fileEl.querySelector('.file-name').textContent.toLowerCase();
+        if (name.includes(query)) {
+          fileEl.style.display = 'flex';
+        } else {
+          fileEl.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  // Socket notification
+  socket.on('file_uploaded', (data) => {
+    if (data && data.room_code === roomCode) {
+      console.log('File uploaded in room:', roomCode);
+      fetchSharedFiles();
+    }
+  });
+
+  // Direct Sidebar File Upload
+  const sharedFileInput = document.getElementById('sharedFileInput');
+  if (sharedFileInput) {
+    sharedFileInput.addEventListener('change', async function() {
+      const file = this.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('shared_file', file);
+
+      showToast(`Uploading ${file.name}...`, 'join');
+
+      try {
+        const res = await fetch(`/chat/${roomCode}/shared-files`, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+          showToast('File uploaded successfully!', 'join');
+          // Refresh files immediately after successful upload
+          setTimeout(() => fetchSharedFiles(), 500);
+        } else {
+          showToast(data.error || 'Upload failed.', 'leave');
+        }
+      } catch (err) {
+        console.error('Error uploading file:', err);
+        showToast('Error uploading file.', 'leave');
+      }
+
+      this.value = '';
+    });
+  }
 </script>
 
 {% endblock %}
