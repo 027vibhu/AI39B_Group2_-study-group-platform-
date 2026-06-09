@@ -1,7 +1,7 @@
 const sendBtn = document.getElementById('sendBtn');
 const messageInput = document.getElementById('messageInput');
 const chatBody = document.getElementById('chatBody');
-const imageInput = document.getElementById('imageInput');
+const fileInput = document.getElementById('fileInput');
 
 function sendMessage() {
   const text = messageInput.value.trim();
@@ -35,22 +35,4 @@ if (sendBtn && messageInput) {
   });
 }
 
-if (imageInput && chatBody) {
-  imageInput.addEventListener('change', function () {
-    const file = this.files[0];
-    if (!file) return;
-
-    const imageURL = URL.createObjectURL(file);
-    const message = document.createElement('div');
-    message.classList.add('message', 'sent');
-    message.innerHTML = `
-      <div class="message-content">
-        <img src="${imageURL}">
-        <div class="message-time">${getTime()}</div>
-      </div>
-    `;
-
-    chatBody.appendChild(message);
-    chatBody.scrollTop = chatBody.scrollHeight;
-  });
-}
+// File uploads are handled by the chat template script (multi-file upload, previews, and send)

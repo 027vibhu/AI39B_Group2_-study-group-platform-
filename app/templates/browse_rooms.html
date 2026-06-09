@@ -7,21 +7,21 @@
 {% block topbar_title %}{% endblock %}
 
 {% block nav %}
-  <a href="{{ url_for('home.index') }}" class="nav-item">
+  <a href="{{ url_for('home.index') }}" class="nav-item" title="Dashboard">
     <i class="fa-solid fa-house"></i>
-    Dashboard
+    <span class="nav-label">Dashboard</span>
   </a>
-  <a href="{{ url_for('home.create_room') }}" class="nav-item">
+  <a href="{{ url_for('home.create_room') }}" class="nav-item" title="Create Room">
     <i class="fa-solid fa-plus"></i>
-    Create Room
+    <span class="nav-label">Create Room</span>
   </a>
-  <a href="{{ url_for('home.join_room') }}" class="nav-item">
+  <a href="{{ url_for('home.join_room') }}" class="nav-item" title="Join Room">
     <i class="fa-solid fa-comments"></i>
-    Join Room
+    <span class="nav-label">Join Room</span>
   </a>
-  <a href="{{ url_for('home.browse_rooms') }}" class="nav-item active">
+  <a href="{{ url_for('home.browse_rooms') }}" class="nav-item active" title="Browse Rooms">
     <i class="fa-solid fa-compass"></i>
-    Browse Rooms
+    <span class="nav-label">Browse Rooms</span>
   </a>
 {% endblock %}
 

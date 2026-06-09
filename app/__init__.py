@@ -3,7 +3,9 @@ from flask_socketio import SocketIO
 from config import Config
 from app.routes.roomroutes import room_bp
 
-socketio = SocketIO()
+# Use a compatible async mode for the current environment.
+# threading is the safest fallback when eventlet/gevent are unavailable or unsupported.
+socketio = SocketIO(async_mode='threading')
 
 def create_app():
 
@@ -15,16 +17,14 @@ def create_app():
     from app.routes import auth as auth_bp
     from app.routes.status import status_bp
     from app.routes.message_vote_routes import message_vote_bp
-    from app.routes.resource_vote_routes import resource_vote_bp
-    from app.routes.file_organization_routes import file_organization_bp
+    from app.routes.join_leave_notification_routes import join_leave_notification_bp
 
     app.register_blueprint(home_bp.bp)
     app.register_blueprint(auth_bp.bp)
     app.register_blueprint(room_bp)
     app.register_blueprint(status_bp)
     app.register_blueprint(message_vote_bp)
-    app.register_blueprint(resource_vote_bp)
-    app.register_blueprint(file_organization_bp)
+    app.register_blueprint(join_leave_notification_bp)
 
     from app import sockets, models
     # Import the database module as a module object so tests can monkeypatch
