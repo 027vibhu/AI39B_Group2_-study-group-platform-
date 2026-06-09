@@ -46,7 +46,36 @@
         <div class="message-bubble">
           <div class="message-username">{{ msg.username }}</div>
           <div class="message-body">
-            <div class="message-content">{{ msg.content }}</div>
+            <div class="message-content">
+              {% if msg.content.startswith('[FILE:') and msg.content.endswith(']') %}
+                {% set parts = msg.content[6:-1].split('|||') %}
+                {% if parts|length == 3 %}
+                  {% set file_type = parts[0] %}
+                  {% set file_name = parts[1] %}
+                  {% set file_url = parts[2] %}
+                  {% if file_type == 'pdf' %}
+                    <div class="file-preview pdf-preview">
+                      <div class="file-info" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <span class="file-name" style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;">📄 {{ file_name }}</span>
+                        <a href="{{ file_url }}" download="{{ file_name }}" class="download-btn" title="Download" style="background: var(--primary); color: white; padding: 4px 10px; border-radius: 4px; text-decoration: none; font-size: 0.85em;">⬇️ Download</a>
+                      </div>
+                      <iframe src="{{ file_url }}" style="width: 100%; height: 250px; border: 1px solid #ddd; border-radius: 4px;"></iframe>
+                    </div>
+                  {% else %}
+                    <div class="file-preview image-preview">
+                      <div class="file-info" style="display: flex; align-items: center; justify-content: flex-end; margin-bottom: 8px;">
+                        <a href="{{ file_url }}" download="{{ file_name }}" class="download-btn" title="Download" style="background: var(--primary); color: white; padding: 4px 10px; border-radius: 4px; text-decoration: none; font-size: 0.85em;">⬇️ Download</a>
+                      </div>
+                      <img src="{{ file_url }}" class="message-image" alt="{{ file_name }}" style="max-width: 100%; border-radius: 4px;">
+                    </div>
+                  {% endif %}
+                {% else %}
+                  {{ msg.content }}
+                {% endif %}
+              {% else %}
+                {{ msg.content }}
+              {% endif %}
+            </div>
             <div class="message-votes {% if (msg.upvotes|default(0)|int) > 0 or (msg.downvotes|default(0)|int) > 0 %}has-votes{% endif %}" data-message-id="{{ msg.id }}">
               <button class="vote-button upvote{% if msg.user_vote == 'upvote' %} active{% endif %}" type="button" data-vote-type="upvote">▲</button>
               <span class="vote-count" data-vote-type="upvotes">{{ 0 if msg.upvotes in [None, 'None', ''] else msg.upvotes }}</span>
@@ -62,10 +91,10 @@
 
     <div class="chat-input">
       <button class="icon-btn" id="emojiBtn">😀</button>
-      <label class="icon-btn">
+      <label class="icon-btn" title="Attach file" for="fileInput" style="cursor: pointer;">
         📎
-        <input type="file" hidden id="imageInput" accept="image/*">
       </label>
+      <input type="file" id="fileInput" accept="image/*,application/pdf" style="display: none;">
       <input type="text" class="input-box" id="messageInput" placeholder="Type a message...">
       <button class="send-btn" id="sendBtn">➤</button>
     </div>
@@ -149,7 +178,7 @@ const roomCode = "{{ room_code }}";
 const sendBtn = document.getElementById('sendBtn');
 const messageInput = document.getElementById('messageInput');
 const chatBody = document.getElementById('chatBody');
-const imageInput = document.getElementById('imageInput');
+const fileInput = document.getElementById('fileInput');
 const emojiBtn = document.getElementById('emojiBtn');
 const memberStatus = document.getElementById('memberStatus');
 const memberCount = document.getElementById('memberCount');
@@ -277,12 +306,48 @@ function addMessageToUI(text, type, sender, messageId = null){
     <div class="message-bubble">
       ${senderHTML}
       <div class="message-body">
-        <div class="message-content">${text}</div>
+        <div class="message-content"></div>
         ${voteControls}
       </div>
       <div class="message-time">${getTime()}</div>
     </div>
   `;
+  
+  const contentDiv = message.querySelector('.message-content');
+  if (text.startsWith('[FILE:') && text.endsWith(']')) {
+    const parts = text.substring(6, text.length - 1).split('|||');
+    if (parts.length === 3) {
+      const fileType = parts[0];
+      const fileName = parts[1];
+      const fileUrl = parts[2];
+      
+      if (fileType === 'pdf') {
+        contentDiv.innerHTML = `
+          <div class="file-preview pdf-preview">
+            <div class="file-info" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <span class="file-name" style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;">📄 ${fileName}</span>
+              <a href="${fileUrl}" download="${fileName}" class="download-btn" title="Download" style="background: var(--primary); color: white; padding: 4px 10px; border-radius: 4px; text-decoration: none; font-size: 0.85em;">⬇️ Download</a>
+            </div>
+            <iframe src="${fileUrl}" style="width: 100%; height: 250px; border: 1px solid #ddd; border-radius: 4px;"></iframe>
+          </div>
+        `;
+      } else {
+        contentDiv.innerHTML = `
+          <div class="file-preview image-preview">
+            <div class="file-info" style="display: flex; align-items: center; justify-content: flex-end; margin-bottom: 8px;">
+              <a href="${fileUrl}" download="${fileName}" class="download-btn" title="Download" style="background: var(--primary); color: white; padding: 4px 10px; border-radius: 4px; text-decoration: none; font-size: 0.85em;">⬇️ Download</a>
+            </div>
+            <img src="${fileUrl}" class="message-image" alt="${fileName}" style="max-width: 100%; border-radius: 4px;">
+          </div>
+        `;
+      }
+    } else {
+      contentDiv.innerText = text;
+    }
+  } else {
+    contentDiv.innerText = text;
+  }
+  
   chatBody.appendChild(message);
   scrollBottom();
 }
@@ -348,21 +413,36 @@ function renderPresenceLists(onlineUsers, offlineUsers) {
 }
 
 
-imageInput.addEventListener('change', function(){
-  const file = this.files[0];
-  if(!file) return;
-  const imageURL = URL.createObjectURL(file);
-  const message = document.createElement('div');
-  message.classList.add('message','sent');
-  message.innerHTML = `
-    <div class="message-bubble">
-      <img src="${imageURL}" class="message-image">
-      <div class="message-time">${getTime()}</div>
-    </div>
-  `;
-  chatBody.appendChild(message);
-  scrollBottom();
-});
+if (fileInput) {
+  fileInput.addEventListener('change', async function(){
+    const file = this.files[0];
+    if(!file) return;
+
+    // Show a temporary sending indicator or just wait
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const response = await fetch('/chat/' + roomCode + '/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (data.error) {
+        alert("Upload error: " + data.error);
+        return;
+      }
+      
+      const fileMessage = '[FILE:' + data.type + '|||' + data.filename + '|||' + data.url + ']';
+      socket.emit('send_message', { room: roomCode, message: fileMessage, username: displayName });
+    } catch (err) {
+      console.error('File upload failed:', err);
+      alert('File upload failed');
+    }
+    
+    this.value = '';
+  });
+}
 
 if (emojiBtn) {
   emojiBtn.addEventListener('click', () => {
