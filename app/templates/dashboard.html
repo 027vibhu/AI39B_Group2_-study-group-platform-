@@ -105,6 +105,21 @@
 
     const pad = (n) => String(n).padStart(2, '0');
 
+    // Days at (or beyond) which the card is calmest (lightest red).
+    const MAX_DAYS = 45;
+
+    // Paint the card teal (far away) -> yellow -> orange -> red (exam day).
+    function applyUrgencyColor(days) {
+      const t = Math.min(Math.max(1 - days / MAX_DAYS, 0), 1); // 0 = far, 1 = now
+      // Ease the hue so yellow lands mid-way and warm tones dominate as t rises.
+      const hue = 170 * Math.pow(1 - t, 1.6);  // 170 (teal) -> 0 (red)
+      const sat = 68 + t * 12;                  // 68% -> 80%
+      const light = 47 - t * 3;                 // 47% -> 44%
+      const base = `hsl(${hue}, ${sat}%, ${light}%)`;
+      const deep = `hsl(${hue}, ${sat}%, ${Math.max(light - 12, 26)}%)`;
+      el.style.background = `linear-gradient(160deg, ${base} 0%, ${deep} 100%)`;
+    }
+
     function loadStored() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -153,6 +168,7 @@
         if (hoursEl) hoursEl.textContent = '00';
         if (minutesEl) minutesEl.textContent = '00';
         if (secondsEl) secondsEl.textContent = '00';
+        applyUrgencyColor(0);
         return;
       }
 
@@ -160,6 +176,8 @@
       const hours = Math.floor(diff / 3600); diff -= hours * 3600;
       const minutes = Math.floor(diff / 60);
       const seconds = diff - minutes * 60;
+
+      applyUrgencyColor(days);
 
       if (daysEl) daysEl.textContent = days;
       if (labelEl) labelEl.textContent = days === 1 ? 'day left' : 'days left';
