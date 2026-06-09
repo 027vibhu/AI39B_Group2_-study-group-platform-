@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('whiteboardCanvas');
   const placeholder = document.querySelector('.whiteboard-placeholder');
   const clearButton = document.querySelector('.wb-btn-secondary');
+  const downloadButton = document.getElementById('downloadButton');
   const inviteButton = document.querySelector('.wb-btn-primary');
   const inviteModal = document.getElementById('inviteModal');
   const inviteLinkInput = document.getElementById('inviteLinkInput');
@@ -155,8 +156,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   updatePlaceholder();
 
+  const downloadBoard = () => {
+    if (!canvas) return;
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = 'whiteboard.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (clearButton) {
     clearButton.addEventListener('click', clearCanvas);
+  }
+
+  if (downloadButton) {
+    downloadButton.addEventListener('click', downloadBoard);
   }
 
   if (inviteButton) {
