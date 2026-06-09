@@ -254,6 +254,76 @@
   display: none;
 }
 
+.collaborator-panel {
+  background: #f8fafc;
+  border-radius: 1rem;
+  padding: 1rem 1rem 0.75rem;
+  border: 1px solid #e5e7eb;
+}
+
+.collaborator-panel h4 {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  color: #111827;
+}
+
+.collaborators {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.collaborator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #ffffff;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+}
+
+.avatar {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: #4338ca;
+}
+
+.collab-name {
+  display: block;
+  font-weight: 600;
+  color: #111827;
+}
+
+.collab-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.83rem;
+  color: #6b7280;
+}
+
+.collab-status::before {
+  content: '';
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  display: inline-block;
+  background: #22c55e;
+}
+
+.collaborator:nth-child(3) .collab-status::before {
+  background: #f59e0b;
+}
+
 .chat-note-list {
   display: grid;
   gap: 0.85rem;
