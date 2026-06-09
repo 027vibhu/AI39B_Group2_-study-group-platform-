@@ -64,6 +64,7 @@ class HomeRoutes:
         self.bp.route('/profile/avatar', methods=['POST'])(self.update_avatar)
         self.bp.route('/notes')(self.notes)
         self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
+        self.bp.route('/whiteboard')(self.whiteboard)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
 
         return self.bp
@@ -122,6 +123,9 @@ class HomeRoutes:
 
     def create(self):
         return redirect(url_for('home.create_room'))
+
+    def whiteboard(self):
+        return render_template('whiteboard.html')
 
     def _generate_unique_room_code(self):
         while True:

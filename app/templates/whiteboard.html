@@ -1,0 +1,67 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Shared Whiteboard{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/whiteboard.css') }}">
+{% endblock %}
+
+{% block topbar_title %}Shared Whiteboard{% endblock %}
+
+{% block content %}
+  <section class="whiteboard-page">
+    <div class="whiteboard-header">
+      <div class="whiteboard-info">
+        <h2 class="whiteboard-title">Collaborative Whiteboard</h2>
+        <p class="whiteboard-subtitle">Draw, annotate, and share ideas in real time with your study group.</p>
+      </div>
+      <div class="whiteboard-actions">
+        <button class="wb-btn wb-btn-secondary" type="button">Clear board</button>
+        <button class="wb-btn wb-btn-primary" type="button">Invite collaborators</button>
+      </div>
+    </div>
+
+    <div class="whiteboard-layout">
+      <aside class="whiteboard-sidebar">
+        <div class="sidebar-panel">
+          <h3>Tools</h3>
+          <ul class="tool-list">
+            <li class="tool-item">Pen</li>
+            <li class="tool-item">Highlighter</li>
+            <li class="tool-item">Eraser</li>
+            <li class="tool-item">Text</li>
+            <li class="tool-item">Shapes</li>
+          </ul>
+        </div>
+
+        <div class="sidebar-panel">
+          <h3>Layers</h3>
+          <div class="layers-placeholder">Layer controls and visibility toggles.</div>
+        </div>
+      </aside>
+
+      <main class="whiteboard-canvas-container">
+        <div class="whiteboard-toolbar">
+          <span class="toolbar-label">Current room: <strong>Study Session</strong></span>
+          <span class="toolbar-label">Participants: <strong>4</strong></span>
+        </div>
+        <div class="whiteboard-canvas" aria-label="Shared whiteboard drawing surface">
+          <div class="whiteboard-placeholder">Loading whiteboard...</div>
+        </div>
+      </main>
+
+      <aside class="whiteboard-chat-panel">
+        <div class="chat-panel-header">
+          <h3>Live Notes</h3>
+        </div>
+        <div class="chat-note-list">
+          <div class="chat-note">Annotate with text, comments, and quick highlights.</div>
+          <div class="chat-note">Use the tool palette to switch drawing modes.</div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/whiteboard.js') }}"></script>
+{% endblock %}
