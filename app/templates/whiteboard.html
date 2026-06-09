@@ -6,7 +6,17 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/whiteboard.css') }}">
 {% endblock %}
 
-{% block topbar_title %}Shared Whiteboard{% endblock %}
+{% block topbar_title %}
+  {% if room %}
+    <span class="topbar-room-meta">
+      <i class="fa-solid fa-chalkboard"></i>
+      {{ room.name if room.name else 'Room ' ~ room_code }} Whiteboard
+      <span class="room-code-chip">#{{ room_code }}</span>
+    </span>
+  {% else %}
+    Shared Whiteboard
+  {% endif %}
+{% endblock %}
 
 {% block content %}
   <section class="whiteboard-page">
@@ -14,6 +24,9 @@
       <div class="whiteboard-info">
         <h2 class="whiteboard-title">Collaborative Whiteboard</h2>
         <p class="whiteboard-subtitle">Draw, annotate, and share ideas in real time with your study group.</p>
+        {% if room %}
+        <p class="whiteboard-room-detail">Room: <strong>{{ room.name if room.name else 'Room ' ~ room_code }}</strong></p>
+        {% endif %}
       </div>
       <div class="whiteboard-actions">
         <button class="wb-btn wb-btn-secondary" type="button">Clear board</button>

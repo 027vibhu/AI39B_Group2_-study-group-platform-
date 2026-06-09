@@ -50,6 +50,9 @@
         <button id="filesToggleBtn" class="action-btn" type="button" title="Files" aria-pressed="false">
           <i class="fa-solid fa-folder"></i>
         </button>
+        <a href="{{ url_for('home.whiteboard_room', room_code=room_code) }}" class="action-btn" title="Open whiteboard">
+          <i class="fa-solid fa-chalkboard"></i>
+        </a>
         <a href="{{ url_for('home.moderation', room_code=room_code) }}" class="moderation-btn" title="Moderation Panel">
           <i class="fa-solid fa-shield-halved"></i>
         </a>

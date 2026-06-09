@@ -30,6 +30,16 @@
   line-height: 1.65;
 }
 
+.whiteboard-room-detail {
+  margin: 0.75rem 0 0;
+  color: #373f51;
+  font-size: 0.95rem;
+}
+
+.whiteboard-room-detail strong {
+  color: #111827;
+}
+
 .whiteboard-actions {
   display: flex;
   gap: 0.75rem;

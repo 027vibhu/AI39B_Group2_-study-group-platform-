@@ -65,6 +65,7 @@ class HomeRoutes:
         self.bp.route('/notes')(self.notes)
         self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
         self.bp.route('/whiteboard')(self.whiteboard)
+        self.bp.route('/chat/<room_code>/whiteboard')(self.whiteboard_room)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
 
         return self.bp
@@ -126,6 +127,12 @@ class HomeRoutes:
 
     def whiteboard(self):
         return render_template('whiteboard.html')
+
+    def whiteboard_room(self, room_code):
+        room = get_room_by_code(room_code)
+        if not room:
+            return redirect(url_for('home.chat', room_code=room_code))
+        return render_template('whiteboard.html', room_code=room_code, room=room)
 
     def _generate_unique_room_code(self):
         while True:
