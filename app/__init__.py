@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_socketio import SocketIO
 from config import Config
+from app.routes.home import HomeRoutes
 from app.routes.roomroutes import room_bp
 
 # Use a compatible async mode for the current environment.
@@ -12,13 +13,12 @@ def create_app():
     app.config.from_object(Config)
 
     socketio.init_app(app)
-    from app.routes import home as home_bp
+    app.register_blueprint(HomeRoutes().register())
     from app.routes import auth as auth_bp
     from app.routes.status import status_bp
     from app.routes.message_vote_routes import message_vote_bp
     from app.routes.join_leave_notification_routes import join_leave_notification_bp
 
-    app.register_blueprint(home_bp.bp)
     app.register_blueprint(auth_bp.bp)
     app.register_blueprint(room_bp)
     app.register_blueprint(status_bp)
