@@ -98,9 +98,23 @@
   transition: background 0.2s ease, color 0.2s ease;
 }
 
-.tool-item:hover {
+.tool-item:hover,
+.tool-item.active {
   background: #eef2ff;
   color: #1d4ed8;
+}
+
+.tool-item.active {
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+
+.whiteboard-canvas.board-cleared {
+  animation: flashClear 0.3s ease-in-out;
+}
+
+@keyframes flashClear {
+  0% { background-color: rgba(79, 70, 229, 0.1); }
+  100% { background-color: transparent; }
 }
 
 .layers-placeholder,

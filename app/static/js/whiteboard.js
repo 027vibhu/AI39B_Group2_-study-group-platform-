@@ -6,11 +6,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const inviteButton = document.querySelector('.wb-btn-primary');
 
   toolItems.forEach((item) => {
-    item.addEventListener('click', () => {
-      toolItems.forEach((tool) => tool.classList.remove('active'));
+    const setActive = () => {
+      toolItems.forEach((tool) => {
+        tool.classList.remove('active');
+        tool.setAttribute('aria-pressed', 'false');
+      });
       item.classList.add('active');
+      item.setAttribute('aria-pressed', 'true');
       if (placeholder) {
         placeholder.textContent = `Selected tool: ${item.textContent.trim()}. Start drawing on the canvas.`;
+      }
+    };
+
+    item.addEventListener('click', setActive);
+    item.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        setActive();
       }
     });
   });
