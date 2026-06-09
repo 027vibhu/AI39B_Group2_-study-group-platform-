@@ -1,111 +1,222 @@
-{% extends "base_sidebar.html" %}
+{% extends "base_dash.html" %}
 
 {% block title %}Moderation Panel{% endblock %}
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/moderation.css') }}">
 {% endblock %}
+{% block nav %}
+  {{ super() }}
+  <a href="{{ url_for('home.moderation') }}" class="nav-item {% if request.endpoint == 'home.moderation' %}active{% endif %}" title="Moderation">
+    <i class="fa-solid fa-shield-halved"></i>
+    <span class="nav-label">Moderation</span>
+  </a>
+{% endblock %}
 {% block topbar_title %}Moderation Panel{% endblock %}
 
 {% block content %}
 <section class="moderation-panel">
-  <header class="mod-header">
-    <div>
-      <h1>Moderation Panel</h1>
-      <p>Kick or ban a user from one of your owned rooms.</p>
+  <header class="mod-hero">
+    <div class="mod-hero-copy">
+      <span class="section-kicker"><i class="fa-solid fa-shield-halved"></i> Room controls</span>
+      <h1>Moderation</h1>
+      <p>Remove or restrict members across the rooms you manage. A kick removes someone instantly; a ban applies a timed restriction.</p>
+    </div>
+
+    <div class="mod-hero-stats">
+      <button type="button" class="stat-card stat-card-accent stat-card-button" id="auditToggle" aria-expanded="false" aria-controls="auditPanel">
+        <span class="stat-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+        <div class="stat-body">
+          <strong>Recent actions</strong>
+          <span>View audit log</span>
+        </div>
+        <i class="fa-solid fa-chevron-down stat-card-caret"></i>
+      </button>
     </div>
   </header>
 
   {% if can_moderate_any %}
-  <form id="moderationForm" class="mod-controls" action="{{ url_for('home.moderation_action') }}" method="post">
-    <div class="search-box">
-      <div class="input-box">
-        <span>👤</span>
-        <input type="text" name="username" placeholder="Target username" aria-label="Target username" required>
-      </div>
-      <button type="button" class="main-btn" id="moderationSubmitTop">Apply</button>
-    </div>
-
-    <div class="filter-group">
-      <select name="room_code" aria-label="Select room" required>
-        <option value="">Select a room</option>
-        {% for room in owned_rooms %}
-          <option value="{{ room.code }}" {% if selected_room_code == room.code %}selected{% endif %}>{{ room.name if room.name else 'Room ' ~ room.code }} ({{ room.code }})</option>
-        {% endfor %}
-        {% if not owned_rooms and joined_rooms %}
-          {% for room in joined_rooms %}
-            <option value="{{ room.code }}" {% if selected_room_code == room.code %}selected{% endif %}>{{ room.name if room.name else 'Room ' ~ room.code }} ({{ room.code }})</option>
-          {% endfor %}
-        {% endif %}
-      </select>
-      <select name="action" id="moderationAction" aria-label="Select action" required>
-        <option value="kick">Kick</option>
-        <option value="ban">Ban</option>
-      </select>
-      <div class="input-box" style="width:160px;">
-        <input type="number" name="duration_minutes" id="banDuration" min="1" placeholder="Ban minutes" aria-label="Ban duration in minutes">
-      </div>
-    </div>
-
-    <div class="user-table">
-      <article class="user-row">
-        <div class="user-meta">
-          <img class="avatar" src="{{ url_for('static', filename='images/default_user_icon.jpg') }}" alt="User avatar">
-          <div class="user-info">
-            <strong class="user-name">Reason</strong>
-            <span class="user-role">Optional note shown to moderators</span>
-          </div>
+  <div class="moderation-grid">
+    <form id="moderationForm" class="moderation-card moderation-form" action="{{ url_for('home.moderation_action') }}" method="post" novalidate>
+      <div class="card-heading">
+        <div>
+          <span class="section-kicker">Apply action</span>
+          <h2>Moderate a member</h2>
         </div>
-        <div class="user-actions" style="flex: 1;">
+      </div>
+
+      <input type="hidden" name="action" id="moderationAction" value="kick">
+      <div class="action-toggle" role="tablist" aria-label="Choose moderation action">
+        <button type="button" class="action-option is-active" data-action="kick" role="tab" aria-selected="true">
+          <span class="action-option-icon"><i class="fa-solid fa-user-xmark"></i></span>
+          <span class="action-option-text">
+            <strong>Kick</strong>
+            <small>Remove now — can rejoin</small>
+          </span>
+        </button>
+        <button type="button" class="action-option" data-action="ban" role="tab" aria-selected="false">
+          <span class="action-option-icon"><i class="fa-solid fa-gavel"></i></span>
+          <span class="action-option-text">
+            <strong>Ban</strong>
+            <small>Restrict for a set time</small>
+          </span>
+        </button>
+      </div>
+
+      <div class="form-layout">
+        <label class="field-card">
+          <span class="field-label">Target username</span>
           <div class="input-box">
-            <span>📝</span>
-            <input type="text" name="reason" placeholder="Reason for action" aria-label="Reason for action">
+            <i class="fa-solid fa-user input-icon"></i>
+            <input type="text" name="username" id="modUsername" placeholder="e.g. johndoe" autocomplete="off" aria-label="Target username" required>
+          </div>
+        </label>
+
+        <div class="field-card">
+          <span class="field-label">Room</span>
+          <div class="custom-select" data-icon="fa-door-closed" data-open="false">
+            <select name="room_code" id="modRoom" aria-label="Select room" required>
+              <option value="">Select a room</option>
+              {% if owned_rooms %}
+                {% for room in owned_rooms %}
+                  <option value="{{ room.code }}" {% if selected_room_code == room.code %}selected{% endif %}>{{ room.name if room.name else 'Room ' ~ room.code }} ({{ room.code }})</option>
+                {% endfor %}
+              {% endif %}
+              {% if joined_rooms %}
+                {% for room in joined_rooms %}
+                  <option value="{{ room.code }}" {% if selected_room_code == room.code %}selected{% endif %}>{{ room.name if room.name else 'Room ' ~ room.code }} ({{ room.code }})</option>
+                {% endfor %}
+              {% endif %}
+            </select>
           </div>
         </div>
-      </article>
-    </div>
 
-    <div class="action-summary" id="moderationStatus">
-      <p>Choose a room, enter a username, and confirm the action.</p>
-    </div>
-
-    {% if recent_actions %}
-    <div class="audit-log">
-      <div class="audit-log-header">
-        <h2>Recent Actions</h2>
-        <span>{{ selected_room_code }}</span>
+        <label class="field-card field-card-wide">
+          <span class="field-label">Reason <span class="field-optional">optional</span></span>
+          <div class="input-box input-box-textarea">
+            <i class="fa-solid fa-pen input-icon"></i>
+            <textarea name="reason" id="modReason" rows="3" placeholder="Shown to other moderators in the audit log" aria-label="Reason for action"></textarea>
+          </div>
+        </label>
       </div>
+
+      <div class="action-summary" id="moderationStatus" role="status" hidden></div>
+
+      <div class="moderation-actions">
+        <button type="reset" class="main-btn main-btn-ghost" id="moderationReset">Clear</button>
+        <button type="submit" class="main-btn main-btn-confirm" id="moderationSubmit">
+          <i class="fa-solid fa-user-xmark"></i><span id="submitLabel">Kick member</span>
+        </button>
+      </div>
+    </form>
+
+    <aside class="moderation-card duration-panel" id="banDurationSection" data-active="false">
+      <div class="duration-head">
+        <span class="duration-head-icon"><i class="fa-solid fa-hourglass-half"></i></span>
+        <div>
+          <span class="section-kicker">Restriction</span>
+          <h2>Ban duration</h2>
+        </div>
+      </div>
+
+      <p class="duration-hint" id="durationHint">Select <strong>Ban</strong> to choose how long the member stays restricted.</p>
+
+      <div class="duration-controls">
+        <div class="duration-presets" id="durationPresets">
+          <button type="button" class="preset-chip" data-minutes="10">
+            <strong>10</strong><span>minutes</span>
+          </button>
+          <button type="button" class="preset-chip" data-minutes="60">
+            <strong>1</strong><span>hour</span>
+          </button>
+          <button type="button" class="preset-chip" data-minutes="1440">
+            <strong>1</strong><span>day</span>
+          </button>
+          <button type="button" class="preset-chip" data-minutes="10080">
+            <strong>1</strong><span>week</span>
+          </button>
+        </div>
+
+        <div class="duration-divider"><span>or set custom</span></div>
+
+        <div class="input-box duration-custom">
+          <i class="fa-solid fa-pen-to-square input-icon"></i>
+          <input type="number" name="duration_minutes" id="banDuration" min="1" placeholder="Custom" form="moderationForm" aria-label="Ban duration in minutes">
+          <span class="input-suffix">minutes</span>
+        </div>
+      </div>
+    </aside>
+
+    <section class="moderation-card audit-panel" id="auditPanel" hidden>
+      <div class="audit-log-header">
+        <div>
+          <span class="section-kicker">Audit log</span>
+          <h2>Recent actions</h2>
+        </div>
+        <span class="audit-room-chip">
+          <i class="fa-solid fa-hashtag"></i>{{ selected_room_code if selected_room_code else 'No room selected' }}
+        </span>
+      </div>
+
+      {% if recent_actions %}
       <div class="audit-log-list">
         {% for action in recent_actions %}
-        <article class="audit-item">
-          <div class="audit-item-main">
-            <strong>{{ action.actor_username }}</strong>
-            <span>{{ action.action_type|capitalize }}ed {{ action.target_username }}</span>
+        <article class="audit-item audit-item-{{ action.action_type }}">
+          <span class="audit-badge audit-badge-{{ action.action_type }}">
+            <i class="fa-solid {{ 'fa-gavel' if action.action_type == 'ban' else 'fa-user-xmark' }}"></i>
+            {{ action.action_type|capitalize }}
+          </span>
+          <div class="audit-item-body">
+            <div class="audit-item-main">
+              <p class="audit-line">
+                <strong>{{ action.actor_username }}</strong>
+                <span class="audit-arrow"><i class="fa-solid fa-arrow-right-long"></i></span>
+                <strong>{{ action.target_username }}</strong>
+              </p>
+              <time>{{ action.created_at }}</time>
+            </div>
+            <div class="audit-item-meta">
+              {% if action.duration_minutes %}
+                <span class="audit-pill"><i class="fa-solid fa-hourglass-half"></i>{{ action.duration_minutes }} min</span>
+              {% endif %}
+              {% if action.reason %}
+                <p class="audit-reason">“{{ action.reason }}”</p>
+              {% endif %}
+            </div>
           </div>
-          <div class="audit-item-meta">
-            {% if action.duration_minutes %}
-              <span>{{ action.duration_minutes }} min</span>
-            {% endif %}
-            <time>{{ action.created_at }}</time>
-          </div>
-          {% if action.reason %}
-          <p class="audit-reason">{{ action.reason }}</p>
-          {% endif %}
         </article>
         {% endfor %}
       </div>
-    </div>
-    {% endif %}
-
-    <div class="modal-buttons" style="justify-content: flex-end; margin-top: 18px;">
-      <button type="submit" class="main-btn" id="moderationSubmit">Confirm Action</button>
-    </div>
-  </form>
+      {% else %}
+      <div class="empty-log">
+        <span class="empty-icon"><i class="fa-solid fa-clipboard-list"></i></span>
+        <strong>No actions yet</strong>
+        <p>Open a room from the chat header to view its recent moderation activity here.</p>
+      </div>
+      {% endif %}
+    </section>
+  </div>
   {% else %}
-  <div class="action-summary">
-    <p>Moderation tools are available to room moderators and administrators only.</p>
+  <div class="moderation-card empty-state-card">
+    <span class="empty-icon"><i class="fa-solid fa-lock"></i></span>
+    <strong>Moderation access unavailable</strong>
+    <p>Moderation tools are available to room moderators, owners, and administrators only.</p>
   </div>
   {% endif %}
 </section>
+
+<div class="modal-backdrop" id="confirmModal" hidden>
+  <div class="modal-window" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <span class="modal-icon" id="confirmIcon"><i class="fa-solid fa-user-xmark"></i></span>
+    <h2 id="confirmTitle">Kick member?</h2>
+    <p id="confirmBody">Confirm the action.</p>
+    <div class="modal-buttons">
+      <button type="button" class="main-btn main-btn-ghost" id="confirmCancel">Cancel</button>
+      <button type="button" class="main-btn main-btn-confirm" id="confirmApply">
+        <span id="confirmApplyLabel">Kick member</span>
+      </button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 {% block scripts %}
   <script src="{{ url_for('static', filename='js/moderation.js') }}"></script>

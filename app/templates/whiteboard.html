@@ -1,0 +1,72 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Shared Whiteboard - Lorevia{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/whiteboard.css') }}">
+{% endblock %}
+
+{% block topbar_title %}Shared Whiteboard{% endblock %}
+
+{% block content %}
+  <div class="whiteboard-page">
+
+    <aside class="whiteboard-sidebar">
+      <div class="sidebar-section">
+        <h2>Tools</h2>
+        <div class="tool-list">
+          <button type="button" class="tool active">Pen</button>
+          <button type="button" class="tool">Eraser</button>
+          <button type="button" class="tool">Shape</button>
+          <button type="button" class="tool">Text</button>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <h2>Colors</h2>
+        <div class="color-palette">
+          <button type="button" class="color-swatch color-black active"></button>
+          <button type="button" class="color-swatch color-blue"></button>
+          <button type="button" class="color-swatch color-green"></button>
+          <button type="button" class="color-swatch color-yellow"></button>
+          <button type="button" class="color-swatch color-red"></button>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <h2>Actions</h2>
+        <button type="button" class="sidebar-btn">Undo</button>
+        <button type="button" class="sidebar-btn">Redo</button>
+        <button type="button" class="sidebar-btn">Clear Board</button>
+      </div>
+
+      <div class="sidebar-section">
+        <h2>Participants</h2>
+        <ul class="participant-list">
+          <li>Alice</li>
+          <li>Jamal</li>
+          <li>Priya</li>
+          <li>Camila</li>
+        </ul>
+      </div>
+    </aside>
+
+    <main class="whiteboard-main">
+      <div class="board-header">
+        <div>
+          <h3>Room 472918</h3>
+          <p>Draw together with your study group in real time.</p>
+        </div>
+        <div class="board-actions">
+          <button type="button" class="secondary-btn">Save</button>
+          <button type="button" class="primary-btn">Share</button>
+        </div>
+      </div>
+
+      <div class="whiteboard-canvas" aria-label="Shared drawing canvas">
+        <span class="canvas-placeholder">Shared whiteboard will appear here.</span>
+      </div>
+    </main>
+
+  </div>
+{% endblock %}

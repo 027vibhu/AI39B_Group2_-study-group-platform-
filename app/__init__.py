@@ -17,12 +17,14 @@ def create_app():
     from app.routes import auth as auth_bp
     from app.routes.status import status_bp
     from app.routes.message_vote_routes import message_vote_bp
+    from app.routes.join_leave_notification_routes import join_leave_notification_bp
 
     app.register_blueprint(home_bp.bp)
     app.register_blueprint(auth_bp.bp)
     app.register_blueprint(room_bp)
     app.register_blueprint(status_bp)
     app.register_blueprint(message_vote_bp)
+    app.register_blueprint(join_leave_notification_bp)
 
     from app import sockets, models
     # Import the database module as a module object so tests can monkeypatch

@@ -8,19 +8,23 @@ from app.models.room import (
     get_room_by_id,
     is_user_banned_from_room,
     is_user_in_room,
+    log_room_action,
+    log_moderation_action
 )
 from app.models.message import get_messages_for_room
 from app.models.presence_model import get_online_users, get_offline_users
 from app.models.message_vote import get_vote_count, get_user_vote
-from app.controllers import MessageVoteController
+from app.controllers.message_vote_controller import MessageVoteController
 from app.models.database import get_user_by_id, get_user_by_username, update_user_avatar, update_user_profile
 from app.models.shared_file import create_shared_file, get_shared_file_by_id, get_shared_files_for_room
+from app.controllers.moderation_controller import ModerationController
+from app.controllers.browse_rooms_controller import BrowseRoomsController
+from app.controllers.note_controller import NoteController
+from app import socketio
 import random
 import os
 import uuid
 from werkzeug.utils import secure_filename
-from app.controllers.moderation_controller import ModerationController
-from app.controllers.browse_rooms_controller import BrowseRoomsController
 
 ALLOWED_SHARED_FILE_EXTENSIONS = {
     '.png', '.jpg', '.jpeg', '.gif', '.webp',
@@ -40,12 +44,14 @@ class HomeRoutes:
 
         # routes
         self.bp.route('/')(self.index)
+        self.bp.route('/dashboard')(self.dashboard)
         self.bp.route('/join_room')(self.join_room)
         self.bp.route('/browse_rooms')(self.browse_rooms)
         self.bp.route('/create')(self.create)
         self.bp.route('/chat/<room_code>')(self.chat)
         self.bp.route('/chat/<room_code>/shared-files', methods=['GET'])(self.list_shared_files)
         self.bp.route('/chat/<room_code>/shared-files', methods=['POST'])(self.upload_shared_file)
+        self.bp.route('/chat/<room_code>/chat-image', methods=['POST'])(self.upload_chat_image)
         self.bp.route('/files/<int:file_id>/download')(self.download_shared_file)
         self.bp.route('/files/<int:file_id>/view')(self.view_shared_file)
         self.bp.route('/message/<int:message_id>/vote', methods=['POST'])(self.vote_message)
@@ -56,6 +62,8 @@ class HomeRoutes:
         self.bp.route('/moderation/action', methods=['POST'])(self.moderation_action)
         self.bp.route('/profile/update', methods=['POST'])(self.update_profile)
         self.bp.route('/profile/avatar', methods=['POST'])(self.update_avatar)
+        self.bp.route('/notes')(self.notes)
+        self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
 
         return self.bp
@@ -86,6 +94,14 @@ class HomeRoutes:
 
     def index(self):
         return render_template('index.html')
+
+    def dashboard(self):
+        # Exam date drives the countdown square. Swap this for real data later.
+        return render_template(
+            'dashboard.html',
+            exam_date='2026-07-01T09:00:00',
+            exam_name='Final Exams',
+        )
 
     def join_room(self):
         return render_template('join_room.html')
@@ -216,18 +232,26 @@ class HomeRoutes:
             return redirect(url_for('auth.login'))
 
         file = request.files.get('shared_file')
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.accept_mimetypes.values()
+
         if not file or not file.filename:
+            if is_ajax:
+                return jsonify({'error': 'Please select a file to share.'}), 400
             flash('Please select a file to share.', 'warning')
             return redirect(url_for('home.chat', room_code=room_code))
 
         original_filename = secure_filename(file.filename)
         if not original_filename:
+            if is_ajax:
+                return jsonify({'error': 'Invalid file name.'}), 400
             flash('Invalid file name.', 'warning')
             return redirect(url_for('home.chat', room_code=room_code))
 
         _, ext = os.path.splitext(original_filename)
         ext = ext.lower()
         if ext not in ALLOWED_SHARED_FILE_EXTENSIONS:
+            if is_ajax:
+                return jsonify({'error': 'Unsupported file type.'}), 400
             flash('Unsupported file type. Please upload a document, image, or compressed archive.', 'warning')
             return redirect(url_for('home.chat', room_code=room_code))
 
@@ -239,15 +263,69 @@ class HomeRoutes:
         file_size = os.path.getsize(saved_path)
         if file_size > MAX_SHARED_FILE_SIZE:
             os.remove(saved_path)
+            if is_ajax:
+                return jsonify({'error': 'File is too large. Maximum allowed size is 25 MB.'}), 400
             flash('File is too large. Maximum allowed size is 25 MB.', 'warning')
             return redirect(url_for('home.chat', room_code=room_code))
 
         mime_type = file.mimetype or 'application/octet-stream'
 
-        create_shared_file(room['id'], current_user['username'], original_filename, stored_filename, mime_type, file_size)
+        file_id = create_shared_file(room['id'], current_user['username'], original_filename, stored_filename, mime_type, file_size)
+
+        # Broadcast the file upload to all clients in the room
+        socketio.emit('file_uploaded', {
+            'room_code': room_code,
+            'id': file_id,
+            'original_filename': original_filename,
+            'uploader_username': current_user['username'],
+            'mime_type': mime_type,
+            'file_size': file_size,
+            'download_url': url_for('home.download_shared_file', file_id=file_id),
+            'view_url': url_for('home.view_shared_file', file_id=file_id),
+        }, room=room_code)
+
+        if is_ajax:
+            return jsonify({'status': 'success', 'message': 'File shared successfully.'}), 200
 
         flash('File shared successfully.', 'success')
         return redirect(url_for('home.chat', room_code=room_code))
+
+    def upload_chat_image(self, room_code):
+        """Persist an inline chat image and return a static URL to embed in a message."""
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Login required.'}), 401
+
+        room = get_room_by_code(room_code)
+        if not room:
+            return jsonify({'error': 'Room not found'}), 404
+
+        if not self._authorize_room_access(room, user_id):
+            return jsonify({'error': 'Access denied'}), 403
+
+        file = request.files.get('image')
+        if not file or not file.filename:
+            return jsonify({'error': 'No image provided.'}), 400
+
+        original_filename = secure_filename(file.filename)
+        _, ext = os.path.splitext(original_filename)
+        ext = ext.lower()
+        if ext not in {'.png', '.jpg', '.jpeg', '.gif', '.webp'}:
+            return jsonify({'error': 'Unsupported image type.'}), 400
+
+        upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'chat_images')
+        os.makedirs(upload_dir, exist_ok=True)
+
+        stored_filename = f"{uuid.uuid4().hex}{ext}"
+        saved_path = os.path.join(upload_dir, stored_filename)
+        file.save(saved_path)
+
+        if os.path.getsize(saved_path) > MAX_SHARED_FILE_SIZE:
+            os.remove(saved_path)
+            return jsonify({'error': 'Image is too large. Maximum allowed size is 25 MB.'}), 400
+
+        image_url = url_for('static', filename=f'uploads/chat_images/{stored_filename}')
+        return jsonify({'status': 'success', 'url': image_url}), 200
 
     def _load_shared_file_for_user(self, file_id, user_id):
         file_record = get_shared_file_by_id(file_id)
@@ -462,6 +540,14 @@ class HomeRoutes:
 
         return redirect(url_for('home.profile'))
 
+    def notes(self):
+        controller = NoteController()
+        return controller.list_notes()
+
+    def upload_note(self):
+        controller = NoteController()
+        return controller.upload_note()
+
     def create_room(self):
         if request.method == 'POST':
             room_name = request.form.get('room_name', '').strip()
@@ -477,7 +563,6 @@ class HomeRoutes:
             user_id = session.get('user_id')
             new_room = create_room_record(code, room_name or f'Room {code}', is_private, subject_tags, owner_id=user_id)
 
-            user_id = session.get('user_id')
             if user_id:
                 self._remember_joined_room_for_user(user_id, new_room['id'])
             else:
@@ -486,7 +571,6 @@ class HomeRoutes:
             return redirect(url_for('home.chat', room_code=code))
 
         return render_template('createroom.html', room_code=self._generate_unique_room_code())
-
 
 # Expose blueprint
 bp = HomeRoutes().register()
