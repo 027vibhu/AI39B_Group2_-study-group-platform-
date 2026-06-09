@@ -26,6 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
     placeholder.classList.toggle('hidden', !visible);
   };
 
+  const clearCanvas = () => {
+    if (!canvas || !ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    togglePlaceholder(true);
+    updatePlaceholder('Board cleared. Choose a tool to begin again.');
+    canvas.classList.add('board-cleared');
+    setTimeout(() => canvas.classList.remove('board-cleared'), 250);
+  };
+
   const activateButtonGroup = (buttons, target) => {
     buttons.forEach((button) => button.classList.toggle('active', button === target));
   };
@@ -130,13 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updatePlaceholder();
 
   if (clearButton) {
-    clearButton.addEventListener('click', () => {
-      if (placeholder) {
-        placeholder.textContent = 'Board cleared. Choose a tool to begin again.';
-      }
-      canvas.classList.add('board-cleared');
-      setTimeout(() => canvas.classList.remove('board-cleared'), 250);
-    });
+    clearButton.addEventListener('click', clearCanvas);
   }
 
   if (inviteButton) {
