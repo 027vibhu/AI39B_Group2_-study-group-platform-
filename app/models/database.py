@@ -267,6 +267,13 @@ class Database:
             pass
 
         try:
+            from app.models.chat_attachment import create_attachment, ensure_table_exists
+
+            ensure_table_exists()
+        except Exception:
+            pass
+
+        try:
             from app.models.database import create_room_actions_table
 
             create_room_actions_table()
@@ -277,6 +284,20 @@ class Database:
             from app.models.room import create_moderation_log_table
 
             create_moderation_log_table()
+        except Exception:
+            pass
+
+        try:
+            from app.models.join_leave_notification import create_join_leave_notifications_table
+
+            create_join_leave_notifications_table()
+        except Exception:
+            pass
+
+        try:
+            from app.models.shared_file import create_shared_files_table
+
+            create_shared_files_table()
         except Exception:
             pass
 

@@ -22,9 +22,13 @@ class RoomModel(BaseModel):
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
         )
         self.execute(create_query)
-        # Best-effort: add owner_id column on existing tables
+        # Best-effort: add columns on existing tables
         try:
             self.execute("ALTER TABLE room ADD COLUMN owner_id INT NULL AFTER id")
+        except Exception:
+            pass
+        try:
+            self.execute("ALTER TABLE room ADD COLUMN subject_tags VARCHAR(255) DEFAULT '' AFTER is_private")
         except Exception:
             pass
 
