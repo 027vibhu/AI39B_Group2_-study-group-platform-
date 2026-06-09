@@ -65,8 +65,13 @@
 
       <main class="whiteboard-canvas-container">
         <div class="whiteboard-toolbar">
-          <span class="toolbar-label">Current room: <strong>Study Session</strong></span>
-          <span class="toolbar-label">Participants: <strong>4</strong></span>
+          <div class="toolbar-info">
+            <span class="toolbar-label">Current room: <strong>Study Session</strong></span>
+            <span class="toolbar-label">Participants: <strong>4</strong></span>
+          </div>
+          <div class="toolbar-meta">
+            <span class="toolbar-status" id="toolbarStatus">Tool: Pen • #111827 • 2px</span>
+          </div>
         </div>
         <div class="whiteboard-canvas" aria-label="Shared whiteboard drawing surface">
           <canvas id="whiteboardCanvas" role="img" aria-label="Canvas drawing area"></canvas>

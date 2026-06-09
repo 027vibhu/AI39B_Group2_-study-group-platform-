@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const canvasWrapper = document.querySelector('.whiteboard-canvas');
   const canvas = document.getElementById('whiteboardCanvas');
   const placeholder = document.querySelector('.whiteboard-placeholder');
+  const toolbarStatus = document.getElementById('toolbarStatus');
   const clearButton = document.querySelector('.wb-btn-secondary');
   const downloadButton = document.getElementById('downloadButton');
   const inviteButton = document.querySelector('.wb-btn-primary');
@@ -24,6 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const updatePlaceholder = (text) => {
     if (!placeholder) return;
     placeholder.textContent = text || `Selected tool: ${selectedTool}, color: ${selectedColor}, stroke: ${selectedStroke}px. Start drawing on the canvas.`;
+  };
+
+  const updateToolbarStatus = () => {
+    if (!toolbarStatus) return;
+    toolbarStatus.textContent = `Tool: ${selectedTool} • ${selectedColor} • ${selectedStroke}px`;
   };
 
   const togglePlaceholder = (visible) => {
@@ -132,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     swatch.addEventListener('click', () => {
       selectedColor = swatch.dataset.color || selectedColor;
       activateButtonGroup(colorSwatches, swatch);
-      updatePlaceholder();
+      syncUI();
     });
   });
 
@@ -140,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', () => {
       selectedStroke = Number(button.dataset.size) || selectedStroke;
       activateButtonGroup(strokeButtons, button);
-      updatePlaceholder();
+      syncUI();
     });
   });
 
@@ -154,7 +160,12 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.addEventListener('pointercancel', endDrawing);
   }
 
-  updatePlaceholder();
+  const syncUI = () => {
+    updatePlaceholder();
+    updateToolbarStatus();
+  };
+
+  syncUI();
 
   const downloadBoard = () => {
     if (!canvas) return;

@@ -210,6 +210,27 @@
   border: 1px solid #e5e7eb;
 }
 
+.toolbar-info {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.toolbar-meta {
+  display: flex;
+  min-width: 18rem;
+  justify-content: flex-end;
+}
+
+.toolbar-status {
+  font-size: 0.95rem;
+  color: #475569;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
 .toolbar-label {
   font-size: 0.95rem;
   color: #374151;
