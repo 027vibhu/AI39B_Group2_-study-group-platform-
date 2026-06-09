@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const placeholder = document.querySelector('.whiteboard-placeholder');
   const clearButton = document.querySelector('.wb-btn-secondary');
   const inviteButton = document.querySelector('.wb-btn-primary');
+  const inviteModal = document.getElementById('inviteModal');
+  const inviteLinkInput = document.getElementById('inviteLinkInput');
+  const copyInviteLink = document.getElementById('copyInviteLink');
+  const closeInviteModal = document.getElementById('closeInviteModal');
 
   let selectedTool = 'Pen';
   let selectedColor = '#111827';
@@ -33,6 +37,19 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePlaceholder('Board cleared. Choose a tool to begin again.');
     canvas.classList.add('board-cleared');
     setTimeout(() => canvas.classList.remove('board-cleared'), 250);
+  };
+
+  const openInviteModal = () => {
+    if (!inviteModal || !inviteLinkInput) return;
+    inviteModal.classList.add('open');
+    inviteModal.setAttribute('aria-hidden', 'false');
+    inviteLinkInput.select();
+  };
+
+  const closeInviteDialog = () => {
+    if (!inviteModal) return;
+    inviteModal.classList.remove('open');
+    inviteModal.setAttribute('aria-hidden', 'true');
   };
 
   const activateButtonGroup = (buttons, target) => {
@@ -143,8 +160,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (inviteButton) {
-    inviteButton.addEventListener('click', () => {
-      window.alert('Invite link copied to clipboard! Share it with your group.');
+    inviteButton.addEventListener('click', openInviteModal);
+  }
+
+  if (closeInviteModal) {
+    closeInviteModal.addEventListener('click', closeInviteDialog);
+  }
+
+  if (copyInviteLink) {
+    copyInviteLink.addEventListener('click', () => {
+      if (!inviteLinkInput) return;
+      navigator.clipboard.writeText(inviteLinkInput.value)
+        .then(() => updatePlaceholder('Invite link copied! Share it with your group.'))
+        .catch(() => updatePlaceholder('Copy the invite link manually using your browser.'));
+    });
+  }
+
+  if (inviteModal) {
+    inviteModal.addEventListener('click', (event) => {
+      if (event.target === inviteModal) {
+        closeInviteDialog();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeInviteDialog();
+      }
     });
   }
 });

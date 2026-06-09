@@ -17,7 +17,7 @@
       </div>
       <div class="whiteboard-actions">
         <button class="wb-btn wb-btn-secondary" type="button">Clear board</button>
-        <button class="wb-btn wb-btn-primary" type="button">Invite collaborators</button>
+        <button class="wb-btn wb-btn-primary" type="button" id="inviteButton">Invite collaborators</button>
       </div>
     </div>
 
@@ -116,6 +116,20 @@
       </aside>
     </div>
   </section>
+
+  <div class="modal-overlay" id="inviteModal" aria-hidden="true">
+    <div class="invite-modal" role="dialog" aria-modal="true" aria-labelledby="inviteModalTitle">
+      <h3 class="invite-modal-title" id="inviteModalTitle">Invite collaborators</h3>
+      <p class="invite-modal-copy">Share this board link with your study group.</p>
+      <div class="invite-link-group">
+        <input id="inviteLinkInput" type="text" readonly value="{{ request.url }}">
+        <button type="button" class="wb-btn wb-btn-secondary" id="copyInviteLink">Copy link</button>
+      </div>
+      <div class="invite-modal-actions">
+        <button type="button" class="wb-btn wb-btn-secondary" id="closeInviteModal">Close</button>
+      </div>
+    </div>
+  </div>
 
 {% block scripts %}
   <script src="{{ url_for('static', filename='js/whiteboard.js') }}"></script>

@@ -260,6 +260,65 @@
   border: 1px solid #e5e7eb;
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 1000;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.invite-modal {
+  width: 100%;
+  max-width: 480px;
+  padding: 1.75rem;
+  border-radius: 1.5rem;
+  background: #ffffff;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.18);
+}
+
+.invite-modal-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.3rem;
+  color: #111827;
+}
+
+.invite-modal-copy {
+  margin: 0 0 1.5rem;
+  color: #475569;
+  line-height: 1.7;
+}
+
+.invite-link-group {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+#inviteLinkInput {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 1rem;
+  background: #f8fafc;
+  color: #111827;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.invite-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .whiteboard-placeholder {
   position: absolute;
   inset: 0;
