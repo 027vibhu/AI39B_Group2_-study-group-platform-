@@ -27,7 +27,7 @@
 
       <div class="form-box">
 
-        <h2>Create</h2>
+        <h2 class="title">Create</h2>
 
         <p class="subtitle">
           Setup your study workspace below
@@ -44,9 +44,9 @@
 
           <label class="label">Your Room Code</label>
 
-          <div class="code-grid">
+          <div class="room-code">
             {% for char in room_code %}
-            <input type="text" maxlength="1" value="{{ char }}" readonly>
+            <div class="code-box">{{ char }}</div>
             {% endfor %}
           </div>
 
