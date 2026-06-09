@@ -17,6 +17,10 @@
     <i class="fa-solid fa-compass"></i>
     <span class="nav-label">Browse Rooms</span>
   </a>
+  <a href="{{ url_for('home.whiteboard') }}" class="nav-item {% if request.endpoint == 'home.whiteboard' %}active{% endif %}" title="Whiteboard">
+    <i class="fa-solid fa-chalkboard"></i>
+    <span class="nav-label">Whiteboard</span>
+  </a>
   <a href="{{ url_for('home.notes') }}" class="nav-item {% if request.endpoint == 'home.notes' %}active{% endif %}" title="Notes">
     <i class="fa-solid fa-file-pdf"></i>
     <span class="nav-label">Notes</span>

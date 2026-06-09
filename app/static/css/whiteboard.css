@@ -167,7 +167,15 @@
   justify-content: center;
 }
 
+.board-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+}
+
 .canvas-placeholder {
+  position: absolute;
   color: #8d90b0;
   font-size: 18px;
 }

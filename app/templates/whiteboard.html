@@ -64,9 +64,14 @@
       </div>
 
       <div class="whiteboard-canvas" aria-label="Shared drawing canvas">
+        <canvas id="whiteboardCanvas" class="board-canvas"></canvas>
         <span class="canvas-placeholder">Shared whiteboard will appear here.</span>
       </div>
     </main>
 
   </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/whiteboard.js') }}"></script>
 {% endblock %}

@@ -48,6 +48,7 @@ class HomeRoutes:
         self.bp.route('/join_room')(self.join_room)
         self.bp.route('/browse_rooms')(self.browse_rooms)
         self.bp.route('/create')(self.create)
+        self.bp.route('/whiteboard')(self.whiteboard)
         self.bp.route('/chat/<room_code>')(self.chat)
         self.bp.route('/chat/<room_code>/shared-files', methods=['GET'])(self.list_shared_files)
         self.bp.route('/chat/<room_code>/shared-files', methods=['POST'])(self.upload_shared_file)
@@ -109,6 +110,9 @@ class HomeRoutes:
     def browse_rooms(self):
         controller = BrowseRoomsController()
         return controller.show_browse_rooms()
+
+    def whiteboard(self):
+        return render_template('whiteboard.html')
 
     def _remember_joined_room(self, room_code):
         joined_room_codes = session.get('joined_room_codes', [])
