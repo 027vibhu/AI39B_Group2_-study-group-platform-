@@ -1,0 +1,192 @@
+/* ===== PAGE ===== */
+
+.track-hours-page {
+    padding: 40px;
+}
+
+.page-title {
+    font-size: 42px;
+    font-weight: 700;
+    color: #1f2d3d;
+    margin-bottom: 40px;
+}
+
+/* ===== MAIN CARD ===== */
+
+.study-card {
+    width: 100%;
+    max-width: 1050px;
+    min-height: 500px;
+    margin: auto;
+
+    display: flex;
+
+    background: #ffffff;
+    border-radius: 35px;
+    overflow: hidden;
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+/* ===== LEFT PANEL ===== */
+
+.study-info-panel {
+    width: 35%;
+
+    background: #525682;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    padding: 40px 25px;
+}
+
+.study-icon {
+    width: 120px;
+    height: 120px;
+
+    border-radius: 50%;
+
+    border: 5px solid white;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 30px;
+}
+
+.study-icon i {
+    font-size: 50px;
+    color: white;
+}
+
+.study-stat-box {
+    width: 100%;
+
+    margin-bottom: 15px;
+
+    padding: 16px 20px;
+
+    background: rgba(255,255,255,0.08);
+
+    border: 1px solid rgba(255,255,255,0.15);
+
+    border-radius: 12px;
+
+    color: white;
+}
+
+.study-stat-box span {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+.study-stat-box strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 18px;
+}
+
+/* ===== RIGHT PANEL ===== */
+
+.study-form-panel {
+    flex: 1;
+    padding: 50px;
+}
+
+.study-form-panel h2 {
+    font-size: 40px;
+    margin-bottom: 30px;
+    color: #1f2d3d;
+}
+
+/* ===== FORM ===== */
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    border: none;
+
+    background: #f3f4f8;
+
+    border-radius: 12px;
+
+    padding: 15px;
+
+    font-size: 15px;
+
+    outline: none;
+}
+
+.form-group textarea {
+    resize: none;
+    height: 120px;
+}
+
+/* ===== BUTTON ===== */
+
+.save-btn {
+    margin-top: 25px;
+
+    border: none;
+
+    background: #525682;
+    color: white;
+
+    padding: 14px 35px;
+
+    border-radius: 12px;
+
+    font-size: 15px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+.save-btn:hover {
+    transform: translateY(-2px);
+    background: #43476d;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 900px) {
+
+    .study-card {
+        flex-direction: column;
+    }
+
+    .study-info-panel {
+        width: 100%;
+    }
+
+    .form-row {
+        flex-direction: column;
+    }
+}

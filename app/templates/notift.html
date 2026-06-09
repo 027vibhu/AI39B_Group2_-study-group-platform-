@@ -91,20 +91,21 @@
 
 <div class="chat-container">
 
-    <h2>Study Group Activity</h2>
+    <h2>Study Group Chat</h2>
 
-    <section class="notifications-area">
-        <h3>Notifications</h3>
-        <div class="notification notification-event">username joined the room</div>
-        <div class="notification notification-event">username left the room</div>
+    <div class="chat-box">
+
+        <!-- Sample frontend-only notifications (Step 1: plain HTML structure) -->
+        <div class="notifications-sample" aria-live="polite">
+            <div class="notification notification-joined"><strong>Alice</strong> joined the room</div>
+            <div class="notification notification-left"><strong>Bob</strong> left the room</div>
+        </div>
+
         {% for notification in notifications %}
         <div class="notification">
             {{ notification }}
         </div>
         {% endfor %}
-    </section>
-
-    <div class="chat-box">
 
         {% for msg in messages %}
         <div class="message">

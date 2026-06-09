@@ -40,6 +40,7 @@ class HomeRoutes:
         self.bp.context_processor(self.inject_joined_rooms)
         self.bp.route('/profile')(self.profile)
         self.bp.route('/moderation')(self.moderation)
+        self.bp.route('/track-study-hours')(self.track_study_hours)
         self.bp.route('/moderation/action', methods=['POST'])(self.moderation_action)
         self.bp.route('/profile/update', methods=['POST'])(self.update_profile)
         self.bp.route('/profile/avatar', methods=['POST'])(self.update_avatar)
@@ -194,6 +195,9 @@ class HomeRoutes:
             return redirect(url_for('auth.login'))
 
         return render_template('profile.html', user=user)
+    
+    def track_study_hours(self):
+        return render_template('track_study_hours.html')
 
     def moderation(self):
         controller = ModerationController()

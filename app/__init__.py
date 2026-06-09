@@ -3,10 +3,9 @@ from flask_socketio import SocketIO
 from config import Config
 from app.routes.roomroutes import room_bp
 
-socketio = SocketIO()
+socketio = SocketIO(async_mode="threading", cors_allowed_origins="*")
 
 def create_app():
-
     app = Flask(__name__)
     app.config.from_object(Config)
 
