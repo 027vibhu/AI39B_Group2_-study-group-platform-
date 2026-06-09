@@ -221,6 +221,11 @@
   border-radius: 1.25rem;
   border: 1px solid #d1d5db;
   background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  background-image:
+    linear-gradient(rgba(156, 163, 175, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(156, 163, 175, 0.15) 1px, transparent 1px),
+    linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  background-size: 40px 40px, 40px 40px, auto;
   overflow: hidden;
   position: relative;
   display: flex;
@@ -234,6 +239,25 @@
   display: block;
   background: transparent;
   cursor: crosshair;
+}
+
+.whiteboard-helper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.75rem 0 0;
+  font-size: 0.95rem;
+  color: #525252;
+}
+
+.whiteboard-helper span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
 }
 
 .whiteboard-placeholder {
