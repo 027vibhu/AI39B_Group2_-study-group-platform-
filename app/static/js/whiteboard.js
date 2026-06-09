@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedStroke = 2;
   let isDrawing = false;
   let lastPosition = { x: 0, y: 0 };
+  let initialCanvasData = null;
 
   const ctx = canvas ? canvas.getContext('2d') : null;
 
@@ -87,15 +88,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const beginDrawing = (event) => {
     if (!canvas || !ctx) return;
-    isDrawing = true;
     const point = getPointerPosition(event);
+
+    if (selectedTool === 'Text') {
+      const text = window.prompt('Enter text to place on the board:');
+      if (!text) return;
+      ctx.save();
+      ctx.fillStyle = selectedColor;
+      ctx.font = `${selectedStroke * 4}px Arial`;
+      ctx.fillText(text, point.x, point.y);
+      ctx.restore();
+      togglePlaceholder(false);
+      return;
+    }
+
+    isDrawing = true;
     lastPosition = point;
     ctx.beginPath();
-    ctx.moveTo(point.x, point.y);
     ctx.lineWidth = selectedStroke;
     ctx.globalCompositeOperation = selectedTool === 'Eraser' ? 'destination-out' : 'source-over';
     const strokeColor = selectedTool === 'Eraser' ? '#000000' : selectedColor;
     ctx.strokeStyle = selectedTool === 'Highlighter' ? `${strokeColor}77` : strokeColor;
+    ctx.fillStyle = selectedTool === 'Highlighter' ? `${strokeColor}44` : strokeColor;
+
+    if (selectedTool === 'Shapes') {
+      initialCanvasData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.moveTo(point.x, point.y);
+    }
+
     togglePlaceholder(false);
     canvas.setPointerCapture(event.pointerId);
   };
@@ -103,14 +124,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const drawLine = (event) => {
     if (!isDrawing || !canvas || !ctx) return;
     const point = getPointerPosition(event);
+
+    if (selectedTool === 'Shapes') {
+      ctx.putImageData(initialCanvasData, 0, 0);
+      ctx.beginPath();
+      ctx.rect(lastPosition.x, lastPosition.y, point.x - lastPosition.x, point.y - lastPosition.y);
+      ctx.fillStyle = 'rgba(79, 70, 229, 0.12)';
+      ctx.strokeStyle = selectedColor;
+      ctx.lineWidth = selectedStroke;
+      ctx.fill();
+      ctx.stroke();
+      return;
+    }
+
     ctx.lineTo(point.x, point.y);
     ctx.stroke();
-    lastPosition = point;
   };
 
   const endDrawing = (event) => {
     if (!isDrawing || !canvas || !ctx) return;
-    drawLine(event);
+    if (selectedTool === 'Shapes') {
+      drawLine(event);
+    }
     isDrawing = false;
     if (event.pointerId) {
       canvas.releasePointerCapture(event.pointerId);
