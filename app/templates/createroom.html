@@ -160,23 +160,5 @@
       }
     });
 
-    // Handle Enter key in custom tag input
-    customTagInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        addCustomBtn.click();
-      }
-    });
-
-    // Initialize selected tags on page load
-    updateSelectedTags();
-
-    // Ensure the latest tags are captured on submit
-    if (formEl) {
-      formEl.addEventListener('submit', () => {
-        updateSelectedTags();
-      });
-    }
-  </script>
   <script src="{{ url_for('static', filename='js/create_workspace_step1.js') }}"></script>
 {% endblock %}
