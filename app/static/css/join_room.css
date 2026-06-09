@@ -14,7 +14,7 @@ body {
 
 .auth-box{
   width:100%;
-  min-height:calc(100vh - 180px);
+  min-height:calc(100vh - 130px);
   background:white;
   border-radius:34px;
   overflow:visible;
@@ -25,7 +25,7 @@ body {
 .left-panel{
   width:46%;
   background:linear-gradient(180deg,#4b4f78,#7d86c7);
-  padding:70px 60px;
+  padding:56px 48px;
   position:relative;
   display:flex;
   align-items:center;
@@ -78,7 +78,7 @@ body {
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:60px;
+  padding:48px;
   position:relative;
 }
 
@@ -112,14 +112,14 @@ body {
   text-align:center;
   color:#777;
   font-size:14px;
-  margin-bottom:38px;
+  margin-bottom:28px;
 }
 
 .code-inputs{
   display:flex;
   justify-content:center;
   gap:10px;
-  margin-bottom:34px;
+  margin-bottom:24px;
 }
 
 .code-inputs input{

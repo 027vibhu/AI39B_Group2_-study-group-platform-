@@ -1,25 +1,25 @@
 {% extends "base_sidebar.html" %}
 
 {% block nav %}
-  <a href="{{ url_for('home.index') }}" class="nav-item {% if request.endpoint == 'home.index' %}active{% endif %}">
+  <a href="{{ url_for('home.dashboard') }}" class="nav-item {% if request.endpoint == 'home.dashboard' %}active{% endif %}" title="Dashboard">
     <i class="fa-solid fa-house"></i>
-    Dashboard
+    <span class="nav-label">Dashboard</span>
   </a>
-  <a href="{{ url_for('home.create_room') }}" class="nav-item {% if request.endpoint == 'home.create_room' %}active{% endif %}">
+  <a href="{{ url_for('home.create_room') }}" class="nav-item {% if request.endpoint == 'home.create_room' %}active{% endif %}" title="Create Room">
     <i class="fa-solid fa-plus"></i>
-    Create Room
+    <span class="nav-label">Create Room</span>
   </a>
-  <a href="{{ url_for('home.join_room') }}" class="nav-item {% if request.endpoint == 'home.join_room' %}active{% endif %}">
+  <a href="{{ url_for('home.join_room') }}" class="nav-item {% if request.endpoint == 'home.join_room' %}active{% endif %}" title="Join Room">
     <i class="fa-solid fa-comments"></i>
-    Join Room
+    <span class="nav-label">Join Room</span>
   </a>
-  <a href="{{ url_for('home.browse_rooms') }}" class="nav-item {% if request.endpoint == 'home.browse_rooms' %}active{% endif %}">
+  <a href="{{ url_for('home.browse_rooms') }}" class="nav-item {% if request.endpoint == 'home.browse_rooms' %}active{% endif %}" title="Browse Rooms">
     <i class="fa-solid fa-compass"></i>
-    Browse Rooms
+    <span class="nav-label">Browse Rooms</span>
   </a>
-  <a href="{{ url_for('home.notes') }}" class="nav-item {% if request.endpoint == 'home.notes' %}active{% endif %}">
+  <a href="{{ url_for('home.notes') }}" class="nav-item {% if request.endpoint == 'home.notes' %}active{% endif %}" title="Notes">
     <i class="fa-solid fa-file-pdf"></i>
-    Notes
+    <span class="nav-label">Notes</span>
   </a>
 {% endblock %}
 

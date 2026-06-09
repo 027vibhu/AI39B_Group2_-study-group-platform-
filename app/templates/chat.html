@@ -9,10 +9,11 @@
 {% endblock %}
 
 {% block topbar_title %}
-<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-  <span>{{ room.name if room.name else room_code }}</span>
-
-</div>
+<span class="topbar-room-meta">
+  <i class="fa-solid fa-comments"></i>
+  Study Room
+  <span class="room-code-chip">#{{ room_code }}</span>
+</span>
 {% endblock %}
 
 {% block content %}
@@ -20,28 +21,37 @@
   <div class="chat-section">
     <div class="chat-header">
       <div class="header-left">
-        <h2>
-          {{ room.name if room.name else 'Room ' ~ room_code }}
-          {% if room.is_private %}<i class="fa-solid fa-lock"
-            style="font-size: 0.7em; margin-left: 8px; color: #7a8194;" title="Private Room"></i>{% endif %}
+        <h2 class="room-title">
+          <span class="room-title-text">{{ room.name if room.name else 'Room ' ~ room_code }}</span>
+          {% if room.is_private %}<i class="fa-solid fa-lock room-lock" title="Private Room"></i>{% endif %}
         </h2>
-        {% if room.subject_tags %}
-        <div class="room-tags">
-          {% for tag in room.subject_tags.split(',') %}
-          {% set clean_tag = tag.strip() %}
-          {% if clean_tag %}
-          <span class="room-tag">{{ clean_tag }}</span>
+        <div class="room-subline">
+          <span class="online">
+            <span class="online-dot"></span>
+            <span id="headerOnlineCount">{{ online_members|length if online_members else 0 }}</span> online
+          </span>
+          {% if room.subject_tags %}
+          <div class="room-tags">
+            {% for tag in room.subject_tags.split(',') %}
+            {% set clean_tag = tag.strip() %}
+            {% if clean_tag %}
+            <span class="room-tag">{{ clean_tag }}</span>
+            {% endif %}
+            {% endfor %}
+          </div>
           {% endif %}
-          {% endfor %}
         </div>
-        {% endif %}
-
       </div>
 
       <div class="header-actions">
+        <button id="membersToggleBtn" class="action-btn" type="button" title="Members" aria-pressed="false">
+          <i class="fa-solid fa-users"></i>
+        </button>
+        <button id="filesToggleBtn" class="action-btn" type="button" title="Files" aria-pressed="false">
+          <i class="fa-solid fa-folder"></i>
+        </button>
         <a href="{{ url_for('home.moderation', room_code=room_code) }}" class="moderation-btn" title="Moderation Panel">
           <i class="fa-solid fa-shield-halved"></i>
-          <span style="margin-left: 6px;">M</span>
         </a>
       </div>
     </div>
@@ -80,11 +90,11 @@
       <button class="icon-btn" id="emojiBtn" type="button" aria-label="Insert emoji" title="Insert emoji">
         <i class="fa-solid fa-face-smile" aria-hidden="true"></i>
       </button>
-      <label class="icon-btn" id="fileLabel">
-        <i class="fa-solid fa-paperclip" aria-hidden="true"></i>
-        <input type="file" hidden id="fileInput" accept="image/*,application/pdf" multiple>
+      <label class="icon-btn" id="fileLabel" title="Upload image(s)">
+        <i class="fa-solid fa-image" aria-hidden="true"></i>
+        <input type="file" hidden id="fileInput" accept="image/*" multiple>
       </label>
-      <input type="text" class="input-box" id="messageInput" placeholder="Type a message...">
+      <textarea class="input-box" id="messageInput" placeholder="Type a message..." rows="1"></textarea>
       <button class="send-btn" id="sendBtn" type="button" aria-label="Send message" title="Send message">
         <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
       </button>
@@ -137,68 +147,80 @@
     </div>
   </div>
 
-  <div class="right-panel">
+  <!-- Members drawer (toggled from the header) -->
+  <aside class="side-drawer" id="membersPanel" aria-hidden="true">
     {% set total_members = (online_members | length if online_members else 0) + (offline_members | length if
     offline_members else 0) %}
-    <h3 id="memberCount">Members ({{ total_members }})</h3>
-
-    <div class="section-title">Online</div>
-    <div id="onlineMembers">
-      {% if online_members %}
-      {% for member in online_members %}
-      <div class="member">
-        <div class="member-left">
-          <div class="member-avatar">{{ member.username[:1] | upper }}</div>
-          <div class="member-name">{{ member.username }}</div>
-        </div>
-        <div class="green-dot"></div>
-      </div>
-      {% endfor %}
-      {% else %}
-      <div class="member offline">
-        <div class="member-left">
-          <div class="member-avatar">–</div>
-          <div class="member-name">No members online</div>
-        </div>
-      </div>
-      {% endif %}
+    <div class="drawer-header">
+      <h3 id="memberCount">Members ({{ total_members }})</h3>
+      <button class="drawer-close" type="button" data-drawer="membersPanel" aria-label="Close members">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
     </div>
-
-    <div class="section-title">Offline</div>
-    <div id="offlineMembers">
-      {% if offline_members %}
-      {% for member in offline_members %}
-      <div class="member">
-        <div class="member-left">
-          <div class="member-avatar">{{ member.username[:1] | upper }}</div>
-          <div class="member-name">{{ member.username }}</div>
+    <div class="drawer-body">
+      <div class="section-title">Online</div>
+      <div id="onlineMembers">
+        {% if online_members %}
+        {% for member in online_members %}
+        <div class="member">
+          <div class="member-left">
+            <div class="member-avatar">{{ member.username[:1] | upper }}</div>
+            <div class="member-name">{{ member.username }}</div>
+          </div>
+          <div class="green-dot"></div>
         </div>
-        <div class="offline-dot"></div>
+        {% endfor %}
+        {% else %}
+        <div class="member offline">
+          <div class="member-left">
+            <div class="member-avatar">–</div>
+            <div class="member-name">No members online</div>
+          </div>
+        </div>
+        {% endif %}
       </div>
-      {% endfor %}
-      {% endif %}
+
+      <div class="section-title">Offline</div>
+      <div id="offlineMembers">
+        {% if offline_members %}
+        {% for member in offline_members %}
+        <div class="member">
+          <div class="member-left">
+            <div class="member-avatar">{{ member.username[:1] | upper }}</div>
+            <div class="member-name">{{ member.username }}</div>
+          </div>
+          <div class="offline-dot"></div>
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
     </div>
+  </aside>
 
-    <div class="card files">
-      <div class="files-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="margin: 0; font-size: 18px; color: #1f2430;">Files</h3>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <button id="refreshFilesBtn" type="button" title="Refresh Files" style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: #eef1ff; color: #49507a; transition: all 0.2s ease; border: none;">
-            <i class="fa-solid fa-rotate-right"></i>
-          </button>
-          <label class="file-upload-btn" title="Upload File" style="cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: #eef1ff; color: #49507a; transition: all 0.2s ease;">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-            <input type="file" id="sharedFileInput" style="display: none;">
-          </label>
-        </div>
+  <!-- Files drawer (toggled from the header) -->
+  <aside class="side-drawer" id="filesPanel" aria-hidden="true">
+    <div class="drawer-header">
+      <h3>Files</h3>
+      <div class="drawer-header-actions">
+        <button id="refreshFilesBtn" type="button" title="Refresh Files">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+        <label class="file-upload-btn" title="Upload File">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <input type="file" id="sharedFileInput" style="display: none;">
+        </label>
+        <button class="drawer-close" type="button" data-drawer="filesPanel" aria-label="Close files">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
+    </div>
+    <div class="drawer-body">
       <input class="search" placeholder="Search files...">
       <div class="file-list" id="fileList">
         <!-- Files will be loaded dynamically via Javascript -->
       </div>
     </div>
-
-  </div>
+  </aside>
 </div>
 {% endblock %}
 
@@ -226,6 +248,14 @@
       const senderLabel = msg.querySelector('.message-username');
       if (senderLabel) senderLabel.style.display = 'none';
     }
+    // Convert any persisted image markers into actual images
+    const content = msg.querySelector('.message-content');
+    if (content) {
+      const rendered = renderMessageContent(content.textContent.trim());
+      if (rendered !== content.textContent.trim()) {
+        content.innerHTML = rendered;
+      }
+    }
   });
 
   const socket = io();
@@ -242,6 +272,7 @@
   const memberCount = document.getElementById('memberCount');
   const onlineMembersContainer = document.getElementById('onlineMembers');
   const offlineMembersContainer = document.getElementById('offlineMembers');
+  const headerOnlineCount = document.getElementById('headerOnlineCount');
   const chatMenuButton = document.getElementById('chatMenuButton');
   const chatMenu = document.getElementById('chatMenu');
   const initialOnlineMembers = JSON.parse('{{ (online_members or []) | tojson | safe }}');
@@ -394,6 +425,17 @@
     messageInput.value = '';
   }
 
+  // Convert an image marker "[[img:/static/uploads/chat_images/...]]" into a safe
+  // <img> tag. Only our own chat-image static path is allowed; anything else is
+  // returned untouched so it renders as plain text.
+  function renderMessageContent(text) {
+    const match = /^\[\[img:(\/static\/uploads\/chat_images\/[A-Za-z0-9._\-\/]+)\]\]$/.exec(text || '');
+    if (match) {
+      return `<img src="${match[1]}" class="message-image" alt="shared image">`;
+    }
+    return text;
+  }
+
   function addMessageToUI(text, type, sender, messageId = null, timeLabel = null) {
     const message = document.createElement('div');
     message.classList.add('message', type);
@@ -417,7 +459,7 @@
     <div class="message-bubble">
       ${senderHTML}
       <div class="message-body">
-        <div class="message-content">${text}</div>
+        <div class="message-content">${renderMessageContent(text)}</div>
         ${voteControls}
       </div>
       <div class="message-time">${timeLabel || getTime()}</div>
@@ -439,6 +481,10 @@
     if (memberCount) {
       const total = (onlineUsers?.length || 0) + (offlineUsers?.length || 0);
       memberCount.innerText = `Members (${total})`;
+    }
+
+    if (headerOnlineCount) {
+      headerOnlineCount.innerText = onlineUsers?.length || 0;
     }
 
     if (onlineMembersContainer) {
@@ -511,20 +557,22 @@
   });
 
   function handleFileUpload(file) {
+    // Only allow images for chat uploads
+    const isImage = file.type && file.type.startsWith('image/');
+    if (!isImage) {
+      showToast('Only images are allowed in chat uploads.', 'leave');
+      return;
+    }
+
     const id = 'upload-' + Math.random().toString(36).slice(2, 9);
     const item = document.createElement('div');
     item.className = 'upload-item';
     item.id = id;
 
-    const isImage = file.type.startsWith('image/');
     const thumb = document.createElement('div');
     thumb.className = 'upload-thumb';
-    if (isImage) {
-      const url = URL.createObjectURL(file);
-      thumb.innerHTML = `<img src="${url}" alt="${file.name}">`;
-    } else {
-      thumb.textContent = file.name.split('.').pop().toUpperCase();
-    }
+    const url = URL.createObjectURL(file);
+    thumb.innerHTML = `<img src="${url}" alt="${file.name}">`;
 
     const meta = document.createElement('div');
     meta.className = 'upload-meta';
@@ -542,30 +590,44 @@
 
     sendBtn.addEventListener('click', () => {
       sendBtn.disabled = true;
-      // read file as data URL and emit via socket
-      const reader = new FileReader();
-      reader.onload = function (ev) {
-        const dataUrl = ev.target.result;
-        // show progress simulation
-        let progress = 0;
-        const intv = setInterval(() => {
-          progress = Math.min(100, progress + Math.floor(Math.random() * 20) + 10);
-          progressBar.style.width = progress + '%';
-          if (progress >= 100) {
-            clearInterval(intv);
-            // emit file to server
-            socket.emit('send_file', { room: roomCode, filename: file.name, data: dataUrl, username: displayName });
-            // add message to UI
-            if (isImage) {
-              addMessageToUI(`<img src="${dataUrl}" class=\"message-image\">`, 'sent', displayName);
-            } else {
-              addMessageToUI(`<a href=\"${dataUrl}\" download=\"${file.name}\">${file.name}</a>`, 'sent', displayName);
-            }
+      // Upload the image to the server so it persists, then send a chat message
+      // referencing its URL (small marker fits the DB and survives a refresh).
+      let progress = 0;
+      const intv = setInterval(() => {
+        progress = Math.min(90, progress + Math.floor(Math.random() * 20) + 10);
+        progressBar.style.width = progress + '%';
+      }, 200);
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      fetch(`/chat/${roomCode}/chat-image`, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData,
+      })
+        .then(res => res.json())
+        .then(data => {
+          clearInterval(intv);
+          if (data.status === 'success' && data.url) {
+            progressBar.style.width = '100%';
+            const marker = `[[img:${data.url}]]`;
+            // The server broadcasts this back via 'receive_message', which renders
+            // it for us too — so don't add it locally or it shows up twice.
+            socket.emit('send_message', { room: roomCode, message: marker, username: displayName });
             item.remove();
+          } else {
+            showToast(data.error || 'Failed to upload image.', 'leave');
+            sendBtn.disabled = false;
+            progressBar.style.width = '0%';
           }
-        }, 200);
-      };
-      reader.readAsDataURL(file);
+        })
+        .catch(() => {
+          clearInterval(intv);
+          showToast('Failed to upload image.', 'leave');
+          sendBtn.disabled = false;
+          progressBar.style.width = '0%';
+        });
     });
   }
 
@@ -634,7 +696,25 @@
     chatBody.scrollTop = chatBody.scrollHeight;
   }
 
-  scrollBottom();
+  // Scroll to the latest message on load. Run after the current layout pass, and
+  // again once any images have loaded (they grow the chat after first paint).
+  function scrollToLatest() {
+    scrollBottom();
+    requestAnimationFrame(scrollBottom);
+    chatBody.querySelectorAll('img').forEach(img => {
+      if (!img.complete) {
+        img.addEventListener('load', scrollBottom, { once: true });
+        img.addEventListener('error', scrollBottom, { once: true });
+      }
+    });
+  }
+
+  if (document.readyState === 'complete') {
+    scrollToLatest();
+  } else {
+    window.addEventListener('load', scrollToLatest);
+    scrollToLatest();
+  }
 
   // Voting logic
   chatBody.addEventListener('click', async (e) => {
@@ -716,7 +796,7 @@
           <span class="file-name" title="${file.original_filename}">${file.original_filename}</span>
           <span class="file-size">${metaText}</span>
         </div>
-        <div class="file-actions" style="display: flex; gap: 8px;">
+        <div class="file-actions">
           <a href="${file.download_url}" class="file-action-btn download" title="Download">
             <i class="fa-solid fa-download"></i>
           </a>
@@ -760,7 +840,7 @@
   fetchSharedFiles();
 
   // Search filter
-  const fileSearchInput = document.querySelector('.card.files .search');
+  const fileSearchInput = document.querySelector('#filesPanel .search');
   if (fileSearchInput) {
     fileSearchInput.addEventListener('input', (e) => {
       const query = e.target.value.toLowerCase().trim();
@@ -820,6 +900,60 @@
       this.value = '';
     });
   }
+
+</script>
+
+<!-- Drawer toggles live in their OWN script so the Members/Files buttons keep
+     working even if the main chat script above throws (sockets, votes, etc.). -->
+<script>
+  (function () {
+    const membersBtn = document.getElementById('membersToggleBtn');
+    const filesBtn = document.getElementById('filesToggleBtn');
+    const membersPanel = document.getElementById('membersPanel');
+    const filesPanel = document.getElementById('filesPanel');
+
+    // The drawers are position:fixed but live inside the flex chat layout. Move
+    // them to <body> so no ancestor's overflow/stacking context can clip them.
+    if (membersPanel) document.body.appendChild(membersPanel);
+    if (filesPanel) document.body.appendChild(filesPanel);
+
+    function setOpen(panel, btn, open) {
+      if (!panel) return;
+      panel.classList.toggle('open', open);
+      panel.setAttribute('aria-hidden', String(!open));
+      if (btn) {
+        btn.classList.toggle('active', open);
+        btn.setAttribute('aria-pressed', String(open));
+      }
+    }
+
+    function toggle(panel, btn, otherPanel, otherBtn) {
+      const willOpen = !panel.classList.contains('open');
+      if (willOpen) setOpen(otherPanel, otherBtn, false); // only one drawer open at a time
+      setOpen(panel, btn, willOpen);
+      if (willOpen && panel === filesPanel && typeof fetchSharedFiles === 'function') {
+        fetchSharedFiles();
+      }
+    }
+
+    if (membersBtn) membersBtn.addEventListener('click', () => toggle(membersPanel, membersBtn, filesPanel, filesBtn));
+    if (filesBtn) filesBtn.addEventListener('click', () => toggle(filesPanel, filesBtn, membersPanel, membersBtn));
+
+    document.querySelectorAll('.drawer-close').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const panel = document.getElementById(btn.getAttribute('data-drawer'));
+        const toggleBtn = panel === membersPanel ? membersBtn : filesBtn;
+        setOpen(panel, toggleBtn, false);
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        setOpen(membersPanel, membersBtn, false);
+        setOpen(filesPanel, filesBtn, false);
+      }
+    });
+  })();
 </script>
 
 {% endblock %}

@@ -13,7 +13,7 @@ import re
 class AuthController(BaseController):
     def login(self):
         if session.get('user_id'):
-            return redirect(url_for('home.profile'))
+            return redirect(url_for('home.dashboard'))
 
         if request.method == 'POST':
             identifier = (request.form.get('identifier') or '').strip()
@@ -29,7 +29,7 @@ class AuthController(BaseController):
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['email'] = user['email']
-            return redirect(url_for('home.profile'))
+            return redirect(url_for('home.dashboard'))
 
         return render_template('login.html', active_form='sign-in')
 

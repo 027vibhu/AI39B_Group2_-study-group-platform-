@@ -44,12 +44,14 @@ class HomeRoutes:
 
         # routes
         self.bp.route('/')(self.index)
+        self.bp.route('/dashboard')(self.dashboard)
         self.bp.route('/join_room')(self.join_room)
         self.bp.route('/browse_rooms')(self.browse_rooms)
         self.bp.route('/create')(self.create)
         self.bp.route('/chat/<room_code>')(self.chat)
         self.bp.route('/chat/<room_code>/shared-files', methods=['GET'])(self.list_shared_files)
         self.bp.route('/chat/<room_code>/shared-files', methods=['POST'])(self.upload_shared_file)
+        self.bp.route('/chat/<room_code>/chat-image', methods=['POST'])(self.upload_chat_image)
         self.bp.route('/files/<int:file_id>/download')(self.download_shared_file)
         self.bp.route('/files/<int:file_id>/view')(self.view_shared_file)
         self.bp.route('/message/<int:message_id>/vote', methods=['POST'])(self.vote_message)
@@ -92,6 +94,14 @@ class HomeRoutes:
 
     def index(self):
         return render_template('index.html')
+
+    def dashboard(self):
+        # Exam date drives the countdown square. Swap this for real data later.
+        return render_template(
+            'dashboard.html',
+            exam_date='2026-07-01T09:00:00',
+            exam_name='Final Exams',
+        )
 
     def join_room(self):
         return render_template('join_room.html')
@@ -279,6 +289,43 @@ class HomeRoutes:
 
         flash('File shared successfully.', 'success')
         return redirect(url_for('home.chat', room_code=room_code))
+
+    def upload_chat_image(self, room_code):
+        """Persist an inline chat image and return a static URL to embed in a message."""
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Login required.'}), 401
+
+        room = get_room_by_code(room_code)
+        if not room:
+            return jsonify({'error': 'Room not found'}), 404
+
+        if not self._authorize_room_access(room, user_id):
+            return jsonify({'error': 'Access denied'}), 403
+
+        file = request.files.get('image')
+        if not file or not file.filename:
+            return jsonify({'error': 'No image provided.'}), 400
+
+        original_filename = secure_filename(file.filename)
+        _, ext = os.path.splitext(original_filename)
+        ext = ext.lower()
+        if ext not in {'.png', '.jpg', '.jpeg', '.gif', '.webp'}:
+            return jsonify({'error': 'Unsupported image type.'}), 400
+
+        upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'chat_images')
+        os.makedirs(upload_dir, exist_ok=True)
+
+        stored_filename = f"{uuid.uuid4().hex}{ext}"
+        saved_path = os.path.join(upload_dir, stored_filename)
+        file.save(saved_path)
+
+        if os.path.getsize(saved_path) > MAX_SHARED_FILE_SIZE:
+            os.remove(saved_path)
+            return jsonify({'error': 'Image is too large. Maximum allowed size is 25 MB.'}), 400
+
+        image_url = url_for('static', filename=f'uploads/chat_images/{stored_filename}')
+        return jsonify({'status': 'success', 'url': image_url}), 200
 
     def _load_shared_file_for_user(self, file_id, user_id):
         file_record = get_shared_file_by_id(file_id)
