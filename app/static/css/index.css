@@ -28,6 +28,8 @@ body{
 .hero{
   min-height:100vh;
 
+  margin-top:-117px;
+
   position:relative;
   overflow:hidden;
 
