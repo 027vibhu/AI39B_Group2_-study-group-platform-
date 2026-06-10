@@ -1,4 +1,8 @@
 /* ===== Dashboard home ===== */
+.main {
+  padding-top: 8px;
+}
+
 .dashboard {
   display: grid;
   gap: 1.6rem;
@@ -8,6 +12,110 @@
 .dash-intro {
   display: grid;
   gap: 6px;
+}
+
+/* ===== Welcome hero card ===== */
+.welcome-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  justify-self: start;
+  margin-top: 6px;
+  padding: 34px 14px 34px 44px;
+  border-radius: 28px;
+  background: #ffffff;
+  border: 1px solid rgba(125, 134, 199, 0.16);
+  box-shadow: 0 22px 45px rgba(125, 134, 199, 0.14);
+  overflow: visible;
+}
+
+.welcome-text {
+  position: relative;
+  z-index: 1;
+}
+
+.welcome-hi {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #2d2d2d;
+}
+
+.welcome-sub {
+  margin: 6px 0 18px;
+  font-size: 15px;
+  color: #9aa0b8;
+}
+
+.welcome-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 180px));
+  gap: 8px 18px;
+}
+
+.welcome-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #5a5f7a;
+  text-decoration: none;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.welcome-link i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 11px;
+  color: #7d86c7;
+  background: rgba(125, 134, 199, 0.12);
+}
+
+.welcome-link:hover {
+  color: #7d86c7;
+  transform: translateX(2px);
+}
+
+.welcome-mascot {
+  flex-shrink: 0;
+  align-self: flex-end;
+  width: auto;
+  height: 330px;
+  margin-top: -140px;   /* let the bear's head poke above the card */
+  margin-bottom: -50px;
+  margin-left: -120px;   /* nudge the bear toward the text */
+  object-fit: contain;
+  filter: drop-shadow(0 12px 24px rgba(125, 134, 199, 0.20));
+  pointer-events: none;
+}
+
+@media (max-width: 700px) {
+  .welcome-card {
+    padding: 28px 24px;
+  }
+
+  .welcome-hi {
+    font-size: 30px;
+  }
+
+  .welcome-links {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .welcome-mascot {
+    display: none;
+  }
 }
 
 .dash-kicker {
