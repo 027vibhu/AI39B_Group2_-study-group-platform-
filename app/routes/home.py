@@ -64,6 +64,8 @@ class HomeRoutes:
         self.bp.route('/profile')(self.profile)
         self.bp.route('/moderation')(self.moderation)
         self.bp.route('/track-study-hours')(self.track_study_hours)
+        # alias with underscore to support URLs that use underscores
+        self.bp.route('/track_study_hours')(self.track_study_hours)
         self.bp.route('/moderation/action', methods=['POST'])(self.moderation_action)
         self.bp.route('/profile/update', methods=['POST'])(self.update_profile)
         self.bp.route('/profile/avatar', methods=['POST'])(self.update_avatar)
