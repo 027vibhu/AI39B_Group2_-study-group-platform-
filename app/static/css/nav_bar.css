@@ -43,12 +43,10 @@
   width:50px;
   height:50px;
   border-radius:15px;
-  background:var(--primary);
   overflow:hidden;
   display:flex;
   align-items:center;
   justify-content:center;
-  box-shadow:0 10px 25px rgba(76,83,114,0.25);
 }
 
 .navbar .logo img{
