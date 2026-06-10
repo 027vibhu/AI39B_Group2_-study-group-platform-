@@ -94,7 +94,7 @@
 .detail-item{
   display:flex;
   justify-content:space-between;
-  align-items:flex-start;
+  align-items:center;
   gap:14px;
   padding:14px 16px;
   border-radius:12px;
@@ -107,14 +107,19 @@
   text-transform:uppercase;
   letter-spacing:0.14em;
   opacity:0.75;
-  min-width:110px;
+  flex:0 0 auto;
+  white-space:nowrap;
 }
 
 .detail-value{
   font-size:14px;
   font-weight:600;
   text-align:right;
-  word-break:break-word;
+  flex:1 1 auto;
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
   color:#f6f7ff;
 }
 
