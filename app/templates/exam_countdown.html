@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/countdown.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="exam-countdown-container">
+  <h2>Exam Countdowns</h2>
+  <div id="exam-list">
+    {% for exam in exams %}
+    <div class="exam-card" data-exam-datetime="{{ exam.exam_datetime }}" data-color="{{ exam.color or '' }}">
+      <div class="exam-title">{{ exam.title }}</div>
+      <div class="exam-timer">Loading...</div>
+      <div class="exam-notes">{{ exam.notes or '' }}</div>
+    </div>
+    {% else %}
+    <p>No exams scheduled.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  window.EXAMS = {{ exams|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/countdown.js') }}"></script>
+{% endblock %}
