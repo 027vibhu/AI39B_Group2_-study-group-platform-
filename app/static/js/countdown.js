@@ -59,4 +59,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
   updateCountdowns();
   setInterval(updateCountdowns, 1000);
+
+  // Form submission handler for creating exams
+  const form = document.getElementById('create-exam-form');
+  const formMessage = document.getElementById('form-message');
+  if (form) {
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      formMessage.textContent = '';
+      const fd = new FormData(form);
+      const payload = {
+        title: fd.get('title'),
+        exam_datetime: fd.get('exam_datetime'),
+        notes: fd.get('notes'),
+        color: fd.get('color') || null,
+      };
+
+      try {
+        const resp = await fetch('/exams', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await resp.json();
+        if (resp.ok && data.status === 'success') {
+          formMessage.textContent = 'Exam added.';
+          // append new exam card
+          const list = document.getElementById('exam-list');
+          const div = document.createElement('div');
+          div.className = 'exam-card';
+          div.setAttribute('data-exam-datetime', payload.exam_datetime);
+          if (payload.color) div.setAttribute('data-color', payload.color);
+          div.innerHTML = `<div class="exam-title">${payload.title}</div>` +
+                          `<div class="exam-timer">Loading...</div>` +
+                          `<div class="exam-notes">${payload.notes || ''}</div>`;
+          list.insertBefore(div, list.firstChild);
+          form.reset();
+          updateCountdowns();
+        } else {
+          formMessage.textContent = data.message || 'Failed to create exam.';
+        }
+      } catch (err) {
+        formMessage.textContent = 'Network error';
+      }
+    });
+  }
 });

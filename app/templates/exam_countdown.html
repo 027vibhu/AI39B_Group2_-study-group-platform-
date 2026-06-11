@@ -7,6 +7,14 @@
 {% block content %}
 <div class="exam-countdown-container">
   <h2>Exam Countdowns</h2>
+  <form id="create-exam-form" class="create-exam-form">
+    <input type="text" name="title" placeholder="Exam title" required />
+    <input type="datetime-local" name="exam_datetime" required />
+    <input type="color" name="color" title="Choose color" />
+    <textarea name="notes" placeholder="Optional notes"></textarea>
+    <button type="submit">Add Exam</button>
+    <div id="form-message" role="status" aria-live="polite"></div>
+  </form>
   <div id="exam-list">
     {% for exam in exams %}
     <div class="exam-card" data-exam-datetime="{{ exam.exam_datetime }}" data-color="{{ exam.color or '' }}">
