@@ -101,6 +101,19 @@
               <i class="fa-solid fa-eye"></i>
               View
             </a>
+            <button type="button" class="share-btn"
+                    data-share-url="{{ url_for('home.share_note', note_id=note.id) }}"
+                    data-note-title="{{ note.title }}">
+              <i class="fa-solid fa-share-nodes"></i>
+              Share
+            </button>
+            <form method="POST" action="{{ url_for('home.delete_note', note_id=note.id) }}"
+                  class="delete-note-form" data-note-title="{{ note.title }}">
+              <button type="submit" class="delete-btn">
+                <i class="fa-solid fa-trash"></i>
+                Delete
+              </button>
+            </form>
           </article>
         {% endfor %}
       </div>
@@ -112,6 +125,62 @@
         <span>Click “Add Note” above to upload your first PDF.</span>
       </div>
     {% endif %}
+
+    {% if shared_notes %}
+      <div class="shared-section">
+        <h3 class="shared-heading">
+          <i class="fa-solid fa-user-group"></i>
+          Shared with me
+        </h3>
+        <div class="note-list">
+          {% for note in shared_notes %}
+            <article class="note-row">
+              <div class="note-icon">
+                <i class="fa-solid fa-file-pdf"></i>
+              </div>
+              <div class="note-main">
+                <h4>{{ note.title }}</h4>
+                {% if note.description %}
+                  <p>{{ note.description }}</p>
+                {% else %}
+                  <p class="no-desc">No description provided.</p>
+                {% endif %}
+                <span class="shared-by">Shared by {{ note.shared_by }}</span>
+              </div>
+              <span class="note-meta">
+                <i class="fa-regular fa-calendar"></i>
+                {{ note.created_at.strftime('%b %d, %Y') }}
+              </span>
+              <a href="{{ url_for('static', filename=note.pdf_url) }}" target="_blank" rel="noopener noreferrer" class="view-link">
+                <i class="fa-solid fa-eye"></i>
+                View
+              </a>
+            </article>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="share-modal" id="shareModal" aria-hidden="true">
+      <div class="share-modal-backdrop" data-close-share></div>
+      <div class="share-modal-box" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+        <h3 id="shareModalTitle">Share note</h3>
+        <p class="share-modal-sub" id="shareModalSub">Enter the username of the person to share with.</p>
+        <form method="POST" id="shareForm">
+          <div class="input-group">
+            <label for="shareUsername">Username</label>
+            <input type="text" name="username" id="shareUsername" placeholder="e.g. janedoe" autocomplete="off" required>
+          </div>
+          <div class="share-modal-actions">
+            <button type="button" class="cancel-btn" data-close-share>Cancel</button>
+            <button type="submit" class="save-btn">
+              <i class="fa-solid fa-share-nodes"></i>
+              Share
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </section>
 {% endblock %}
 
@@ -170,8 +239,52 @@
         });
       }
 
+      const shareModal = document.getElementById('shareModal');
+      const shareForm = document.getElementById('shareForm');
+      const shareUsername = document.getElementById('shareUsername');
+      const shareSub = document.getElementById('shareModalSub');
+
+      if (shareModal && shareForm) {
+        const openShare = (url, title) => {
+          shareForm.action = url;
+          shareUsername.value = '';
+          shareSub.textContent = 'Enter the username of the person to share "' + title + '" with.';
+          shareModal.classList.add('open');
+          shareModal.setAttribute('aria-hidden', 'false');
+          shareUsername.focus();
+        };
+
+        const closeShare = () => {
+          shareModal.classList.remove('open');
+          shareModal.setAttribute('aria-hidden', 'true');
+        };
+
+        document.querySelectorAll('.share-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            openShare(btn.dataset.shareUrl, btn.dataset.noteTitle || 'this note');
+          });
+        });
+
+        shareModal.querySelectorAll('[data-close-share]').forEach((el) => {
+          el.addEventListener('click', closeShare);
+        });
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && shareModal.classList.contains('open')) closeShare();
+        });
+      }
+
+      document.querySelectorAll('.delete-note-form').forEach((form) => {
+        form.addEventListener('submit', (e) => {
+          const title = form.dataset.noteTitle || 'this note';
+          if (!window.confirm('Delete "' + title + '"? This cannot be undone.')) {
+            e.preventDefault();
+          }
+        });
+      });
+
       const search = document.getElementById('noteSearch');
-      const rows = Array.from(document.querySelectorAll('.note-row'));
+      const rows = Array.from(document.querySelectorAll('#noteList .note-row'));
       const noResults = document.getElementById('noSearchResults');
 
       if (search) {
