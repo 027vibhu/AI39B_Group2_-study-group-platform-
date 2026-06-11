@@ -16,18 +16,20 @@
 }
 
 .navbar{
-  width:100%;
   height:85px;
   position:fixed;
-  top:0;
-  left:0;
+  top:16px;
+  left:24px;
+  right:24px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:0 80px;
+  padding:0 56px;
   background:rgba(255,253,246,0.85);
   backdrop-filter:blur(12px);
-  border-bottom:1px solid rgba(76,83,114,0.08);
+  border:1px solid rgba(76,83,114,0.12);
+  border-radius:22px;
+  box-shadow:0 10px 30px rgba(76,83,114,0.10);
   z-index:1000;
 }
 
@@ -41,12 +43,10 @@
   width:50px;
   height:50px;
   border-radius:15px;
-  background:var(--primary);
   overflow:hidden;
   display:flex;
   align-items:center;
   justify-content:center;
-  box-shadow:0 10px 25px rgba(76,83,114,0.25);
 }
 
 .navbar .logo img{
@@ -119,5 +119,5 @@
 }
 
 main{
-  padding-top:85px;
+  padding-top:117px;
 }

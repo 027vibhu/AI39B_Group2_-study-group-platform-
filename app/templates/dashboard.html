@@ -10,8 +10,32 @@
 
 {% block content %}
 <section class="dashboard">
-  <div class="dash-intro">
-    <span class="dash-kicker">Welcome back{% if current_user and current_user.username %}, {{ current_user.username }}{% endif %}</span>
+  <div class="welcome-card">
+    <div class="welcome-text">
+      <h1 class="welcome-hi">Hi{% if current_user %}, {{ current_user.first_name or current_user.username }}{% endif %}!</h1>
+      <p class="welcome-sub">What are we doing today?</p>
+
+      <div class="welcome-links">
+        <a class="welcome-link" href="{{ url_for('home.browse_rooms') }}">
+          <i class="fa-solid fa-compass"></i>
+          <span>Browse Rooms</span>
+        </a>
+        <a class="welcome-link" href="{{ url_for('home.notes') }}">
+          <i class="fa-solid fa-file-pdf"></i>
+          <span>My Notes</span>
+        </a>
+        <a class="welcome-link" href="{{ url_for('home.create_room') }}">
+          <i class="fa-solid fa-plus"></i>
+          <span>Create Room</span>
+        </a>
+        <a class="welcome-link" href="{{ url_for('home.join_room') }}">
+          <i class="fa-solid fa-comments"></i>
+          <span>Join Room</span>
+        </a>
+      </div>
+    </div>
+
+    <img class="welcome-mascot" src="{{ url_for('static', filename='images/bear_icon.jpg') }}" alt="" aria-hidden="true">
   </div>
 
   <div class="dash-grid">
