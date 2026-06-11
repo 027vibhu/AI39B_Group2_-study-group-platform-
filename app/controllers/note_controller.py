@@ -1,6 +1,6 @@
 import os
 import uuid
-from flask import request, current_app, url_for, flash
+from flask import request, current_app, url_for, flash,  jsonify
 from werkzeug.utils import secure_filename
 from app.controllers.base_controller import BaseController
 from app.models.note import Note
