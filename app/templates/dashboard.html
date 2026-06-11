@@ -39,6 +39,24 @@
   </div>
 
   <div class="dash-grid">
+    <article class="pomodoro-timer">
+      <div class="pomodoro-header">
+        <span class="pomodoro-badge">Pomodoro Timer</span>
+        <p class="pomodoro-subtitle">Study sessions with built-in focus and break phases.</p>
+      </div>
+      <div class="pomodoro-state" id="pomodoroState" role="status" aria-live="polite">Study</div>
+      <div class="pomodoro-display" id="pomodoroDisplay" aria-live="polite">25:00</div>
+      <div class="pomodoro-controls">
+        <button type="button" class="pomodoro-btn" id="pomodoroStart">Start</button>
+        <button type="button" class="pomodoro-btn" id="pomodoroPause">Pause</button>
+        <button type="button" class="pomodoro-btn" id="pomodoroReset">Reset</button>
+      </div>
+      <div class="pomodoro-modes">
+        <button type="button" class="mode-btn active" data-mode="study">Study</button>
+        <button type="button" class="mode-btn" data-mode="break">Break</button>
+      </div>
+    </article>
+
     <article class="exam-countdown" id="examCountdown" data-exam-date="{{ exam_date }}" data-exam-name="{{ exam_name if exam_name else 'Final Exams' }}">
       <button type="button" class="exam-edit-btn" id="examEditBtn" aria-label="Edit exam title and date">
         <i class="fa-solid fa-pen"></i>
@@ -267,4 +285,5 @@
     setInterval(tick, 1000);
   })();
 </script>
+<script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
 {% endblock %}
