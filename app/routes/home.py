@@ -20,6 +20,7 @@ from app.models.shared_file import create_shared_file, get_shared_file_by_id, ge
 from app.controllers.moderation_controller import ModerationController
 from app.controllers.browse_rooms_controller import BrowseRoomsController
 from app.controllers.note_controller import NoteController
+from app.controllers.study_hour_controller import StudyHourController
 from app import socketio
 import random
 import os
@@ -66,6 +67,10 @@ class HomeRoutes:
         self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
         self.bp.route('/whiteboard')(self.whiteboard)
         self.bp.route('/chat/<room_code>/whiteboard')(self.whiteboard_room)
+        # Study hours tracking routes
+        self.bp.route('/study-hours')(self.study_hours_index)
+        self.bp.route('/study-hours/new')(self.study_hours_new)
+        self.bp.route('/study-hours/create', methods=['POST'])(self.study_hours_create)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
 
         return self.bp
@@ -133,6 +138,19 @@ class HomeRoutes:
         if not room:
             return redirect(url_for('home.chat', room_code=room_code))
         return render_template('whiteboard.html', room_code=room_code, room=room)
+
+    # --- Study hours route handlers (thin wrappers around controller) ---
+    def study_hours_index(self):
+        controller = StudyHourController()
+        return controller.list_sessions()
+
+    def study_hours_new(self):
+        controller = StudyHourController()
+        return controller.new_session_form()
+
+    def study_hours_create(self):
+        controller = StudyHourController()
+        return controller.create_session()
 
     def _generate_unique_room_code(self):
         while True:
