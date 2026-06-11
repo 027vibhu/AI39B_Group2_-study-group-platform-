@@ -408,6 +408,136 @@
   color:#fff;
 }
 
+.share-btn{
+  flex-shrink:0;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:#4b4f78;
+  background:#eef0f8;
+  border:none;
+  cursor:pointer;
+  font-weight:600;
+  font-size:13.5px;
+  padding:10px 18px;
+  border-radius:12px;
+  transition:0.25s;
+}
+
+.share-btn:hover{
+  background:#4b4f78;
+  color:#fff;
+}
+
+.delete-note-form{
+  flex-shrink:0;
+  margin:0;
+}
+
+.delete-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:#b3344b;
+  background:#fdeaee;
+  border:none;
+  cursor:pointer;
+  font-weight:600;
+  font-size:13.5px;
+  padding:10px 18px;
+  border-radius:12px;
+  transition:0.25s;
+}
+
+.delete-btn:hover{
+  background:#b3344b;
+  color:#fff;
+}
+
+/* SHARED WITH ME */
+.shared-section{
+  margin-top:38px;
+}
+
+.shared-heading{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:#4b4f78;
+  font-size:17px;
+  margin:0 0 16px;
+}
+
+.shared-by{
+  display:inline-block;
+  margin-top:6px;
+  color:#9499ad;
+  font-size:12.5px;
+}
+
+/* SHARE MODAL */
+.share-modal{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+
+.share-modal.open{
+  display:flex;
+}
+
+.share-modal-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(20,22,40,0.45);
+}
+
+.share-modal-box{
+  position:relative;
+  width:min(440px,92vw);
+  background:#fff;
+  border-radius:18px;
+  padding:28px;
+  box-shadow:0 24px 60px rgba(20,22,40,0.25);
+}
+
+.share-modal-box h3{
+  margin:0 0 6px;
+  color:#2f3358;
+}
+
+.share-modal-sub{
+  margin:0 0 18px;
+  color:#7a7f95;
+  font-size:14px;
+}
+
+.share-modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:12px;
+  margin-top:20px;
+}
+
+.cancel-btn{
+  background:#eef0f8;
+  color:#4b4f78;
+  border:none;
+  cursor:pointer;
+  font-weight:600;
+  font-size:14px;
+  padding:11px 20px;
+  border-radius:12px;
+  transition:0.25s;
+}
+
+.cancel-btn:hover{
+  background:#dde0ee;
+}
+
 /* EMPTY / NO RESULTS */
 .empty-state{
   text-align:center;

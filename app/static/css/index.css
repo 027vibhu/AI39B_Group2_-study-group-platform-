@@ -173,6 +173,54 @@ body{
   transform:translateY(-5px);
 }
 
+/* Get Started — hover reveal arrow (ported from shadcn get-started-button) */
+.get-started-btn{
+  position:relative;
+  overflow:hidden;
+  display:inline-flex;
+  align-items:center;
+}
+
+.get-started-btn:hover{
+  transform:none;
+}
+
+.get-started-btn .gs-label{
+  margin-right:46px;
+  transition:opacity 0.5s ease;
+}
+
+.get-started-btn:hover .gs-label{
+  opacity:0;
+}
+
+.get-started-btn .gs-arrow{
+  position:absolute;
+  top:6px;
+  right:6px;
+  bottom:6px;
+  z-index:10;
+  display:grid;
+  place-items:center;
+  width:25%;
+  border-radius:12px;
+  color:#fff;
+  background:rgba(255,255,255,0.15);
+  transition:width 0.5s ease, transform 0.2s ease;
+}
+
+.get-started-btn:hover .gs-arrow{
+  width:calc(100% - 12px);
+}
+
+.get-started-btn:active .gs-arrow{
+  transform:scale(0.95);
+}
+
+.get-started-btn .gs-arrow svg{
+  display:block;
+}
+
 .ghost-btn{
   border:1px solid rgba(76,83,114,0.12);
 
