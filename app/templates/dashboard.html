@@ -1,0 +1,289 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Dashboard — LOREVIA{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_home.css') }}">
+{% endblock %}
+
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block content %}
+<section class="dashboard">
+  <div class="welcome-card">
+    <div class="welcome-text">
+      <h1 class="welcome-hi">Hi{% if current_user %}, {{ current_user.first_name or current_user.username }}{% endif %}!</h1>
+      <p class="welcome-sub">What are we doing today?</p>
+
+      <div class="welcome-links">
+        <a class="welcome-link" href="{{ url_for('home.browse_rooms') }}">
+          <i class="fa-solid fa-compass"></i>
+          <span>Browse Rooms</span>
+        </a>
+        <a class="welcome-link" href="{{ url_for('home.notes') }}">
+          <i class="fa-solid fa-file-pdf"></i>
+          <span>My Notes</span>
+        </a>
+        <a class="welcome-link" href="{{ url_for('home.create_room') }}">
+          <i class="fa-solid fa-plus"></i>
+          <span>Create Room</span>
+        </a>
+        <a class="welcome-link" href="{{ url_for('home.join_room') }}">
+          <i class="fa-solid fa-comments"></i>
+          <span>Join Room</span>
+        </a>
+      </div>
+    </div>
+
+    <img class="welcome-mascot" src="{{ url_for('static', filename='images/bear_icon.jpg') }}" alt="" aria-hidden="true">
+  </div>
+
+  <div class="dash-grid">
+    <article class="pomodoro-timer">
+      <div class="pomodoro-header">
+        <span class="pomodoro-badge">Pomodoro Timer</span>
+        <p class="pomodoro-subtitle">Study sessions with built-in focus and break phases.</p>
+      </div>
+      <div class="pomodoro-state" id="pomodoroState" role="status" aria-live="polite">Study</div>
+      <div class="pomodoro-display" id="pomodoroDisplay" aria-live="polite">25:00</div>
+      <div class="pomodoro-controls">
+        <button type="button" class="pomodoro-btn" id="pomodoroStart">Start</button>
+        <button type="button" class="pomodoro-btn" id="pomodoroPause">Pause</button>
+        <button type="button" class="pomodoro-btn" id="pomodoroReset">Reset</button>
+      </div>
+      <div class="pomodoro-modes">
+        <button type="button" class="mode-btn active" data-mode="study">Study</button>
+        <button type="button" class="mode-btn" data-mode="break">Break</button>
+      </div>
+    </article>
+
+    <article class="exam-countdown" id="examCountdown" data-exam-date="{{ exam_date }}" data-exam-name="{{ exam_name if exam_name else 'Final Exams' }}">
+      <button type="button" class="exam-edit-btn" id="examEditBtn" aria-label="Edit exam title and date">
+        <i class="fa-solid fa-pen"></i>
+      </button>
+      <div class="exam-countdown-top">
+        <span class="exam-badge"><i class="fa-solid fa-graduation-cap"></i> Exam countdown</span>
+        <span class="exam-name" id="examName">{{ exam_name if exam_name else 'Final Exams' }}</span>
+      </div>
+
+      <div class="exam-number-wrap">
+        <strong class="exam-number" id="examDays">--</strong>
+        <span class="exam-number-label" id="examDaysLabel">days left</span>
+      </div>
+
+      <div class="exam-clock" aria-hidden="true">
+        <div class="exam-clock-cell"><strong id="examHours">--</strong><span>hrs</span></div>
+        <div class="exam-clock-cell"><strong id="examMinutes">--</strong><span>min</span></div>
+        <div class="exam-clock-cell"><strong id="examSeconds">--</strong><span>sec</span></div>
+      </div>
+
+      <div class="exam-date-line"><i class="fa-regular fa-calendar"></i> <span id="examDateText"></span></div>
+    </article>
+
+    <article class="dash-placeholder">
+      <i class="fa-solid fa-list-check dash-placeholder-icon"></i>
+      <span class="dash-placeholder-title">Study Tasks</span>
+      <span class="dash-placeholder-tag">Coming soon</span>
+    </article>
+
+    <article class="dash-placeholder">
+      <i class="fa-solid fa-chart-line dash-placeholder-icon"></i>
+      <span class="dash-placeholder-title">Progress</span>
+      <span class="dash-placeholder-tag">Coming soon</span>
+    </article>
+
+    <article class="dash-placeholder">
+      <i class="fa-regular fa-calendar-days dash-placeholder-icon"></i>
+      <span class="dash-placeholder-title">Schedule</span>
+      <span class="dash-placeholder-tag">Coming soon</span>
+    </article>
+  </div>
+</section>
+
+<div class="exam-modal-overlay" id="examModal" aria-hidden="true">
+  <div class="exam-modal" role="dialog" aria-modal="true" aria-labelledby="examModalTitle">
+    <h3 class="exam-modal-title" id="examModalTitle">Edit exam countdown</h3>
+    <form id="examForm">
+      <label class="exam-field">
+        <span>Exam title</span>
+        <input type="text" id="examNameInput" name="exam_name" maxlength="80" placeholder="Final Exams" required>
+      </label>
+      <label class="exam-field">
+        <span>Exam date &amp; time</span>
+        <input type="datetime-local" id="examDateInput" name="exam_date" required>
+      </label>
+      <div class="exam-modal-actions">
+        <button type="button" class="exam-btn exam-btn-ghost" id="examCancelBtn">Cancel</button>
+        <button type="submit" class="exam-btn exam-btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    const el = document.getElementById('examCountdown');
+    if (!el) return;
+
+    // Placeholder store: persisted in the browser until a backend is wired up.
+    const STORAGE_KEY = 'loreviaExamCountdown';
+
+    const nameEl = document.getElementById('examName');
+    const daysEl = document.getElementById('examDays');
+    const labelEl = document.getElementById('examDaysLabel');
+    const hoursEl = document.getElementById('examHours');
+    const minutesEl = document.getElementById('examMinutes');
+    const secondsEl = document.getElementById('examSeconds');
+    const dateText = document.getElementById('examDateText');
+
+    const modal = document.getElementById('examModal');
+    const editBtn = document.getElementById('examEditBtn');
+    const cancelBtn = document.getElementById('examCancelBtn');
+    const form = document.getElementById('examForm');
+    const nameInput = document.getElementById('examNameInput');
+    const dateInput = document.getElementById('examDateInput');
+
+    const pad = (n) => String(n).padStart(2, '0');
+
+    // Days at (or beyond) which the card is calmest (lightest red).
+    const MAX_DAYS = 45;
+
+    // Paint the card teal (far away) -> yellow -> orange -> red (exam day).
+    function applyUrgencyColor(days) {
+      const t = Math.min(Math.max(1 - days / MAX_DAYS, 0), 1); // 0 = far, 1 = now
+      // Ease the hue so yellow lands mid-way and warm tones dominate as t rises.
+      const hue = 170 * Math.pow(1 - t, 1.6);  // 170 (teal) -> 0 (red)
+      const sat = 68 + t * 12;                  // 68% -> 80%
+      const light = 47 - t * 3;                 // 47% -> 44%
+      const base = `hsl(${hue}, ${sat}%, ${light}%)`;
+      const deep = `hsl(${hue}, ${sat}%, ${Math.max(light - 12, 26)}%)`;
+      el.style.background = `linear-gradient(160deg, ${base} 0%, ${deep} 100%)`;
+    }
+
+    function loadStored() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    let examName = el.dataset.examName || 'Final Exams';
+    let examDateRaw = el.dataset.examDate || '';
+
+    const stored = loadStored();
+    if (stored) {
+      if (stored.name) examName = stored.name;
+      if (stored.date) examDateRaw = stored.date;
+    }
+
+    let target = new Date(examDateRaw);
+
+    function applyName() {
+      if (nameEl) nameEl.textContent = examName;
+    }
+
+    function tick() {
+      if (isNaN(target.getTime())) {
+        if (daysEl) daysEl.textContent = '—';
+        if (dateText) dateText.textContent = 'Set an exam date';
+        if (hoursEl) hoursEl.textContent = '--';
+        if (minutesEl) minutesEl.textContent = '--';
+        if (secondsEl) secondsEl.textContent = '--';
+        return;
+      }
+
+      if (dateText) {
+        dateText.textContent = target.toLocaleDateString(undefined, {
+          weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+        });
+      }
+
+      let diff = Math.floor((target.getTime() - Date.now()) / 1000);
+
+      if (diff <= 0) {
+        if (daysEl) daysEl.textContent = '0';
+        if (labelEl) labelEl.textContent = 'exam day!';
+        if (hoursEl) hoursEl.textContent = '00';
+        if (minutesEl) minutesEl.textContent = '00';
+        if (secondsEl) secondsEl.textContent = '00';
+        applyUrgencyColor(0);
+        return;
+      }
+
+      const days = Math.floor(diff / 86400); diff -= days * 86400;
+      const hours = Math.floor(diff / 3600); diff -= hours * 3600;
+      const minutes = Math.floor(diff / 60);
+      const seconds = diff - minutes * 60;
+
+      applyUrgencyColor(days);
+
+      if (daysEl) daysEl.textContent = days;
+      if (labelEl) labelEl.textContent = days === 1 ? 'day left' : 'days left';
+      if (hoursEl) hoursEl.textContent = pad(hours);
+      if (minutesEl) minutesEl.textContent = pad(minutes);
+      if (secondsEl) secondsEl.textContent = pad(seconds);
+    }
+
+    // Convert a date into the value format datetime-local expects (local time).
+    function toInputValue(date) {
+      if (isNaN(date.getTime())) return '';
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+        `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function openModal() {
+      nameInput.value = examName;
+      dateInput.value = toInputValue(target);
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      nameInput.focus();
+    }
+
+    function closeModal() {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    if (editBtn) editBtn.addEventListener('click', openModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+    if (modal) {
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+      });
+    }
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeModal();
+    });
+
+    if (form) {
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const newName = nameInput.value.trim() || 'Final Exams';
+        const newDate = dateInput.value;
+        if (!newDate) return;
+
+        examName = newName;
+        examDateRaw = newDate;
+        target = new Date(newDate);
+
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ name: examName, date: examDateRaw }));
+        } catch (e) { /* storage unavailable; changes apply for this session only */ }
+
+        applyName();
+        tick();
+        closeModal();
+      });
+    }
+
+    applyName();
+    tick();
+    setInterval(tick, 1000);
+  })();
+</script>
+<script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
+{% endblock %}

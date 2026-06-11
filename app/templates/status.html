@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lorevia Status Dashboard</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/status.css') }}">
+    <script defer src="{{ url_for('static', filename='status.js') }}"></script>
+</head>
+<body>
+
+<div class="dashboard-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo-box">
+            <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Lorevia Logo">
+        </div>
+
+
+
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="#">Dashboard</a></li>
+                <li><a href="#">Create Room</a></li>
+                <li><a href="#">Join Room</a></li>
+                <li><a href="#">Browse Rooms</a></li>
+            </ul>
+        </nav>
+
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Top Bar -->
+        <div class="topbar">
+            <h1>Study Group Status</h1>
+
+            <div class="profile-circle">
+                <span class="online-dot"></span>
+            </div>
+        </div>
+
+        <!-- Status Card -->
+        <section class="status-card">
+
+            <!-- Left Side -->
+            <div class="status-left">
+
+                <div class="overlay-circle top"></div>
+                <div class="overlay-circle bottom"></div>
+
+                <h2>Active<br>Members</h2>
+
+                <p>
+                    Track who is online and offline inside your study rooms.
+                    Stay connected with your classmates in real time.
+                </p>
+
+            </div>
+
+            <!-- Right Side -->
+            <div class="status-right">
+
+                <h2>Members</h2>
+                <p class="subtitle">Current online activity</p>
+
+                <div class="members-grid">
+
+                    {% for member in members %}
+
+                    <div class="member-card {{ 'online' if member.is_online else 'offline' }}"
+                         data-member="{{ member.name }}">
+
+                        <div class="member-top">
+                            <span class="presence-indicator"></span>
+                            <h3>{{ member.name }}</h3>
+                        </div>
+
+                        <p>
+                            {{ 'Online' if member.is_online else 'Offline' }}
+                        </p>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>
+```
