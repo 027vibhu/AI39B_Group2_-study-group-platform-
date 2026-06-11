@@ -53,9 +53,17 @@ def create_users_table():
                 "school VARCHAR(160) NOT NULL DEFAULT '',"
                 "address VARCHAR(255) NOT NULL DEFAULT '',"
                 "bio TEXT,"
+                "role VARCHAR(20) NOT NULL DEFAULT 'user',"
                 "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
             )
+            # Best-effort: add the role column on pre-existing tables.
+            try:
+                cursor.execute(
+                    "ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'user' AFTER bio"
+                )
+            except Exception:
+                pass
     finally:
         connection.close()
 
@@ -66,7 +74,7 @@ def get_user_by_identifier(identifier):
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT id, username, email, password_hash, avatar_url, "
-                "first_name, last_name, school, address, bio, created_at "
+                "first_name, last_name, school, address, bio, role, created_at "
                 "FROM users WHERE username = %s OR email = %s LIMIT 1",
                 (identifier, identifier),
             )
@@ -81,7 +89,7 @@ def get_user_by_email(email):
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT id, username, email, password_hash, avatar_url, "
-                "first_name, last_name, school, address, bio, created_at "
+                "first_name, last_name, school, address, bio, role, created_at "
                 "FROM users WHERE email = %s LIMIT 1",
                 (email,),
             )
@@ -96,7 +104,7 @@ def get_user_by_username(username):
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT id, username, email, password_hash, avatar_url, "
-                "first_name, last_name, school, address, bio, created_at "
+                "first_name, last_name, school, address, bio, role, created_at "
                 "FROM users WHERE username = %s LIMIT 1",
                 (username,),
             )
@@ -111,7 +119,7 @@ def get_user_by_id(user_id):
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT id, username, email, password_hash, avatar_url, "
-                "first_name, last_name, school, address, bio, created_at "
+                "first_name, last_name, school, address, bio, role, created_at "
                 "FROM users WHERE id = %s LIMIT 1",
                 (user_id,),
             )
@@ -135,6 +143,50 @@ def create_user(username, email, password_hash):
         connection.close()
 
 
+def ensure_admin_user():
+    """Guarantee the single owner/admin account exists with the fixed credentials.
+
+    Runs on startup. The account named Config.ADMIN_USERNAME is the only admin;
+    every other user is forced back to the 'user' role so admin access can never
+    be granted to anyone else.
+    """
+    from werkzeug.security import generate_password_hash
+
+    create_users_table()
+
+    username = Config.ADMIN_USERNAME
+    email = Config.ADMIN_EMAIL
+    password_hash = generate_password_hash(Config.ADMIN_PASSWORD)
+
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id FROM users WHERE username = %s LIMIT 1", (username,)
+            )
+            row = cursor.fetchone()
+            if row:
+                # Keep the owner account in sync with the configured password/role.
+                cursor.execute(
+                    "UPDATE users SET email = %s, password_hash = %s, role = 'admin' WHERE id = %s",
+                    (email, password_hash, row['id']),
+                )
+            else:
+                cursor.execute(
+                    "INSERT INTO users (username, email, password_hash, role) "
+                    "VALUES (%s, %s, %s, 'admin')",
+                    (username, email, password_hash),
+                )
+
+            # Enforce single-admin: nobody else may hold the admin role.
+            cursor.execute(
+                "UPDATE users SET role = 'user' WHERE username <> %s AND role = 'admin'",
+                (username,),
+            )
+    finally:
+        connection.close()
+
+
 def update_user_avatar(user_id, avatar_url):
     connection = get_database_connection()
     try:
@@ -142,6 +194,32 @@ def update_user_avatar(user_id, avatar_url):
             cursor.execute(
                 "UPDATE users SET avatar_url = %s WHERE id = %s",
                 (avatar_url, user_id),
+            )
+            return cursor.rowcount
+    finally:
+        connection.close()
+
+
+def update_user_password(user_id, password_hash):
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE users SET password_hash = %s WHERE id = %s",
+                (password_hash, user_id),
+            )
+            return cursor.rowcount
+    finally:
+        connection.close()
+
+
+def update_user_password_by_email(email, password_hash):
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE users SET password_hash = %s WHERE email = %s",
+                (password_hash, email),
             )
             return cursor.rowcount
     finally:
@@ -157,6 +235,70 @@ def update_user_profile(user_id, first_name, last_name, school, address, bio):
                 "address = %s, bio = %s WHERE id = %s",
                 (first_name, last_name, school, address, bio, user_id),
             )
+            return cursor.rowcount
+    finally:
+        connection.close()
+
+
+def get_all_users():
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id, username, email, avatar_url, role, created_at "
+                "FROM users ORDER BY created_at DESC"
+            )
+            return cursor.fetchall()
+    finally:
+        connection.close()
+
+
+def set_user_role(user_id, role):
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE users SET role = %s WHERE id = %s",
+                (role, user_id),
+            )
+            return cursor.rowcount
+    finally:
+        connection.close()
+
+
+def delete_user(user_id):
+    """Delete a user and their owned content (rooms, notes, memberships)."""
+    connection = get_database_connection()
+
+    def _try(cursor, query, params):
+        try:
+            cursor.execute(query, params)
+            return cursor.fetchall()
+        except Exception:
+            return []
+
+    try:
+        with connection.cursor() as cursor:
+            # Rooms owned by the user, plus their messages and memberships.
+            for room in _try(cursor, "SELECT id FROM room WHERE owner_id = %s", (user_id,)):
+                room_id = room['id']
+                _try(cursor, "DELETE FROM message WHERE room_id = %s", (room_id,))
+                _try(cursor, "DELETE FROM user_room WHERE room_id = %s", (room_id,))
+                _try(cursor, "DELETE FROM room WHERE id = %s", (room_id,))
+
+            # Notes owned by the user, plus their shares.
+            for note in _try(cursor, "SELECT id FROM notes WHERE user_id = %s", (user_id,)):
+                _try(cursor, "DELETE FROM note_shares WHERE note_id = %s", (note['id'],))
+            _try(
+                cursor,
+                "DELETE FROM note_shares WHERE shared_with_user_id = %s OR shared_by_user_id = %s",
+                (user_id, user_id),
+            )
+            _try(cursor, "DELETE FROM notes WHERE user_id = %s", (user_id,))
+
+            # The user's own room memberships, then the account.
+            _try(cursor, "DELETE FROM user_room WHERE user_id = %s", (user_id,))
+            cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
             return cursor.rowcount
     finally:
         connection.close()
@@ -241,6 +383,12 @@ class Database:
         # Ensure database exists and create core users table
         ensure_database_exists()
         create_users_table()
+
+        # Bootstrap the single owner/admin account.
+        try:
+            ensure_admin_user()
+        except Exception:
+            pass
 
         # Try to create other tables if their modules are available
         try:

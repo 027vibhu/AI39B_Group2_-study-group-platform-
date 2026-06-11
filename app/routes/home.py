@@ -44,6 +44,8 @@ class HomeRoutes:
 
         # routes
         self.bp.route('/')(self.index)
+        self.bp.route('/features')(self.features)
+        self.bp.route('/about')(self.about)
         self.bp.route('/dashboard')(self.dashboard)
         self.bp.route('/join_room')(self.join_room)
         self.bp.route('/browse_rooms')(self.browse_rooms)
@@ -64,6 +66,8 @@ class HomeRoutes:
         self.bp.route('/profile/avatar', methods=['POST'])(self.update_avatar)
         self.bp.route('/notes')(self.notes)
         self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
+        self.bp.route('/notes/<int:note_id>/share', methods=['POST'])(self.share_note)
+        self.bp.route('/notes/<int:note_id>/delete', methods=['POST'])(self.delete_note)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
         self.bp.route('/music')(self.music)
         
@@ -78,10 +82,15 @@ class HomeRoutes:
 
         allowed_endpoints = {
             'home.index',
+            'home.features',
+            'home.about',
             'auth.login',
             'auth.login_post',
             'auth.register',
             'auth.reset_password',
+            'auth.send_reset_code',
+            'auth.verify_reset_code',
+            'auth.set_new_password',
             'auth.logout',
         }
 
@@ -95,6 +104,12 @@ class HomeRoutes:
 
     def index(self):
         return render_template('index.html')
+
+    def features(self):
+        return render_template('features.html')
+
+    def about(self):
+        return render_template('about.html')
 
     def dashboard(self):
         # Exam date drives the countdown square. Swap this for real data later.
@@ -351,7 +366,7 @@ class HomeRoutes:
             upload_dir,
             file_record['stored_filename'],
             as_attachment=True,
-            attachment_filename=file_record['original_filename'],
+            download_name=file_record['original_filename'],
         )
 
     def view_shared_file(self, file_id):
@@ -551,6 +566,14 @@ class HomeRoutes:
     def upload_note(self):
         controller = NoteController()
         return controller.upload_note()
+
+    def share_note(self, note_id):
+        controller = NoteController()
+        return controller.share_note(note_id)
+
+    def delete_note(self, note_id):
+        controller = NoteController()
+        return controller.delete_note(note_id)
 
     def create_room(self):
         if request.method == 'POST':
