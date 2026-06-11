@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, render_template
 from app.controllers.exam_countdown_controller import ExamCountdownController
 
 
@@ -9,6 +9,7 @@ class ExamCountdownRoutes:
     def register(self):
         self.bp.route('/exams', methods=['GET'])(self.list_exams)
         self.bp.route('/exams', methods=['POST'])(self.create_exam)
+        self.bp.route('/exams/view', methods=['GET'])(self.view_exams_page)
         return self.bp
 
     def list_exams(self):
@@ -33,6 +34,14 @@ class ExamCountdownRoutes:
         try:
             new_id = controller.create_exam(title, exam_datetime, notes, color=color, user_id=None)
             return jsonify({'status': 'success', 'id': new_id}), 201
+        except Exception as e:
+            return jsonify({'status': 'error', 'message': str(e)}), 500
+
+    def view_exams_page(self):
+        controller = ExamCountdownController()
+        try:
+            exams = controller.list_exams()
+            return render_template('exam_countdown.html', exams=exams)
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)}), 500
 
