@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}About — LOREVIA{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/about.css') }}">
+{% endblock %}
+
+{% block content %}
+  <section class="about">
+    <div class="about-grid-bg"></div>
+
+    <header class="about-hero">
+      <span class="about-eyebrow">WHO WE ARE</span>
+      <h1 class="about-title">
+        <span class="outline">About</span>
+        <span class="solid">Us.</span>
+      </h1>
+      <p class="about-lead">
+        LOREVIA started with a simple frustration: studying alone is hard, and the
+        tools meant to help only added more noise. We set out to build one calm,
+        focused space where students can meet, share, and actually get work done.
+      </p>
+    </header>
+
+    <div class="about-story">
+      <div class="about-story-block">
+        <h2>Why we built it</h2>
+        <p>
+          Group chats get cluttered, notes get scattered across a dozen apps, and
+          motivation fades when no one is in it with you. We wanted a single place
+          that brings real-time rooms, shared resources, and gentle productivity
+          tools together — without the clutter.
+        </p>
+      </div>
+      <div class="about-story-block">
+        <h2>What we believe</h2>
+        <p>
+          Learning sticks when it's social, organized, and distraction-free. Every
+          feature in LOREVIA exists to protect your focus and make collaboration
+          feel effortless — never to compete for your attention.
+        </p>
+      </div>
+    </div>
+
+    {% set values = [
+      ['Focused by design', 'A quiet, deliberate interface that keeps your attention on the work — not on the tool.'],
+      ['Built for collaboration', 'Real-time rooms, shared notes, and live discussion make studying together feel natural.'],
+      ['Student-first', 'Every decision starts with the question: does this actually help someone learn?']
+    ] %}
+
+    <div class="about-values">
+      <div class="value-cards">
+        {% for title, desc in values %}
+          <article class="value-card">
+            <h3 class="value-name">{{ title }}</h3>
+            <p class="value-desc">{{ desc }}</p>
+          </article>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="about-cta">
+      <h2>Learning is better with company.</h2>
+      <p>Create a room, invite your friends, and study together on LOREVIA.</p>
+      <a class="cta-btn" href="{{ url_for('auth.login') }}">Get Started</a>
+    </div>
+  </section>
+{% endblock %}
