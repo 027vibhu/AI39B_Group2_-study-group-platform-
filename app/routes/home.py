@@ -44,6 +44,7 @@ class HomeRoutes:
 
         # routes
         self.bp.route('/')(self.index)
+        self.bp.route('/features')(self.features)
         self.bp.route('/dashboard')(self.dashboard)
         self.bp.route('/join_room')(self.join_room)
         self.bp.route('/browse_rooms')(self.browse_rooms)
@@ -77,6 +78,7 @@ class HomeRoutes:
 
         allowed_endpoints = {
             'home.index',
+            'home.features',
             'auth.login',
             'auth.login_post',
             'auth.register',
@@ -93,6 +95,9 @@ class HomeRoutes:
         return None
 
     def index(self):
+        return render_template('index.html')
+
+    def features(self):
         return render_template('index.html')
 
     def dashboard(self):
