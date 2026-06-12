@@ -65,7 +65,8 @@ class HomeRoutes:
         self.bp.route('/notes')(self.notes)
         self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
-
+        self.bp.route('/music')(self.music)
+        
         return self.bp
 
     def require_login_for_protected_pages(self):
@@ -543,6 +544,9 @@ class HomeRoutes:
     def notes(self):
         controller = NoteController()
         return controller.list_notes()
+    
+    def music(self):
+        return render_template('backgroundmusic.html')
 
     def upload_note(self):
         controller = NoteController()
