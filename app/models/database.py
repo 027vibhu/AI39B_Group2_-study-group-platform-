@@ -267,6 +267,13 @@ class Database:
             pass
 
         try:
+            from app.models.exam_countdown import create_exam_countdown_table
+
+            create_exam_countdown_table()
+        except Exception:
+            pass
+
+        try:
             from app.models.chat_attachment import create_attachment, ensure_table_exists
 
             ensure_table_exists()
