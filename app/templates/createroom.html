@@ -4,7 +4,6 @@
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/createroom.css') }}">
-  
 {% endblock %}
 
 {% block topbar_title %}{% endblock %}
@@ -14,67 +13,93 @@
 
     <!-- Left -->
     <div class="left">
-      <h1>Create<br>Room</h1>
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
 
-      <p>
-        Launch a private or public study workspace instantly,
-        then share the room code with your classmates.
-      </p>
+      <div class="left-content">
+        <h1>Create<br>Room</h1>
+        <p>
+          Launch a private or public study workspace instantly,
+          then share the room code with your classmates.
+        </p>
+
+        <!-- Live glass preview -->
+        <div class="preview-card" id="preview-card">
+          <div class="preview-top">
+            <span class="preview-avatar"><i class="fa-solid fa-book-open"></i></span>
+            <div class="preview-meta">
+              <span class="preview-name" id="preview-name">Untitled Room</span>
+              <span class="preview-code">#{{ room_code }}</span>
+            </div>
+            <span class="preview-status" id="preview-status"><i class="fa-solid fa-earth-americas"></i> Public</span>
+          </div>
+          <div class="preview-tags" id="preview-tags"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Right -->
     <div class="right">
-
       <div class="form-box">
-
-        <h2>Create</h2>
-
-        <p class="subtitle">
-          Setup your study workspace below
-        </p>
 
         <form method="post" action="{{ url_for('home.create_room') }}">
           <input type="hidden" name="room_code" id="room-code-value" value="{{ room_code }}">
           <input type="hidden" name="is_private" id="is-private-value" value="0">
+          <input type="hidden" name="selected_tags" id="selected-tags-input" value="">
 
-          <input type="text" class="input" name="room_name" placeholder="Room name" required>
-
-          <label class="label">Your Room Code</label>
-
-          <div class="room-code">
-            {% for char in room_code %}
-            <div class="code-box">{{ char }}</div>
-            {% endfor %}
+          <div class="field f-1">
+            <label class="label" for="room-name"><i class="fa-solid fa-pen"></i> Room name</label>
+            <input type="text" id="room-name" class="input" name="room_name" placeholder="e.g. Calculus Crash Course" required autocomplete="off">
           </div>
 
-          <!-- Subject Tags -->
-          <div class="subject-section">
+          <div class="field f-2">
+            <label class="label"><i class="fa-solid fa-hashtag"></i> Room code</label>
+            <div class="code-row">
+              <div class="room-code">
+                {% for char in room_code %}
+                <div class="code-box" style="animation-delay: {{ loop.index0 * 80 }}ms">{{ char }}</div>
+                {% endfor %}
+              </div>
+              <button type="button" class="copy-btn" id="copy-code-btn" title="Copy code">
+                <i class="fa-regular fa-copy"></i>
+              </button>
+            </div>
+          </div>
 
-            <label class="label">Subject Tags</label>
-
-            <div class="tags" id="tags-container"></div>
-
+          <div class="field f-3">
+            <label class="label"><i class="fa-solid fa-tags"></i> Subjects</label>
+            <div class="tags" id="tags-container">
+              {% for subject in ['Math', 'Science', 'English', 'History', 'Programming', 'Languages'] %}
+              <div class="tag" data-subject="{{ subject.lower() }}">{{ subject }}</div>
+              {% endfor %}
+            </div>
             <div class="custom-tag-section">
-              <input type="text" id="custom-tag-input" placeholder="Add custom subject..." maxlength="20">
-              <button type="button" id="add-custom-btn" class="add-custom-btn">+ Add</button>
+              <input type="text" id="custom-tag-input" placeholder="Add custom subject" maxlength="20">
+              <button type="button" id="add-custom-btn" class="add-custom-btn" title="Add subject"><i class="fa-solid fa-plus"></i></button>
             </div>
-
-            <input type="hidden" name="selected_tags" id="selected-tags-input" value="">
-
           </div>
 
-          <div class="toggle-container">
-            <div class="toggle-text">
-              <span class="toggle-title" id="toggle-label">Public Room</span>
-              <span class="toggle-desc" id="toggle-sublabel">Listed in Browse Rooms and open to anyone</span>
+          <div class="field f-4">
+            <label class="label"><i class="fa-solid fa-eye"></i> Visibility</label>
+            <div class="visibility-options">
+              <span class="visibility-thumb" id="visibility-thumb"></span>
+              <label class="visibility-card">
+                <input type="radio" name="visibility" value="0" checked>
+                <span class="visibility-body"><i class="fa-solid fa-earth-americas"></i> Public</span>
+              </label>
+              <label class="visibility-card">
+                <input type="radio" name="visibility" value="1">
+                <span class="visibility-body"><i class="fa-solid fa-lock"></i> Private</span>
+              </label>
             </div>
-            <label class="switch">
-              <input type="checkbox" id="public-toggle" checked>
-              <span class="slider"></span>
-            </label>
           </div>
 
-          <button type="submit" class="main-btn">Create Room</button>
+          <button type="submit" class="main-btn f-5">
+            <span>Create Room</span> <i class="fa-solid fa-arrow-right"></i>
+          </button>
         </form>
 
       </div>
@@ -85,43 +110,76 @@
 
 {% block scripts %}
   <script>
-    // Handle switching text content based on toggle interaction dynamically
-    const toggleInput = document.getElementById('public-toggle');
-    const toggleLabel = document.getElementById('toggle-label');
-    const toggleSublabel = document.getElementById('toggle-sublabel');
     const isPrivateValue = document.getElementById('is-private-value');
-
-    toggleInput.addEventListener('change', () => {
-      if (toggleInput.checked) {
-        toggleLabel.textContent = 'Public Room';
-        toggleSublabel.textContent = 'Listed in Browse Rooms and open to anyone';
-        isPrivateValue.value = '0';
-      } else {
-        toggleLabel.textContent = 'Private Room';
-        toggleSublabel.textContent = 'Requires the room code to join';
-        isPrivateValue.value = '1';
-      }
-    });
-
-    // Subject Tags functionality
     const tagsContainer = document.getElementById('tags-container');
     const formEl = document.querySelector('form');
     const customTagInput = document.getElementById('custom-tag-input');
     const addCustomBtn = document.getElementById('add-custom-btn');
     const selectedTagsInput = document.getElementById('selected-tags-input');
-    let selectedTags = [];
+    const roomNameInput = document.getElementById('room-name');
+    const visibilityThumb = document.getElementById('visibility-thumb');
 
-    function updateSelectedTags() {
-      selectedTags = Array.from(document.querySelectorAll('.tag.active')).map(tag => tag.dataset.subject || tag.textContent.trim());
-      selectedTagsInput.value = selectedTags.join(',');
+    // Live preview elements
+    const previewName = document.getElementById('preview-name');
+    const previewStatus = document.getElementById('preview-status');
+    const previewTags = document.getElementById('preview-tags');
+
+    function updatePreview() {
+      const name = roomNameInput.value.trim();
+      previewName.textContent = name || 'Untitled Room';
+
+      const isPrivate = isPrivateValue.value === '1';
+      previewStatus.innerHTML = isPrivate
+        ? '<i class="fa-solid fa-lock"></i> Private'
+        : '<i class="fa-solid fa-earth-americas"></i> Public';
+      previewStatus.classList.toggle('private', isPrivate);
+
+      const selected = Array.from(document.querySelectorAll('.tag.active'))
+        .map(tag => tag.dataset.subject || tag.textContent.trim());
+      previewTags.innerHTML = selected.slice(0, 4)
+        .map(t => `<span class="preview-tag">${t}</span>`)
+        .join('') + (selected.length > 4 ? `<span class="preview-tag">+${selected.length - 4}</span>` : '');
     }
 
-    // Handle tag click (supports clicks on inner elements)
+    function updateSelectedTags() {
+      const selected = Array.from(document.querySelectorAll('.tag.active'))
+        .map(tag => tag.dataset.subject || tag.textContent.trim());
+      selectedTagsInput.value = selected.join(',');
+      updatePreview();
+    }
+
+    // Room name -> preview
+    roomNameInput.addEventListener('input', updatePreview);
+
+    // Visibility -> hidden is_private value + thumb slide
+    document.querySelectorAll('input[name="visibility"]').forEach((radio, index) => {
+      radio.addEventListener('change', () => {
+        isPrivateValue.value = radio.value;
+        visibilityThumb.classList.toggle('thumb-right', index === 1);
+        updatePreview();
+      });
+    });
+
+    // Copy room code
+    const copyBtn = document.getElementById('copy-code-btn');
+    copyBtn.addEventListener('click', () => {
+      const code = document.getElementById('room-code-value').value;
+      navigator.clipboard.writeText(code).then(() => {
+        copyBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+        copyBtn.classList.add('copied');
+        setTimeout(() => {
+          copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i>';
+          copyBtn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+
+    // Subject tags
     tagsContainer.addEventListener('click', (e) => {
       const tag = e.target.closest('.tag');
       if (!tag) return;
 
-      if (e.target.classList.contains('remove-tag')) {
+      if (e.target.closest('.remove-tag')) {
         tag.remove();
         updateSelectedTags();
         return;
@@ -131,33 +189,25 @@
       updateSelectedTags();
     });
 
-    // Add custom tag
-    addCustomBtn.addEventListener('click', (e) => {
-      e.preventDefault();
+    addCustomBtn.addEventListener('click', () => {
       const tagText = customTagInput.value.trim();
+      if (!tagText) return;
 
-      if (tagText && tagText.length > 0) {
-        // Check if tag already exists
-        const tagExists = Array.from(tagsContainer.querySelectorAll('.tag')).some(
-          tag => tag.textContent.trim().toLowerCase() === tagText.toLowerCase()
-        );
+      const tagExists = Array.from(tagsContainer.querySelectorAll('.tag')).some(
+        tag => (tag.dataset.subject || tag.textContent.trim()).toLowerCase() === tagText.toLowerCase()
+      );
 
-        if (!tagExists) {
-          const newTag = document.createElement('div');
-          newTag.classList.add('tag', 'custom', 'active');
-          newTag.dataset.subject = tagText.toLowerCase();
-          newTag.innerHTML = `${tagText} <span class="remove-tag">✕</span>`;
-          tagsContainer.appendChild(newTag);
-
-          customTagInput.value = '';
-          updateSelectedTags();
-        } else {
-          alert('This tag already exists!');
-        }
+      if (!tagExists) {
+        const newTag = document.createElement('div');
+        newTag.classList.add('tag', 'custom', 'active');
+        newTag.dataset.subject = tagText.toLowerCase();
+        newTag.innerHTML = `${tagText} <span class="remove-tag"><i class="fa-solid fa-xmark"></i></span>`;
+        tagsContainer.appendChild(newTag);
+        customTagInput.value = '';
+        updateSelectedTags();
       }
     });
 
-    // Handle Enter key in custom tag input
     customTagInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -165,15 +215,7 @@
       }
     });
 
-    // Initialize selected tags on page load
     updateSelectedTags();
-
-    // Ensure the latest tags are captured on submit
-    if (formEl) {
-      formEl.addEventListener('submit', () => {
-        updateSelectedTags();
-      });
-    }
+    formEl.addEventListener('submit', updateSelectedTags);
   </script>
-  <script src="{{ url_for('static', filename='js/create_workspace_step1.js') }}"></script>
 {% endblock %}

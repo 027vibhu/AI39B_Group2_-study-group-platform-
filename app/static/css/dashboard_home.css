@@ -14,6 +14,34 @@
   gap: 6px;
 }
 
+/* ===== Welcome row: hero card + motivation side by side ===== */
+.welcome-row {
+  display: flex;
+  align-items: stretch;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.welcome-row .quote-card {
+  aspect-ratio: auto;
+  flex: 0 0 350px;
+  max-width: none;
+  /* match the welcome card's top offset so the stretched heights line up */
+  margin-top: 6px;
+}
+
+@media (max-width: 950px) {
+  .welcome-row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .welcome-row .quote-card {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+}
+
 /* ===== Welcome hero card ===== */
 .welcome-card {
   position: relative;
@@ -148,127 +176,301 @@
 
 /* ===== Pomodoro timer card ===== */
 .pomodoro-timer {
+  --pomo-accent: #5b54e6;
+  --pomo-accent-soft: rgba(91, 84, 230, 0.16);
+  --pomo-track: #e6e6ec;
+  --pomo-bubble: rgba(91, 84, 230, 0.08);
   position: relative;
   aspect-ratio: 1 / 1;
   width: 100%;
   max-width: 320px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  padding: 24px;
+  gap: 12px;
+  padding: 18px 24px;
   border-radius: 28px;
-  background: linear-gradient(180deg, #ffffff 0%, #f5f7ff 100%);
-  border: 1px solid rgba(125, 134, 199, 0.18);
-  box-shadow: 0 24px 55px rgba(125, 134, 199, 0.12);
-  color: #2f3348;
+  background: linear-gradient(160deg, #f6f5ff 0%, #ece9ff 100%);
+  border: 1px solid #e7e4fb;
+  box-shadow: 0 18px 45px rgba(91, 84, 230, 0.14);
+  color: #1c1d29;
+  overflow: hidden;
+  isolation: isolate;
+  transition: background 0.6s ease, border-color 0.6s ease, box-shadow 0.6s ease;
 }
 
-.pomodoro-header {
+.pomodoro-timer[data-mode="break"] {
+  --pomo-accent: #14b8a6;
+  --pomo-accent-soft: rgba(20, 184, 166, 0.18);
+  --pomo-track: #e6e6ec;
+  --pomo-bubble: rgba(20, 184, 166, 0.09);
+  background: linear-gradient(160deg, #f0fdfb 0%, #ddf6f2 100%);
+  border-color: #d4f1ec;
+  box-shadow: 0 18px 45px rgba(20, 184, 166, 0.16);
+}
+
+/* soft, accent-tinted decorative bubbles, matching the exam countdown card */
+.pomodoro-timer::before,
+.pomodoro-timer::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: var(--pomo-bubble);
+  z-index: -1;
+  pointer-events: none;
+  transition: background 0.6s ease;
+}
+
+.pomodoro-timer::before {
+  width: 180px;
+  height: 180px;
+  top: -70px;
+  right: -60px;
+}
+
+.pomodoro-timer::after {
+  width: 130px;
+  height: 130px;
+  bottom: -55px;
+  left: -45px;
+}
+
+.pomodoro-top {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 10px;
 }
 
 .pomodoro-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
+  gap: 7px;
+  padding: 6px 12px;
   border-radius: 999px;
-  background: #e7ecff;
-  color: #4f5cd1;
+  background: rgba(255, 255, 255, 0.7);
+  color: #6b6c7e;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pomodoro-badge i {
+  color: var(--pomo-accent);
+  transition: color 0.5s ease;
+}
+
+/* segmented Study / Break toggle with a sliding thumb */
+.pomodoro-segment {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.seg-btn {
+  position: relative;
+  z-index: 1;
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  color: #9092a6;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.pomodoro-subtitle {
-  margin: 0;
-  color: #6d7390;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.pomodoro-state {
-  width: fit-content;
-  padding: 10px 16px;
+  cursor: pointer;
   border-radius: 999px;
-  background: #eef2ff;
-  color: #3f4cb1;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  transition: color 0.25s ease;
 }
 
-.pomodoro-display {
+.seg-btn.active {
+  color: #ffffff;
+}
+
+.seg-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
+  border-radius: 999px;
+  background: var(--pomo-accent);
+  box-shadow: 0 4px 12px var(--pomo-accent-soft);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease;
+}
+
+.pomodoro-timer[data-mode="break"] .seg-thumb {
+  transform: translateX(100%);
+}
+
+/* circular dial */
+.pomodoro-dial {
+  position: relative;
+  flex: 1 1 auto;
   display: grid;
   place-items: center;
   width: 100%;
-  min-height: 120px;
-  border-radius: 24px;
-  background: linear-gradient(180deg, #4f5cd1 0%, #2f3aa2 100%);
-  color: #ffffff;
-  font-size: 54px;
-  font-weight: 800;
+  max-width: 180px;
+  min-height: 0;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+  touch-action: none;
 }
 
-.pomodoro-controls {
+.pomodoro-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-track {
+  fill: none;
+  stroke: var(--pomo-track);
+  stroke-width: 9;
+  transition: stroke 0.6s ease;
+}
+
+.ring-progress {
+  fill: none;
+  stroke: var(--pomo-accent);
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-dasharray: 326.726;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear, stroke 0.5s ease;
+}
+
+/* used for instant jumps (reset, mode switch, pause) — no glide */
+.ring-progress.ring-instant {
+  transition: stroke 0.5s ease;
+}
+
+.pomodoro-dial-center {
+  position: absolute;
+  inset: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  pointer-events: none;
 }
 
-.pomodoro-btn {
-  flex: 1 1 96px;
-  min-width: 96px;
-  padding: 12px 14px;
-  border: none;
-  border-radius: 16px;
-  background: #4f5cd1;
-  color: #ffffff;
-  font-size: 14px;
+.pomodoro-state {
+  font-size: 11px;
   font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pomo-accent);
+  transition: color 0.5s ease;
 }
 
-.pomodoro-btn:hover {
-  background: #3f4cb1;
-  transform: translateY(-1px);
+.pomodoro-display {
+  font-size: 33px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: #1c1d29;
+  font-variant-numeric: tabular-nums;
 }
 
-.pomodoro-btn:disabled {
-  background: #a1b0f0;
-  cursor: not-allowed;
-  opacity: 0.7;
-  transform: none;
+.pomodoro-minutes {
+  font-size: 13px;
+  font-weight: 600;
+  color: #9092a6;
 }
 
-.pomodoro-modes {
+/* play / pause + reset controls */
+.pomodoro-controls {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: 16px;
+  width: 100%;
+  margin-top: 2px;
 }
 
-.mode-btn {
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid #d9dfff;
-  background: #ffffff;
-  color: #4f5cd1;
-  font-size: 14px;
-  font-weight: 700;
+/* keep the side buttons hugging the centered play control */
+.pomo-edit {
+  justify-self: end;
+}
+
+.pomo-reset {
+  justify-self: start;
+}
+
+.pomo-ctrl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  color: #54566a;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
-.mode-btn.active,
-.mode-btn:hover {
-  background: #eef2ff;
-  border-color: #c5d1ff;
+.pomo-reset,
+.pomo-edit {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 15px;
+  color: #54566a;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.pomo-reset:hover {
+  background: #ffffff;
+  transform: rotate(-30deg);
+}
+
+.pomo-edit:hover {
+  background: #ffffff;
+  color: var(--pomo-accent);
+}
+
+.pomo-toggle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 20px;
+  color: #ffffff;
+  background: var(--pomo-accent);
+  box-shadow: 0 10px 24px var(--pomo-accent-soft);
+}
+
+.pomo-toggle:hover {
+  transform: translateY(-2px);
+}
+
+.pomo-toggle:active {
+  transform: translateY(0);
+}
+
+/* mode dots */
+.pomo-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.pomo-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #cfcde8;
+  transition: background 0.25s ease, width 0.25s ease;
+}
+
+.pomo-dot.active {
+  width: 20px;
+  border-radius: 999px;
+  background: var(--pomo-accent);
 }
 
 /* ===== Exam countdown square ===== */
@@ -523,6 +725,21 @@
   background: #a52f2f;
 }
 
+/* pomodoro timer-settings modal: reuse the exam modal layout, purple accent */
+.pomo-modal .exam-field input:focus {
+  border-color: #5b54e6;
+  box-shadow: 0 0 0 3px rgba(91, 84, 230, 0.15);
+}
+
+.pomo-btn-primary {
+  background: #5b54e6;
+  color: #ffffff;
+}
+
+.pomo-btn-primary:hover {
+  background: #4a43d0;
+}
+
 /* ===== Placeholder widgets (future features) ===== */
 .dash-placeholder {
   position: relative;
@@ -562,6 +779,75 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #9aa0b8;
+}
+
+/* ===== Daily motivation card ===== */
+.quote-card {
+  --quote-accent: #5b54e6;
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 26px;
+  border-radius: 28px;
+  border: 1px solid rgba(91, 84, 230, 0.16);
+  background: linear-gradient(160deg, rgba(91, 84, 230, 0.10), rgba(91, 84, 230, 0.02));
+  text-align: center;
+}
+
+.quote-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(91, 84, 230, 0.12);
+  color: var(--quote-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.quote-text {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #3a3f5c;
+}
+
+.quote-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 999px;
+  background: var(--quote-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.quote-refresh:hover {
+  opacity: 0.92;
+}
+
+.quote-refresh:active {
+  transform: translateY(1px);
+}
+
+.quote-refresh:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 @media (max-width: 950px) {
