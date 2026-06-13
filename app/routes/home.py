@@ -431,7 +431,15 @@ class HomeRoutes:
             session.clear()
             return redirect(url_for('auth.login'))
 
-        return render_template('profile.html', user=user)
+        member_since = None
+        if user.get('created_at') is not None:
+            created_at = user['created_at']
+            if hasattr(created_at, 'strftime'):
+                member_since = created_at.strftime('%b %d, %Y')
+            else:
+                member_since = str(created_at)
+
+        return render_template('profile.html', user=user, member_since=member_since)
 
     def moderation(self):
         controller = ModerationController()
