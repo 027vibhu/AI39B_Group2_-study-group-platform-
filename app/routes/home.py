@@ -69,10 +69,6 @@ class HomeRoutes:
         self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
         self.bp.route('/notes/<int:note_id>/share', methods=['POST'])(self.share_note)
         self.bp.route('/notes/<int:note_id>/delete', methods=['POST'])(self.delete_note)
-        # Study hours tracking routes
-        self.bp.route('/study-hours')(self.study_hours_index)
-        self.bp.route('/study-hours/new')(self.study_hours_new)
-        self.bp.route('/study-hours/create', methods=['POST'])(self.study_hours_create)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
 
         return self.bp
