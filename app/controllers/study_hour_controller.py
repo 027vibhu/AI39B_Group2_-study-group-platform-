@@ -71,4 +71,6 @@ class StudyHourController(BaseController):
             'status': 'success',
             'current_streak': streaks.get('current_streak', 0),
             'longest_streak': streaks.get('longest_streak', 0),
+            'last_study_date': streaks.get('last_study_date').isoformat() if streaks.get('last_study_date') else None,
+            'streak_active': streaks.get('streak_active', False),
         })

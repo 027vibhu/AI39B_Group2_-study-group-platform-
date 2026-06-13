@@ -97,46 +97,72 @@ class StudyHour(BaseModel):
             db.close()
 
     @classmethod
+    def _calculate_current_streak(cls, study_dates):
+        """Return the current active streak ending today or yesterday."""
+        if not study_dates:
+            return 0
+
+        today = date.today()
+        descending_dates = study_dates[::-1]
+        last_date = descending_dates[0]
+        days_since_last = (today - last_date).days
+
+        # A streak is only active if the most recent study day is today or yesterday.
+        if days_since_last > 1:
+            return 0
+
+        current_streak = 1
+        previous = last_date
+        for current_date in descending_dates[1:]:
+            diff = (previous - current_date).days
+            if diff == 1:
+                current_streak += 1
+                previous = current_date
+            elif diff == 0:
+                continue
+            else:
+                break
+
+        return current_streak
+
+    @classmethod
     def get_study_streaks(cls, user_id: int):
         """Calculate current and longest consecutive study day streaks."""
-        dates = cls.get_study_dates_for_user(user_id)
-        if not dates:
-            return {'current_streak': 0, 'longest_streak': 0}
+        date_rows = cls.get_study_dates_for_user(user_id)
+        if not date_rows:
+            return {
+                'current_streak': 0,
+                'longest_streak': 0,
+                'last_study_date': None,
+                'streak_active': False,
+            }
 
-        consecutive = 0
-        longest = 0
-        last_date = None
-        for row in dates:
-            session_date = row['session_date']
-            if last_date is None:
-                consecutive = 1
+        study_dates = [row['session_date'] for row in date_rows]
+        longest = 1
+        consecutive = 1
+        previous_date = study_dates[0]
+
+        for current_date in study_dates[1:]:
+            diff = (current_date - previous_date).days
+            if diff == 1:
+                consecutive += 1
+            elif diff == 0:
+                # same date may appear more than once in source data; ignore duplicates.
+                pass
             else:
-                diff = (session_date - last_date).days
-                if diff == 1:
-                    consecutive += 1
-                elif diff == 0:
-                    continue
-                else:
-                    longest = max(longest, consecutive)
-                    consecutive = 1
-            last_date = session_date
+                longest = max(longest, consecutive)
+                consecutive = 1
+            previous_date = current_date
 
         longest = max(longest, consecutive)
 
-        # Compute current streak from most recent study dates
-        current_streak = 0
-        descending_dates = [row['session_date'] for row in dates][::-1]
-        if descending_dates:
-            current_streak = 1
-            previous = descending_dates[0]
-            for session_date in descending_dates[1:]:
-                diff = (previous - session_date).days
-                if diff == 1:
-                    current_streak += 1
-                    previous = session_date
-                elif diff == 0:
-                    continue
-                else:
-                    break
+        current_streak = cls._calculate_current_streak(study_dates)
+        last_study_date = study_dates[-1]
+        streak_active = current_streak > 0
 
-        return {'current_streak': current_streak, 'longest_streak': longest}
+        return {
+            'current_streak': current_streak,
+            'longest_streak': longest,
+            'last_study_date': last_study_date,
+            'streak_active': streak_active,
+        }
