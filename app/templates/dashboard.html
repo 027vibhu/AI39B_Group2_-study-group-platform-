@@ -10,6 +10,7 @@
 
 {% block content %}
 <section class="dashboard">
+  <div class="welcome-row">
   <div class="welcome-card">
     <div class="welcome-text">
       <h1 class="welcome-hi">Hi{% if current_user %}, {{ current_user.first_name or current_user.username }}{% endif %}!</h1>
@@ -38,25 +39,17 @@
     <img class="welcome-mascot" src="{{ url_for('static', filename='images/bear_icon.jpg') }}" alt="" aria-hidden="true">
   </div>
 
-  <div class="dash-grid">
-    <article class="pomodoro-timer">
-      <div class="pomodoro-header">
-        <span class="pomodoro-badge">Pomodoro Timer</span>
-        <p class="pomodoro-subtitle">Study sessions with built-in focus and break phases.</p>
-      </div>
-      <div class="pomodoro-state" id="pomodoroState" role="status" aria-live="polite">Study</div>
-      <div class="pomodoro-display" id="pomodoroDisplay" aria-live="polite">25:00</div>
-      <div class="pomodoro-controls">
-        <button type="button" class="pomodoro-btn" id="pomodoroStart">Start</button>
-        <button type="button" class="pomodoro-btn" id="pomodoroPause">Pause</button>
-        <button type="button" class="pomodoro-btn" id="pomodoroReset">Reset</button>
-      </div>
-      <div class="pomodoro-modes">
-        <button type="button" class="mode-btn active" data-mode="study">Study</button>
-        <button type="button" class="mode-btn" data-mode="break">Break</button>
-      </div>
+    <article class="quote-card" id="quoteCard">
+      <span class="quote-badge"><i class="fa-solid fa-quote-left"></i> Daily motivation</span>
+      <p class="quote-text" id="quoteText">Loading a little motivation…</p>
+      <button type="button" class="quote-refresh" id="quoteRefresh" aria-label="Show another quote">
+        <i class="fa-solid fa-rotate"></i>
+        <span>New quote</span>
+      </button>
     </article>
+  </div>
 
+  <div class="dash-grid">
     <article class="exam-countdown" id="examCountdown" data-exam-date="{{ exam_date }}" data-exam-name="{{ exam_name if exam_name else 'Final Exams' }}">
       <button type="button" class="exam-edit-btn" id="examEditBtn" aria-label="Edit exam title and date">
         <i class="fa-solid fa-pen"></i>
@@ -80,6 +73,46 @@
       <div class="exam-date-line"><i class="fa-regular fa-calendar"></i> <span id="examDateText"></span></div>
     </article>
 
+    <article class="pomodoro-timer" id="pomodoroCard" data-mode="study">
+      <div class="pomodoro-top">
+        <span class="pomodoro-badge"><i class="fa-solid fa-stopwatch"></i> Pomodoro</span>
+        <div class="pomodoro-segment" role="tablist" aria-label="Timer mode">
+          <button type="button" class="seg-btn active" data-mode="study" role="tab" aria-selected="true">Study</button>
+          <button type="button" class="seg-btn" data-mode="break" role="tab" aria-selected="false">Break</button>
+          <span class="seg-thumb" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div class="pomodoro-dial" id="pomodoroDial">
+        <svg class="pomodoro-ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+          <circle class="ring-progress" id="pomodoroRing" cx="60" cy="60" r="52"></circle>
+        </svg>
+        <div class="pomodoro-dial-center">
+          <span class="pomodoro-state" id="pomodoroState" role="status" aria-live="polite">Focus</span>
+          <span class="pomodoro-display" id="pomodoroDisplay" aria-live="polite">25:00</span>
+          <span class="pomodoro-minutes" id="pomodoroMinutes">25 min</span>
+        </div>
+      </div>
+
+      <div class="pomodoro-controls">
+        <button type="button" class="pomo-ctrl pomo-edit" id="pomodoroEdit" aria-label="Edit focus and break durations">
+          <i class="fa-solid fa-sliders"></i>
+        </button>
+        <button type="button" class="pomo-ctrl pomo-toggle" id="pomodoroToggle" aria-label="Start timer">
+          <i class="fa-solid fa-play"></i>
+        </button>
+        <button type="button" class="pomo-ctrl pomo-reset" id="pomodoroReset" aria-label="Reset timer">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+      </div>
+
+      <div class="pomo-dots" aria-hidden="true">
+        <span class="pomo-dot active" data-mode="study"></span>
+        <span class="pomo-dot" data-mode="break"></span>
+      </div>
+    </article>
+
     <article class="dash-placeholder">
       <i class="fa-solid fa-list-check dash-placeholder-icon"></i>
       <span class="dash-placeholder-title">Study Tasks</span>
@@ -96,6 +129,15 @@
       <i class="fa-regular fa-calendar-days dash-placeholder-icon"></i>
       <span class="dash-placeholder-title">Schedule</span>
       <span class="dash-placeholder-tag">Coming soon</span>
+    </article>
+
+    <article class="study-hours-widget">
+      <span class="pomodoro-badge"><i class="fa-solid fa-clock"></i> Track Study Hours</span>
+      <div class="study-stats">
+        <div class="stat"><span>Total</span><strong id="totalHours">0</strong></div>
+        <div class="stat"><span>Today</span><strong id="todayHours">0</strong></div>
+      </div>
+      <button type="button" class="pomo-ctrl" id="logHoursBtn">Log Session</button>
     </article>
   </div>
 </section>
@@ -115,6 +157,26 @@
       <div class="exam-modal-actions">
         <button type="button" class="exam-btn exam-btn-ghost" id="examCancelBtn">Cancel</button>
         <button type="submit" class="exam-btn exam-btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="exam-modal-overlay pomo-modal" id="pomodoroModal" aria-hidden="true">
+  <div class="exam-modal" role="dialog" aria-modal="true" aria-labelledby="pomodoroModalTitle">
+    <h3 class="exam-modal-title" id="pomodoroModalTitle">Timer settings</h3>
+    <form id="pomodoroForm">
+      <label class="exam-field">
+        <span>Focus length (minutes)</span>
+        <input type="number" id="pomodoroFocusInput" name="focus" min="1" max="60" step="1" inputmode="numeric" required>
+      </label>
+      <label class="exam-field">
+        <span>Break length (minutes)</span>
+        <input type="number" id="pomodoroBreakInput" name="break" min="1" max="60" step="1" inputmode="numeric" required>
+      </label>
+      <div class="exam-modal-actions">
+        <button type="button" class="exam-btn exam-btn-ghost" id="pomodoroCancelBtn">Cancel</button>
+        <button type="submit" class="exam-btn pomo-btn-primary">Save</button>
       </div>
     </form>
   </div>
@@ -286,4 +348,5 @@
   })();
 </script>
 <script src="{{ url_for('static', filename='js/pomodoro.js') }}"></script>
+<script src="{{ url_for('static', filename='js/motivation.js') }}"></script>
 {% endblock %}
