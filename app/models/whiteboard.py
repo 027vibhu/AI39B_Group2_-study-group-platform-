@@ -70,6 +70,10 @@ def ensure_table_exists():
     return Whiteboard.ensure_table_exists()
 
 
+def create_whiteboard_table():
+    return ensure_table_exists()
+
+
 def save_whiteboard_drawing(room_id, creator_user_id, drawing_data, title=''):
     return _whiteboard.save_drawing(room_id, creator_user_id, drawing_data, title)
 
