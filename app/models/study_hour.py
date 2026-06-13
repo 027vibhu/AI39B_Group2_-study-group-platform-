@@ -2,7 +2,7 @@ from app.models.base_model import BaseModel
 from app.models.database import Database, ensure_database_exists
 
 
-class StudyHours(BaseModel):
+class StudyHour(BaseModel):
     @property
     def table(self):
         return 'study_hours'
