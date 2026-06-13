@@ -47,3 +47,37 @@ class StudyHour(BaseModel):
             (user_id,),
         )
         return result['total_minutes'] if result else 0
+
+    def get_current_streak(self, user_id):
+        # This is a simplified streak calculation: counts consecutive days with at least 1 study session,
+        # looking back from today.
+        query = """
+            SELECT study_date
+            FROM study_hours
+            WHERE user_id = %s
+            GROUP BY study_date
+            ORDER BY study_date DESC
+        """
+        dates = self.fetch_all(query, (user_id,))
+        if not dates:
+            return 0
+        
+        streak = 0
+        from datetime import date, timedelta
+        
+        check_date = date.today()
+        # If they studied today, start counting, otherwise check yesterday
+        # This implementation counts consecutive days up to today.
+        
+        study_dates = {d['study_date'] for d in dates}
+        
+        current_streak = 0
+        d = date.today()
+        while d in study_dates or d == date.today(): # Allow streak if studied today or yesterday
+             if d in study_dates:
+                 current_streak += 1
+             elif d < date.today(): # If they didn't study yesterday, streak broken
+                 break
+             d -= timedelta(days=1)
+             
+        return current_streak

@@ -134,8 +134,8 @@
     <article class="study-hours-widget">
       <span class="pomodoro-badge"><i class="fa-solid fa-clock"></i> Track Study Hours</span>
       <div class="study-stats">
-        <div class="stat"><span>Total</span><strong id="totalHours">0</strong></div>
-        <div class="stat"><span>Today</span><strong id="todayHours">0</strong></div>
+        <div class="stat"><span>Total</span><strong id="totalHours">{{ study_stats.total_hours }}</strong></div>
+        <div class="stat"><span>Streak</span><strong id="streakCount">{{ study_stats.streak }}</strong></div>
       </div>
       <button type="button" class="pomo-ctrl" id="logHoursBtn">Log Session</button>
     </article>

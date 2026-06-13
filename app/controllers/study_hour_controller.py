@@ -11,13 +11,16 @@ class StudyHourController(BaseController):
         StudyHour.ensure_table_exists()
         self.model = StudyHour()
 
-    def list_sessions(self):
-        user_id = self.get_current_user_id()
-        if not user_id:
-            return self.redirect('auth.login')
-
-        sessions = self.model.find_for_user(user_id)
-        return self.render('study_hours/index.html', sessions=sessions)
+    def get_widget_stats(self, user_id):
+        total_minutes = self.model.get_total_minutes_for_user(user_id)
+        # Assuming 60 mins = 1 hr
+        total_hours = total_minutes // 60
+        streak = self.model.get_current_streak(user_id)
+        
+        return {
+            'total_hours': total_hours,
+            'streak': streak
+        }
 
     def new_session_form(self):
         user_id = self.get_current_user_id()

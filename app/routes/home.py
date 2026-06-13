@@ -113,10 +113,17 @@ class HomeRoutes:
 
     def dashboard(self):
         # Exam date drives the countdown square. Swap this for real data later.
+        user_id = session.get('user_id')
+        stats = {'total_hours': 0, 'streak': 0}
+        if user_id:
+            controller = StudyHourController()
+            stats = controller.get_widget_stats(user_id)
+            
         return render_template(
             'dashboard.html',
             exam_date='2026-07-01T09:00:00',
             exam_name='Final Exams',
+            study_stats=stats
         )
 
     def join_room(self):
