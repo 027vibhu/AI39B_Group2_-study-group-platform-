@@ -1,83 +1,82 @@
+from datetime import date
+
 from app.models.base_model import BaseModel
-from app.models.database import Database, ensure_database_exists
+
+
+def create_study_hours_table():
+    """Create the study_hours table if it does not exist."""
+    # Use the existing helpers from database.py to ensure DB exists and open a connection
+    from app.models.database import ensure_database_exists, get_database_connection
+
+    ensure_database_exists()
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = (
+                "CREATE TABLE IF NOT EXISTS study_hours ("
+                "id INT AUTO_INCREMENT PRIMARY KEY,"
+                "user_id INT NOT NULL,"
+                "session_date DATE NOT NULL,"
+                "duration_minutes INT NOT NULL,"
+                "notes TEXT NULL,"
+                "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+            )
+            cursor.execute(sql)
+            # Add helpful indexes if they don't exist (ignore failures)
+            try:
+                cursor.execute("ALTER TABLE study_hours ADD INDEX idx_study_hours_user_id (user_id)")
+            except Exception:
+                pass
+            try:
+                cursor.execute("ALTER TABLE study_hours ADD INDEX idx_study_hours_date (session_date)")
+            except Exception:
+                pass
+    finally:
+        connection.close()
 
 
 class StudyHour(BaseModel):
+    """Model for tracking study sessions.
+
+    This model uses raw SQL for all database interactions and provides a
+    helper to ensure its table exists before writes/reads.
+    """
+
     @property
     def table(self):
         return 'study_hours'
 
-    @staticmethod
-    def create_study_hours_table():
-        ensure_database_exists()
+    @classmethod
+    def ensure_table_exists(cls):
+        create_study_hours_table()
+
+    @classmethod
+    def record(cls, user_id: int, session_date: date, duration_minutes: int, notes: str = None):
+        """Insert a study session record and return the new row id."""
+        cls.ensure_table_exists()
+        from app.models.database import Database
+
         db = Database()
         try:
-            db.execute(
-                """
-                CREATE TABLE IF NOT EXISTS study_hours (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    user_id INT NOT NULL,
-                    study_date DATE NOT NULL,
-                    duration_minutes INT NOT NULL,
-                    subject VARCHAR(255) NULL,
-                    notes TEXT NULL,
-                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    INDEX idx_study_hours_user_id (user_id)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-                """
+            return db.execute(
+                "INSERT INTO study_hours (user_id, session_date, duration_minutes, notes) VALUES (%s, %s, %s, %s)",
+                (user_id, session_date, duration_minutes, notes),
             )
         finally:
             db.close()
 
-    def log_study_hours(self, user_id, study_date, duration_minutes, subject=None, notes=None):
-        return self.execute(
-            "INSERT INTO study_hours (user_id, study_date, duration_minutes, subject, notes) VALUES (%s, %s, %s, %s, %s)",
-            (user_id, study_date, duration_minutes, subject, notes),
-        )
+    @classmethod
+    def find_for_user(cls, user_id: int, limit: int = 50):
+        """Return recent study sessions for a user."""
+        cls.ensure_table_exists()
+        from app.models.database import Database
 
-    def get_study_hours_for_user(self, user_id):
-        return self.fetch_all(
-            "SELECT * FROM study_hours WHERE user_id = %s ORDER BY study_date DESC, created_at DESC",
-            (user_id,),
-        )
-
-    def get_total_minutes_for_user(self, user_id):
-        result = self.fetch_one(
-            "SELECT COALESCE(SUM(duration_minutes), 0) AS total_minutes FROM study_hours WHERE user_id = %s",
-            (user_id,),
-        )
-        return result['total_minutes'] if result else 0
-
-    def get_current_streak(self, user_id):
-        # This is a simplified streak calculation: counts consecutive days with at least 1 study session,
-        # looking back from today.
-        query = """
-            SELECT study_date
-            FROM study_hours
-            WHERE user_id = %s
-            GROUP BY study_date
-            ORDER BY study_date DESC
-        """
-        dates = self.fetch_all(query, (user_id,))
-        if not dates:
-            return 0
-        
-        streak = 0
-        from datetime import date, timedelta
-        
-        check_date = date.today()
-        # If they studied today, start counting, otherwise check yesterday
-        # This implementation counts consecutive days up to today.
-        
-        study_dates = {d['study_date'] for d in dates}
-        
-        current_streak = 0
-        d = date.today()
-        while d in study_dates or d == date.today(): # Allow streak if studied today or yesterday
-             if d in study_dates:
-                 current_streak += 1
-             elif d < date.today(): # If they didn't study yesterday, streak broken
-                 break
-             d -= timedelta(days=1)
-             
-        return current_streak
+        db = Database()
+        try:
+            return db.fetch_all(
+                "SELECT * FROM study_hours WHERE user_id = %s ORDER BY session_date DESC LIMIT %s",
+                (user_id, limit),
+            )
+        finally:
+            db.close()
