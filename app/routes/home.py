@@ -20,6 +20,7 @@ from app.models.shared_file import create_shared_file, get_shared_file_by_id, ge
 from app.controllers.moderation_controller import ModerationController
 from app.controllers.browse_rooms_controller import BrowseRoomsController
 from app.controllers.note_controller import NoteController
+from app.controllers.whiteboard_controller import WhiteboardController
 from app import socketio
 import random
 import os
@@ -53,6 +54,9 @@ class HomeRoutes:
         self.bp.route('/chat/<room_code>/shared-files', methods=['GET'])(self.list_shared_files)
         self.bp.route('/chat/<room_code>/shared-files', methods=['POST'])(self.upload_shared_file)
         self.bp.route('/chat/<room_code>/chat-image', methods=['POST'])(self.upload_chat_image)
+        self.bp.route('/chat/<room_code>/whiteboard', methods=['GET'])(self.whiteboard)
+        self.bp.route('/chat/<room_code>/whiteboard/save', methods=['POST'])(self.save_whiteboard)
+        self.bp.route('/chat/<room_code>/whiteboard/load', methods=['GET'])(self.load_whiteboard)
         self.bp.route('/files/<int:file_id>/download')(self.download_shared_file)
         self.bp.route('/files/<int:file_id>/view')(self.view_shared_file)
         self.bp.route('/message/<int:message_id>/vote', methods=['POST'])(self.vote_message)
@@ -181,6 +185,70 @@ class HomeRoutes:
             online_members=online_members,
             offline_members=offline_members,
         )
+
+    def whiteboard(self, room_code):
+        room = get_room_by_code(room_code)
+        if not room:
+            return "Room not found", 404
+
+        user_id = session.get('user_id')
+        if not self._authorize_room_access(room, user_id):
+            return "Access denied", 403
+
+        controller = WhiteboardController()
+        drawings = controller.get_room_whiteboards(room['id'])
+
+        return render_template(
+            'whiteboard.html',
+            room=room,
+            drawings=drawings,
+        )
+
+    def save_whiteboard(self, room_code):
+        room = get_room_by_code(room_code)
+        if not room:
+            return jsonify({'status': 'error', 'message': 'Room not found.'}), 404
+
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'status': 'error', 'message': 'Login required.'}), 401
+
+        if not self._authorize_room_access(room, user_id):
+            return jsonify({'status': 'error', 'message': 'Access denied.'}), 403
+
+        payload = request.get_json(silent=True) or request.form
+        title = (payload.get('title') or '').strip()
+        drawing_data = payload.get('drawing_data')
+
+        if not drawing_data:
+            return jsonify({'status': 'error', 'message': 'Drawing data is required.'}), 400
+
+        controller = WhiteboardController()
+        drawing_id = controller.save_whiteboard(room['id'], title, drawing_data)
+        return jsonify({'status': 'success', 'drawing_id': drawing_id}), 200
+
+    def load_whiteboard(self, room_code):
+        room = get_room_by_code(room_code)
+        if not room:
+            return jsonify({'status': 'error', 'message': 'Room not found.'}), 404
+
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'status': 'error', 'message': 'Login required.'}), 401
+
+        if not self._authorize_room_access(room, user_id):
+            return jsonify({'status': 'error', 'message': 'Access denied.'}), 403
+
+        drawing_id = request.args.get('drawing_id')
+        if not drawing_id:
+            return jsonify({'status': 'error', 'message': 'drawing_id is required.'}), 400
+
+        controller = WhiteboardController()
+        drawing = controller.get_whiteboard(drawing_id)
+        if not drawing:
+            return jsonify({'status': 'error', 'message': 'Drawing not found.'}), 404
+
+        return jsonify({'status': 'success', 'drawing': drawing}), 200
 
     def _get_shared_file_upload_dir(self):
         upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'shared_files')
