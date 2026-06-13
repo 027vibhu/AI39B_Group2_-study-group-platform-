@@ -455,3 +455,10 @@ class Database:
             room_presence_model.create_room_presence_table()
         except Exception:
             pass
+
+        try:
+            from app.models.study_streak import create_study_streaks_table
+
+            create_study_streaks_table()
+        except Exception:
+            pass
