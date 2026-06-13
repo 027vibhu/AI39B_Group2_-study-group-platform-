@@ -68,6 +68,7 @@ class HomeRoutes:
         self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
         self.bp.route('/notes/<int:note_id>/share', methods=['POST'])(self.share_note)
         self.bp.route('/notes/<int:note_id>/delete', methods=['POST'])(self.delete_note)
+        self.bp.route('/track-study-hours')(self.track_study_hours)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
 
         return self.bp
@@ -570,6 +571,9 @@ class HomeRoutes:
     def delete_note(self, note_id):
         controller = NoteController()
         return controller.delete_note(note_id)
+
+    def track_study_hours(self):
+        return render_template('track_study_hours.html')
 
     def create_room(self):
         if request.method == 'POST':
