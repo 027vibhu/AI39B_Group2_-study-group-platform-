@@ -16,6 +16,17 @@
       <a href="{{ url_for('home.study_hours_new') }}" class="save-btn">Log New Session</a>
     </div>
 
+    <div class="study-streak-summary">
+      <div class="streak-card">
+        <span class="streak-number">{{ streaks.current_streak }}</span>
+        <span class="streak-label">Current streak</span>
+      </div>
+      <div class="streak-card">
+        <span class="streak-number">{{ streaks.longest_streak }}</span>
+        <span class="streak-label">Longest streak</span>
+      </div>
+    </div>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}

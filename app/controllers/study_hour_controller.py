@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import request, flash
+from flask import request, flash, jsonify
 from app.controllers.base_controller import BaseController
 from app.models.study_hour import StudyHour
 
@@ -17,7 +17,8 @@ class StudyHourController(BaseController):
             return self.redirect('auth.login')
 
         sessions = self.model.find_for_user(user_id)
-        return self.render('study_hours/index.html', sessions=sessions)
+        streaks = self.model.get_study_streaks(user_id)
+        return self.render('study_hours/index.html', sessions=sessions, streaks=streaks)
 
     def new_session_form(self):
         user_id = self.get_current_user_id()
@@ -59,3 +60,15 @@ class StudyHourController(BaseController):
             flash('Failed to record study session.', 'error')
 
         return self.redirect('home.dashboard')
+
+    def get_streaks(self):
+        user_id = self.get_current_user_id()
+        if not user_id:
+            return jsonify({'error': 'Authentication required.'}), 401
+
+        streaks = self.model.get_study_streaks(user_id)
+        return jsonify({
+            'status': 'success',
+            'current_streak': streaks.get('current_streak', 0),
+            'longest_streak': streaks.get('longest_streak', 0),
+        })

@@ -80,3 +80,63 @@ class StudyHour(BaseModel):
             )
         finally:
             db.close()
+
+    @classmethod
+    def get_study_dates_for_user(cls, user_id: int, limit: int = 1000):
+        """Return distinct study dates for a user, ordered ascending."""
+        cls.ensure_table_exists()
+        from app.models.database import Database
+
+        db = Database()
+        try:
+            return db.fetch_all(
+                "SELECT DISTINCT session_date FROM study_hours WHERE user_id = %s ORDER BY session_date ASC LIMIT %s",
+                (user_id, limit),
+            )
+        finally:
+            db.close()
+
+    @classmethod
+    def get_study_streaks(cls, user_id: int):
+        """Calculate current and longest consecutive study day streaks."""
+        dates = cls.get_study_dates_for_user(user_id)
+        if not dates:
+            return {'current_streak': 0, 'longest_streak': 0}
+
+        consecutive = 0
+        longest = 0
+        last_date = None
+        for row in dates:
+            session_date = row['session_date']
+            if last_date is None:
+                consecutive = 1
+            else:
+                diff = (session_date - last_date).days
+                if diff == 1:
+                    consecutive += 1
+                elif diff == 0:
+                    continue
+                else:
+                    longest = max(longest, consecutive)
+                    consecutive = 1
+            last_date = session_date
+
+        longest = max(longest, consecutive)
+
+        # Compute current streak from most recent study dates
+        current_streak = 0
+        descending_dates = [row['session_date'] for row in dates][::-1]
+        if descending_dates:
+            current_streak = 1
+            previous = descending_dates[0]
+            for session_date in descending_dates[1:]:
+                diff = (previous - session_date).days
+                if diff == 1:
+                    current_streak += 1
+                    previous = session_date
+                elif diff == 0:
+                    continue
+                else:
+                    break
+
+        return {'current_streak': current_streak, 'longest_streak': longest}

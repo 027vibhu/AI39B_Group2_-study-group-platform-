@@ -71,6 +71,7 @@ class HomeRoutes:
         self.bp.route('/study-hours')(self.study_hours_index)
         self.bp.route('/study-hours/new')(self.study_hours_new)
         self.bp.route('/study-hours/create', methods=['POST'])(self.study_hours_create)
+        self.bp.route('/study-hours/streaks')(self.study_hours_streaks)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
 
         return self.bp
@@ -151,6 +152,10 @@ class HomeRoutes:
     def study_hours_create(self):
         controller = StudyHourController()
         return controller.create_session()
+
+    def study_hours_streaks(self):
+        controller = StudyHourController()
+        return controller.get_streaks()
 
     def _generate_unique_room_code(self):
         while True:
