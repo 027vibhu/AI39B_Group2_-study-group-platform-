@@ -1,0 +1,123 @@
+{% extends "base_dash.html" %}
+
+{% block title %}LOREVIA Whiteboard{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/whiteboard.css') }}">
+{% endblock %}
+
+{% block topbar_title %}
+<span class="topbar-room-meta">
+  <i class="fa-solid fa-chalkboard"></i>
+  Whiteboard
+  <span class="room-code-chip">#{{ room.code }}</span>
+</span>
+{% endblock %}
+
+{% block content %}
+<div class="whiteboard-page">
+  <section class="whiteboard-panel">
+    <div class="whiteboard-header">
+      <h2>{{ room.name if room.name else 'Room ' ~ room.code }}</h2>
+      {% if room.is_private %}<span class="room-lock"><i class="fa-solid fa-lock"></i> Private</span>{% endif %}
+    </div>
+
+    <div class="whiteboard-controls">
+      <button id="saveWhiteboardBtn" class="button">Save Drawing</button>
+      <select id="loadDrawingSelect">
+        <option value="">Load saved drawing</option>
+        {% for drawing in drawings %}
+        <option value="{{ drawing.id }}">{{ drawing.title or 'Drawing ' ~ drawing.id }}</option>
+        {% endfor %}
+      </select>
+      <button id="loadWhiteboardBtn" class="button">Load</button>
+    </div>
+
+    <div class="whiteboard-container">
+      <canvas id="whiteboardCanvas" width="1200" height="700"></canvas>
+    </div>
+
+    <div class="whiteboard-footer">
+      <input type="text" id="whiteboardTitle" placeholder="Enter drawing title">
+      <span class="hint">Use the canvas to draw your concept and save it for room members.</span>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const roomCode = "{{ room.code }}";
+const whiteboardCanvas = document.getElementById('whiteboardCanvas');
+const saveWhiteboardBtn = document.getElementById('saveWhiteboardBtn');
+const loadWhiteboardBtn = document.getElementById('loadWhiteboardBtn');
+const loadDrawingSelect = document.getElementById('loadDrawingSelect');
+const whiteboardTitle = document.getElementById('whiteboardTitle');
+
+if (whiteboardCanvas) {
+  const ctx = whiteboardCanvas.getContext('2d');
+  let drawing = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  function drawLine(x, y) {
+    if (!drawing) return;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#2c3e50';
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    lastX = x;
+    lastY = y;
+  }
+
+  whiteboardCanvas.addEventListener('mousedown', (event) => {
+    drawing = true;
+    lastX = event.offsetX;
+    lastY = event.offsetY;
+  });
+
+  whiteboardCanvas.addEventListener('mousemove', (event) => drawLine(event.offsetX, event.offsetY));
+  whiteboardCanvas.addEventListener('mouseup', () => drawing = false);
+  whiteboardCanvas.addEventListener('mouseout', () => drawing = false);
+
+  saveWhiteboardBtn.addEventListener('click', async () => {
+    const drawingData = whiteboardCanvas.toDataURL();
+    const title = whiteboardTitle.value;
+    const response = await fetch(`/chat/${roomCode}/whiteboard/save`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ title, drawing_data: drawingData })
+    });
+    const result = await response.json();
+    if (result.status === 'success') {
+      alert('Whiteboard saved.');
+      location.reload();
+    } else {
+      alert(result.message || 'Unable to save drawing.');
+    }
+  });
+
+  loadWhiteboardBtn.addEventListener('click', async () => {
+    const drawingId = loadDrawingSelect.value;
+    if (!drawingId) {
+      alert('Select a saved drawing.');
+      return;
+    }
+    const response = await fetch(`/chat/${roomCode}/whiteboard/load?drawing_id=${drawingId}`);
+    const result = await response.json();
+    if (result.status === 'success' && result.drawing) {
+      const image = new Image();
+      image.onload = () => ctx.drawImage(image, 0, 0, whiteboardCanvas.width, whiteboardCanvas.height);
+      image.src = result.drawing.drawing_data;
+      whiteboardTitle.value = result.drawing.title || '';
+    } else {
+      alert(result.message || 'Unable to load drawing.');
+    }
+  });
+}
+</script>
+{% endblock %}
