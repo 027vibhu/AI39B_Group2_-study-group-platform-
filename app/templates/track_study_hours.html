@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Track Study Hours</title>
+
+    <!-- Link to your CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/track_study_hours.css') }}">
+</head>
+<body class="track-hours-page">
+
+    <h1 class="page-title">Track Study Hours</h1>
+
+    <div class="study-card">
+        <!-- Left Panel -->
+        <div class="study-info-panel">
+            <div class="study-icon">
+                <i class="fas fa-book"></i> <!-- Example icon -->
+            </div>
+
+            <div class="study-stat-box">
+                <span>Total Hours</span>
+                <strong id="totalHours">0 hrs</strong>
+            </div>
+
+            <div class="study-stat-box">
+                <span>Today's Study</span>
+                <strong id="todayHours">0 hrs</strong>
+            </div>
+
+            <div class="study-stat-box">
+                <span>Weekly Goal</span>
+                <strong id="weeklyGoal">20 hrs</strong>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="study-form-panel">
+            <h2>Manage Study Hours</h2>
+
+            <form>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <input type="text" placeholder="Enter subject" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Hours Studied</label>
+                        <input type="number" id="hours" placeholder="e.g. 2" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Study Type</label>
+                        <select>
+                            <option>Self Study</option>
+                            <option>Group Study</option>
+                            <option>Lecture</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea placeholder="Write notes here..."></textarea>
+                </div>
+
+                <button class="save-btn" id="saveSession">Save Study Session</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Link to your JS -->
+    <script src="{{ url_for('static', filename='js/track_study_hours.js') }}"></script>
+    <!-- Font Awesome for icons (optional) -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</body>
+</html>
