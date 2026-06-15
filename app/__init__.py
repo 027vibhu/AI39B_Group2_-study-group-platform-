@@ -20,6 +20,7 @@ def create_app():
     from app.routes.join_leave_notification_routes import join_leave_notification_bp
     from app.routes.quotes import quote_bp
     from app.routes import admin as admin_bp
+    from app.routes.whiteboard_routes import whiteboard_bp
 
     app.register_blueprint(home_bp.bp)
     app.register_blueprint(auth_bp.bp)
@@ -29,6 +30,7 @@ def create_app():
     app.register_blueprint(join_leave_notification_bp)
     app.register_blueprint(quote_bp)
     app.register_blueprint(admin_bp.bp)
+    app.register_blueprint(whiteboard_bp)
 
     from app import sockets, models
     # Import the database module as a module object so tests can monkeypatch

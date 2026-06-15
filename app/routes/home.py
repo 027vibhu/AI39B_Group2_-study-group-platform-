@@ -70,6 +70,7 @@ class HomeRoutes:
         self.bp.route('/notes/<int:note_id>/share', methods=['POST'])(self.share_note)
         self.bp.route('/notes/<int:note_id>/delete', methods=['POST'])(self.delete_note)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
+        self.bp.route('/chat/<room_code>/upload', methods=['POST'])(self.upload_chat_image)
 
         return self.bp
 

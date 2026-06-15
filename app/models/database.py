@@ -450,6 +450,20 @@ class Database:
             pass
 
         try:
+            from app.models.whiteboard import create_whiteboard_table
+
+            create_whiteboard_table()
+        except Exception:
+            pass
+
+        try:
+            from app.models.pomodoro import create_pomodoro_table
+
+            create_pomodoro_table()
+        except Exception:
+            pass
+
+        try:
             from app.models.presence_model import room_presence_model
 
             room_presence_model.create_room_presence_table()

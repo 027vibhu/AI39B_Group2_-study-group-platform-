@@ -1,3 +1,4 @@
+import json
 from flask import session, request
 from flask_socketio import join_room, emit
 from app import socketio
@@ -7,6 +8,7 @@ from app.models.room import get_room_by_code, get_room_by_id, is_user_banned_fro
 from app.models.message import get_message_by_id
 from app.models.presence_model import set_user_online, set_user_offline, get_online_users, get_offline_users
 from app.models.join_leave_notification import add_join_leave_notification
+from app.models.whiteboard import get_whiteboard_state, save_whiteboard_state, clear_whiteboard_state
 
 # Track joined sockets so disconnect can update presence
 _active_presence = {}
@@ -290,3 +292,105 @@ def handle_send_file(data):
         'download_url': f'/files/{file_id}/download',
         'view_url': f'/files/{file_id}/view'
     }, room=room_code)
+
+
+@socketio.on('whiteboard_action')
+def handle_whiteboard_action(data):
+    room_code = data.get('room')
+    username = data.get('username') or ''
+    action = data.get('action')
+    payload = data.get('payload')
+    user_id = session.get('user_id')
+
+    if not user_id or not room_code or action is None:
+        return
+
+    room = get_room_by_code(room_code)
+    if not room:
+        return
+
+    if is_user_banned_from_room(username, room_code, room.get('name')):
+        return
+
+    emit(
+        'whiteboard_action',
+        {
+            'room_code': room_code,
+            'username': username,
+            'action': action,
+            'payload': payload,
+        },
+        room=room_code,
+        include_self=False,
+    )
+
+
+@socketio.on('whiteboard_request_state')
+def handle_whiteboard_request_state(data):
+    room_code = data.get('room')
+    user_id = session.get('user_id')
+
+    if not user_id or not room_code:
+        return
+
+    room = get_room_by_code(room_code)
+    if not room:
+        return
+
+    stored_state = get_whiteboard_state(room['id'])
+    if not stored_state:
+        emit('whiteboard_state', {'room_code': room_code, 'state': None}, room=request.sid)
+        return
+
+    try:
+        state = json.loads(stored_state.get('state') or 'null')
+    except Exception:
+        state = None
+
+    emit('whiteboard_state', {'room_code': room_code, 'state': state}, room=request.sid)
+
+
+@socketio.on('whiteboard_save_state')
+def handle_whiteboard_save_state(data):
+    room_code = data.get('room')
+    state_payload = data.get('state')
+    user_id = session.get('user_id')
+    username = data.get('username') or ''
+
+    if not user_id or not room_code or state_payload is None:
+        return
+
+    room = get_room_by_code(room_code)
+    if not room:
+        return
+
+    if is_user_banned_from_room(username, room_code, room.get('name')):
+        return
+
+    try:
+        state_json = json.dumps(state_payload, ensure_ascii=False)
+    except Exception:
+        return
+
+    save_whiteboard_state(room['id'], state_json, user_id, username)
+    emit('whiteboard_state', {'room_code': room_code, 'state': state_payload}, room=room_code)
+
+
+@socketio.on('whiteboard_clear')
+def handle_whiteboard_clear(data):
+    room_code = data.get('room')
+    username = data.get('username') or ''
+    user_id = session.get('user_id')
+
+    if not user_id or not room_code:
+        return
+
+    room = get_room_by_code(room_code)
+    if not room:
+        return
+
+    if is_user_banned_from_room(username, room_code, room.get('name')):
+        return
+
+    clear_whiteboard_state(room['id'])
+    emit('whiteboard_cleared', {'room_code': room_code}, room=room_code)
