@@ -50,7 +50,7 @@
         <button id="filesToggleBtn" class="action-btn" type="button" title="Files" aria-pressed="false">
           <i class="fa-solid fa-folder"></i>
         </button>
-        <a href="{{ url_for('home.whiteboard', room_code=room_code) }}" class="action-btn" title="Whiteboard">
+        <a href="{{ url_for('home.chat_whiteboard', room_code=room_code) }}" class="action-btn" title="Whiteboard">
           <i class="fa-solid fa-chalkboard"></i>
         </a>
         <a href="{{ url_for('home.moderation', room_code=room_code) }}" class="moderation-btn" title="Moderation Panel">
@@ -953,6 +953,19 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         setOpen(membersPanel, membersBtn, false);
+        setOpen(filesPanel, filesBtn, false);
+      }
+    });
+
+    // Click outside an open drawer closes it. Ignore clicks inside the drawer
+    // itself or on its toggle button (the button handler already toggles it).
+    document.addEventListener('click', (e) => {
+      if (membersPanel && membersPanel.classList.contains('open') &&
+          !membersPanel.contains(e.target) && !(membersBtn && membersBtn.contains(e.target))) {
+        setOpen(membersPanel, membersBtn, false);
+      }
+      if (filesPanel && filesPanel.classList.contains('open') &&
+          !filesPanel.contains(e.target) && !(filesBtn && filesBtn.contains(e.target))) {
         setOpen(filesPanel, filesBtn, false);
       }
     });

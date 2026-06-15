@@ -1,123 +1,161 @@
 {% extends "base_dash.html" %}
 
-{% block title %}LOREVIA Whiteboard{% endblock %}
+{% block title %}{{ board.title if board else 'Whiteboard' }}{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/whiteboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/whiteboard.css') }}">
 {% endblock %}
 
 {% block topbar_title %}
-<span class="topbar-room-meta">
-  <i class="fa-solid fa-chalkboard"></i>
-  Whiteboard
-  <span class="room-code-chip">#{{ room.code }}</span>
-</span>
+  <div class="whiteboard-header">
+    <div class="whiteboard-info">
+      <span class="whiteboard-title">
+        {{ board.title if board and board.title else 'Collaborative Whiteboard' }}
+        <span class="room-code-chip">#{{ code }}</span>
+      </span>
+      <span class="whiteboard-subtitle">Draw, annotate, and share ideas in real time with your study group.</span>
+    </div>
+    <div class="whiteboard-actions">
+      <button class="wb-btn wb-btn-secondary" type="button" id="clearButton">
+        <i class="fa-solid fa-trash-can"></i> Clear
+      </button>
+      <button class="wb-btn wb-btn-secondary" type="button" id="downloadButton">
+        <i class="fa-solid fa-download"></i> Download
+      </button>
+      <button class="wb-btn wb-btn-primary" type="button" id="inviteButton">
+        <i class="fa-solid fa-user-plus"></i> Invite
+      </button>
+    </div>
+  </div>
 {% endblock %}
 
 {% block content %}
-<div class="whiteboard-page">
-  <section class="whiteboard-panel">
-    <div class="whiteboard-header">
-      <h2>{{ room.name if room.name else 'Room ' ~ room.code }}</h2>
-      {% if room.is_private %}<span class="room-lock"><i class="fa-solid fa-lock"></i> Private</span>{% endif %}
-    </div>
+  <section class="whiteboard-page">
+    <div class="whiteboard-layout">
+      <main class="whiteboard-stage">
+        <!-- Floating tool dock at the top of the drawing area -->
+        <div class="wb-dock" role="toolbar" aria-label="Drawing tools">
+          <div class="wb-tool-group" role="group" aria-label="Tools">
+            <button class="wb-tool active" type="button" data-tool="Pen" aria-pressed="true" title="Pen">
+              <i class="fa-solid fa-pen"></i><span class="wb-tool-tip">Pen</span>
+            </button>
+            <button class="wb-tool" type="button" data-tool="Highlighter" aria-pressed="false" title="Highlighter">
+              <i class="fa-solid fa-highlighter"></i><span class="wb-tool-tip">Highlighter</span>
+            </button>
+            <button class="wb-tool" type="button" data-tool="Eraser" aria-pressed="false" title="Eraser">
+              <i class="fa-solid fa-eraser"></i><span class="wb-tool-tip">Eraser</span>
+            </button>
+            <button class="wb-tool" type="button" data-tool="Text" aria-pressed="false" title="Text">
+              <i class="fa-solid fa-font"></i><span class="wb-tool-tip">Text</span>
+            </button>
 
-    <div class="whiteboard-controls">
-      <button id="saveWhiteboardBtn" class="button">Save Drawing</button>
-      <select id="loadDrawingSelect">
-        <option value="">Load saved drawing</option>
-        {% for drawing in drawings %}
-        <option value="{{ drawing.id }}">{{ drawing.title or 'Drawing ' ~ drawing.id }}</option>
-        {% endfor %}
-      </select>
-      <button id="loadWhiteboardBtn" class="button">Load</button>
-    </div>
+            <div class="wb-shapes-wrap">
+              <button class="wb-tool" type="button" data-tool="Shapes" id="shapesToolBtn" aria-pressed="false" title="Shapes">
+                <i class="fa-solid fa-shapes"></i><span class="wb-tool-tip">Shapes</span>
+              </button>
+              <div class="wb-shapes-flyout" id="shapesFlyout" role="menu" aria-label="Shape type">
+                <button class="wb-shape-opt active" type="button" data-shape="rectangle" title="Rectangle"><i class="fa-regular fa-square"></i></button>
+                <button class="wb-shape-opt" type="button" data-shape="ellipse" title="Ellipse"><i class="fa-regular fa-circle"></i></button>
+                <button class="wb-shape-opt" type="button" data-shape="line" title="Line"><i class="fa-solid fa-minus"></i></button>
+                <button class="wb-shape-opt" type="button" data-shape="arrow" title="Arrow"><i class="fa-solid fa-arrow-right-long"></i></button>
+              </div>
+            </div>
+          </div>
 
-    <div class="whiteboard-container">
-      <canvas id="whiteboardCanvas" width="1200" height="700"></canvas>
-    </div>
+          <div class="wb-dock-divider"></div>
 
-    <div class="whiteboard-footer">
-      <input type="text" id="whiteboardTitle" placeholder="Enter drawing title">
-      <span class="hint">Use the canvas to draw your concept and save it for room members.</span>
+          <div class="wb-color-group" role="group" aria-label="Color">
+            <button class="color-swatch active" type="button" data-color="#111827" style="background:#111827" title="Ink"></button>
+            <button class="color-swatch" type="button" data-color="#2563eb" style="background:#2563eb" title="Blue"></button>
+            <button class="color-swatch" type="button" data-color="#16a34a" style="background:#16a34a" title="Green"></button>
+            <button class="color-swatch" type="button" data-color="#dc2626" style="background:#dc2626" title="Red"></button>
+            <button class="color-swatch" type="button" data-color="#f59e0b" style="background:#f59e0b" title="Amber"></button>
+            <label class="wb-color-custom" title="Custom color">
+              <i class="fa-solid fa-eye-dropper"></i>
+              <input type="color" id="customColor" value="#7c3aed" aria-label="Pick a custom color">
+            </label>
+          </div>
+
+          <div class="wb-dock-divider"></div>
+
+          <div class="wb-stroke-group" role="group" aria-label="Stroke width">
+            <i class="fa-solid fa-pencil wb-stroke-icon" aria-hidden="true"></i>
+            <input type="range" id="strokeRange" class="wb-stroke-range" min="1" max="24" value="3" aria-label="Stroke width">
+            <span class="wb-stroke-value" id="strokeValue">3 px</span>
+          </div>
+        </div>
+
+        <!-- Drawing surface -->
+        <div class="whiteboard-canvas" id="canvasWrapper" aria-label="Shared whiteboard drawing surface">
+          <canvas id="whiteboardCanvas" role="img" aria-label="Canvas drawing area"></canvas>
+          <div class="whiteboard-placeholder">Pick a tool and start drawing</div>
+        </div>
+
+        <!-- Status strip -->
+        <div class="whiteboard-statusbar">
+          <span class="toolbar-status" id="toolbarStatus">
+            <i class="fa-solid fa-pen"></i> Pen • #111827 • 3px
+          </span>
+          <span class="status-hint">
+            <i class="fa-solid fa-circle-info"></i>
+            <span id="statusHint">Drag on the canvas to draw</span>
+          </span>
+        </div>
+      </main>
+
+      <!-- People + tips -->
+      <aside class="whiteboard-side">
+        <h4>
+          <i class="fa-solid fa-users"></i> Participants
+          <span class="participant-count-pill" id="participantCount">1</span>
+        </h4>
+        <ul class="collaborators" id="participantList">
+          <!-- Populated live via Socket.IO -->
+        </ul>
+
+        <div class="wb-side-tips">
+          <div class="wb-tip">
+            <i class="fa-solid fa-share-nodes"></i>
+            <span>Share code <strong>#{{ code }}</strong> so others can join this board.</span>
+          </div>
+          <div class="wb-tip">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Everyone's strokes sync in real time.</span>
+          </div>
+          <div class="wb-tip">
+            <i class="fa-solid fa-keyboard"></i>
+            <span>Press <strong>Esc</strong> to cancel a text box or close dialogs.</span>
+          </div>
+        </div>
+      </aside>
     </div>
   </section>
-</div>
+
+  <div class="modal-overlay" id="inviteModal" aria-hidden="true">
+    <div class="invite-modal" role="dialog" aria-modal="true" aria-labelledby="inviteModalTitle">
+      <h3 class="invite-modal-title" id="inviteModalTitle">Invite collaborators</h3>
+      <p class="invite-modal-copy">Share this board link or code <strong>#{{ code }}</strong> with your study group.</p>
+      <div class="invite-link-group">
+        <input id="inviteLinkInput" type="text" readonly value="{{ request.url }}">
+        <button type="button" class="wb-btn wb-btn-secondary" id="copyInviteLink">
+          <i class="fa-solid fa-copy"></i> Copy
+        </button>
+      </div>
+      <div class="invite-modal-actions">
+        <button type="button" class="wb-btn wb-btn-secondary" id="closeInviteModal">Close</button>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-const roomCode = "{{ room.code }}";
-const whiteboardCanvas = document.getElementById('whiteboardCanvas');
-const saveWhiteboardBtn = document.getElementById('saveWhiteboardBtn');
-const loadWhiteboardBtn = document.getElementById('loadWhiteboardBtn');
-const loadDrawingSelect = document.getElementById('loadDrawingSelect');
-const whiteboardTitle = document.getElementById('whiteboardTitle');
-
-if (whiteboardCanvas) {
-  const ctx = whiteboardCanvas.getContext('2d');
-  let drawing = false;
-  let lastX = 0;
-  let lastY = 0;
-
-  function drawLine(x, y) {
-    if (!drawing) return;
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#2c3e50';
-    ctx.beginPath();
-    ctx.moveTo(lastX, lastY);
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    lastX = x;
-    lastY = y;
-  }
-
-  whiteboardCanvas.addEventListener('mousedown', (event) => {
-    drawing = true;
-    lastX = event.offsetX;
-    lastY = event.offsetY;
-  });
-
-  whiteboardCanvas.addEventListener('mousemove', (event) => drawLine(event.offsetX, event.offsetY));
-  whiteboardCanvas.addEventListener('mouseup', () => drawing = false);
-  whiteboardCanvas.addEventListener('mouseout', () => drawing = false);
-
-  saveWhiteboardBtn.addEventListener('click', async () => {
-    const drawingData = whiteboardCanvas.toDataURL();
-    const title = whiteboardTitle.value;
-    const response = await fetch(`/chat/${roomCode}/whiteboard/save`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ title, drawing_data: drawingData })
-    });
-    const result = await response.json();
-    if (result.status === 'success') {
-      alert('Whiteboard saved.');
-      location.reload();
-    } else {
-      alert(result.message || 'Unable to save drawing.');
-    }
-  });
-
-  loadWhiteboardBtn.addEventListener('click', async () => {
-    const drawingId = loadDrawingSelect.value;
-    if (!drawingId) {
-      alert('Select a saved drawing.');
-      return;
-    }
-    const response = await fetch(`/chat/${roomCode}/whiteboard/load?drawing_id=${drawingId}`);
-    const result = await response.json();
-    if (result.status === 'success' && result.drawing) {
-      const image = new Image();
-      image.onload = () => ctx.drawImage(image, 0, 0, whiteboardCanvas.width, whiteboardCanvas.height);
-      image.src = result.drawing.drawing_data;
-      whiteboardTitle.value = result.drawing.title || '';
-    } else {
-      alert(result.message || 'Unable to load drawing.');
-    }
-  });
-}
-</script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    window.WHITEBOARD = {
+      code: "{{ code }}",
+      username: "{{ current_user.username if current_user else '' }}",
+      userId: "{{ current_user.id if current_user else '' }}"
+    };
+  </script>
+  <script src="{{ url_for('static', filename='js/whiteboard.js') }}"></script>
 {% endblock %}

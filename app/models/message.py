@@ -42,6 +42,15 @@ class MessageModel(BaseModel):
                 row['time_label'] = ''
         return rows
 
+    def get_message_by_id(self, message_id):
+        return self.fetch_one(
+            "SELECT id, room_id, username, content, timestamp FROM message WHERE id = %s LIMIT 1",
+            (message_id,),
+        )
+
+    def delete_message(self, message_id):
+        return self.execute("DELETE FROM message WHERE id = %s", (message_id,))
+
 
 # module-level compatibility API
 _message_model = MessageModel()
@@ -57,6 +66,14 @@ def create_message(room_id, username, content):
 
 def get_messages_for_room(room_id):
     return _message_model.get_messages_for_room(room_id)
+
+
+def get_message_by_id(message_id):
+    return _message_model.get_message_by_id(message_id)
+
+
+def delete_message(message_id):
+    return _message_model.delete_message(message_id)
 
 
 def get_message_by_id(message_id):
