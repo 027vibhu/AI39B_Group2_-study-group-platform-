@@ -7,6 +7,7 @@
 
 body{
   background:#f6f4ef;
+  height:100vh;
   min-height:100vh;
   display:flex;
   overflow:hidden;
@@ -647,7 +648,7 @@ body{
   box-shadow:0 18px 45px rgba(24,32,56,0.12);
   padding:8px;
   display:none;
-  z-index:10;
+  z-index:1300;
 }
 
 .profile-dropdown[aria-hidden="false"]{

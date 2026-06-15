@@ -117,6 +117,14 @@ class RoomModel(BaseModel):
             "SELECT id, code, name, is_private, created_at FROM room WHERE is_private = 0 ORDER BY created_at DESC"
         )
 
+    def get_all_rooms(self):
+        return self.fetch_all(
+            "SELECT r.id, r.owner_id, r.code, r.name, r.is_private, r.subject_tags, r.created_at, "
+            "u.username AS owner_username "
+            "FROM room r LEFT JOIN users u ON u.id = r.owner_id "
+            "ORDER BY r.created_at DESC"
+        )
+
     def delete_room_by_id(self, room_id):
         self.execute("DELETE FROM message WHERE room_id = %s", (room_id,))
         self.execute("DELETE FROM user_room WHERE room_id = %s", (room_id,))
@@ -208,6 +216,10 @@ def get_owned_rooms_for_user(user_id, limit=8):
 
 def get_all_public_rooms():
     return _room_model.get_all_public_rooms()
+
+
+def get_all_rooms():
+    return _room_model.get_all_rooms()
 
 
 def delete_room_by_id(room_id):

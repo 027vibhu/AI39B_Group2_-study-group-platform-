@@ -6,56 +6,54 @@
 {% endblock %}
 {% block topbar_title %}{% endblock %}
 
-{% block nav %}
-  <a href="{{ url_for('home.index') }}" class="nav-item" title="Dashboard">
-    <i class="fa-solid fa-house"></i>
-    <span class="nav-label">Dashboard</span>
-  </a>
-  <a href="{{ url_for('home.create_room') }}" class="nav-item" title="Create Room">
-    <i class="fa-solid fa-plus"></i>
-    <span class="nav-label">Create Room</span>
-  </a>
-  <a href="{{ url_for('home.join_room') }}" class="nav-item" title="Join Room">
-    <i class="fa-solid fa-comments"></i>
-    <span class="nav-label">Join Room</span>
-  </a>
-  <a href="{{ url_for('home.browse_rooms') }}" class="nav-item active" title="Browse Rooms">
-    <i class="fa-solid fa-compass"></i>
-    <span class="nav-label">Browse Rooms</span>
-  </a>
-{% endblock %}
-
 {% block content %}
-<div class="blur1"></div>
-<div class="blur2"></div>
+<div class="workspace">
 
-<div class="container">
-
+    <!-- Left -->
     <div class="left">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+
         <div class="left-content">
-            <h2>Discover Study Rooms</h2>
+            <h1>Browse<br>Rooms</h1>
             <p>
                 Join collaborative learning spaces where students
                 discuss problems, solve assignments together,
                 share answers and prepare for exams in real-time.
             </p>
 
-            <div class="stats"></div>
-
+            <!-- Glass stat card -->
+            <div class="preview-card">
+                <div class="preview-top">
+                    <span class="preview-avatar"><i class="fa-solid fa-compass"></i></span>
+                    <div class="preview-meta">
+                        <span class="preview-name">Public rooms</span>
+                        <span class="preview-code">open to everyone</span>
+                    </div>
+                    <span class="preview-status"><i class="fa-solid fa-door-open"></i> {{ rooms|length }} live</span>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Right -->
     <div class="right">
 
-        <div class="right-header">
-            <h2>Available Rooms</h2>
-            <input type="text" class="search" placeholder="Search rooms..." aria-label="Search rooms">
+        <div class="right-header f-1">
+            <label class="label"><i class="fa-solid fa-compass"></i> Available rooms</label>
+            <div class="search-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" class="search" placeholder="Search rooms..." aria-label="Search rooms">
+            </div>
         </div>
 
         <div class="rooms">
             {% if rooms %}
                 {% for room in rooms %}
-                    <div class="room">
+                    <div class="room" style="animation-delay: {{ 100 + loop.index0 * 60 }}ms">
                         <div class="room-left">
                             <div class="icon">{{ room.name[:1]|upper }}</div>
                             <div class="room-info">
@@ -73,17 +71,24 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <a href="{{ url_for('home.chat', room_code=room.code) }}" class="join-btn" aria-label="Join Room">Join Room</a>
+                        <a href="{{ url_for('home.chat', room_code=room.code) }}" class="join-btn" aria-label="Join Room">
+                            <span>Join</span> <i class="fa-solid fa-arrow-right"></i>
+                        </a>
                     </div>
                 {% endfor %}
             {% else %}
-                <div class="room empty-room">
-                    <div class="room-info">
-                        <h3>No public rooms available</h3>
-                        <p>Try creating a room or check back later.</p>
-                    </div>
+                <div class="empty-room f-2">
+                    <i class="fa-regular fa-folder-open"></i>
+                    <h3>No public rooms available</h3>
+                    <p>Try creating a room or check back later.</p>
                 </div>
             {% endif %}
+
+            <div class="empty-room no-results" hidden>
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <h3>No rooms match your search</h3>
+                <p>Try a different name or room code.</p>
+            </div>
         </div>
 
     </div>
@@ -92,43 +97,36 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const search = document.querySelector('.search');
-  const rooms = Array.from(document.querySelectorAll('.room'));
+  const rooms = Array.from(document.querySelectorAll('.workspace .rooms .room'));
+  const noResults = document.querySelector('.no-results');
 
   if (search) {
     search.addEventListener('input', function (e) {
       const q = e.target.value.trim().toLowerCase();
+      let visible = 0;
+      let revealed = 0;
       rooms.forEach(room => {
         const title = room.querySelector('.room-info h3')?.textContent.trim().toLowerCase() || '';
         const id = room.querySelector('.room-info span')?.textContent.trim().toLowerCase() || '';
-        if (title.includes(q) || id.includes(q)) {
-          room.style.display = '';
-        } else {
-          room.style.display = 'none';
+        const tags = Array.from(room.querySelectorAll('.room-tag')).map(t => t.textContent.toLowerCase()).join(' ');
+        const match = title.includes(q) || id.includes(q) || tags.includes(q);
+        const wasHidden = room.style.display === 'none';
+        room.style.display = match ? '' : 'none';
+        if (match) {
+          if (wasHidden) {
+            // Replay the entrance animation for rooms coming back into the list
+            room.classList.remove('filter-in');
+            void room.offsetWidth;
+            room.style.animationDelay = (revealed * 40) + 'ms';
+            room.classList.add('filter-in');
+            revealed++;
+          }
+          visible++;
         }
       });
+      if (noResults) noResults.hidden = visible > 0 || rooms.length === 0;
     });
   }
-
-  document.addEventListener('click', function (e) {
-    const btn = e.target.closest('.join-btn');
-    if (!btn) return;
-    const room = btn.closest('.room');
-    const title = room?.querySelector('.room-info h3')?.textContent.trim() || 'Room';
-    const code = room?.querySelector('.room-info span')?.textContent.trim() || '';
-    console.log('Join clicked:', title, code);
-    const notice = document.createElement('div');
-    notice.textContent = `Joining ${title} ${code}`;
-    notice.style.position = 'fixed';
-    notice.style.right = '20px';
-    notice.style.bottom = '20px';
-    notice.style.background = 'rgba(0,0,0,0.8)';
-    notice.style.color = 'white';
-    notice.style.padding = '10px 14px';
-    notice.style.borderRadius = '8px';
-    notice.style.zIndex = 9999;
-    document.body.appendChild(notice);
-    setTimeout(() => notice.remove(), 1800);
-  });
 });
 </script>
 {% endblock %}

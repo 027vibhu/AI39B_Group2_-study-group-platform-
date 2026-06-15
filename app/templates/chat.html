@@ -953,6 +953,19 @@
         setOpen(filesPanel, filesBtn, false);
       }
     });
+
+    // Click outside an open drawer closes it. Ignore clicks inside the drawer
+    // itself or on its toggle button (the button handler already toggles it).
+    document.addEventListener('click', (e) => {
+      if (membersPanel && membersPanel.classList.contains('open') &&
+          !membersPanel.contains(e.target) && !(membersBtn && membersBtn.contains(e.target))) {
+        setOpen(membersPanel, membersBtn, false);
+      }
+      if (filesPanel && filesPanel.classList.contains('open') &&
+          !filesPanel.contains(e.target) && !(filesBtn && filesBtn.contains(e.target))) {
+        setOpen(filesPanel, filesBtn, false);
+      }
+    });
   })();
 </script>
 

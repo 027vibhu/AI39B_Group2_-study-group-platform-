@@ -20,9 +20,9 @@
     </div>
 
     <ul class="nav-links">
-      <li><a href="{{ url_for('home.index') }}">Home</a></li>
-      <li><a href="{{ url_for('home.index') }}">Features</a></li>
-      <li><a href="#">About</a></li>
+      <li><a class="{{ 'active' if request.endpoint == 'home.index' }}" href="{{ url_for('home.index') }}">Home</a></li>
+      <li><a class="{{ 'active' if request.endpoint == 'home.features' }}" href="{{ url_for('home.features') }}">Features</a></li>
+      <li><a class="{{ 'active' if request.endpoint == 'home.about' }}" href="{{ url_for('home.about') }}">About</a></li>
     </ul>
 
     <a class="nav-btn" href="{{ url_for('auth.login') }}">Login</a>

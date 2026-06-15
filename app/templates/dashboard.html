@@ -10,32 +10,43 @@
 
 {% block content %}
 <section class="dashboard">
-  <div class="welcome-card">
-    <div class="welcome-text">
-      <h1 class="welcome-hi">Hi{% if current_user %}, {{ current_user.first_name or current_user.username }}{% endif %}!</h1>
-      <p class="welcome-sub">What are we doing today?</p>
+  <div class="welcome-row">
+    <div class="welcome-card">
+      <div class="welcome-text">
+        <h1 class="welcome-hi">Hi{% if current_user %}, {{ current_user.first_name or current_user.username }}{% endif %}!</h1>
+        <p class="welcome-sub">What are we doing today?</p>
 
-      <div class="welcome-links">
-        <a class="welcome-link" href="{{ url_for('home.browse_rooms') }}">
-          <i class="fa-solid fa-compass"></i>
-          <span>Browse Rooms</span>
-        </a>
-        <a class="welcome-link" href="{{ url_for('home.notes') }}">
-          <i class="fa-solid fa-file-pdf"></i>
-          <span>My Notes</span>
-        </a>
-        <a class="welcome-link" href="{{ url_for('home.create_room') }}">
-          <i class="fa-solid fa-plus"></i>
-          <span>Create Room</span>
-        </a>
-        <a class="welcome-link" href="{{ url_for('home.join_room') }}">
-          <i class="fa-solid fa-comments"></i>
-          <span>Join Room</span>
-        </a>
+        <div class="welcome-links">
+          <a class="welcome-link" href="{{ url_for('home.browse_rooms') }}">
+            <i class="fa-solid fa-compass"></i>
+            <span>Browse Rooms</span>
+          </a>
+          <a class="welcome-link" href="{{ url_for('home.notes') }}">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>My Notes</span>
+          </a>
+          <a class="welcome-link" href="{{ url_for('home.create_room') }}">
+            <i class="fa-solid fa-plus"></i>
+            <span>Create Room</span>
+          </a>
+          <a class="welcome-link" href="{{ url_for('home.join_room') }}">
+            <i class="fa-solid fa-comments"></i>
+            <span>Join Room</span>
+          </a>
+        </div>
       </div>
+
+      <img class="welcome-mascot" src="{{ url_for('static', filename='images/bear_icon.jpg') }}" alt="" aria-hidden="true">
     </div>
 
-    <img class="welcome-mascot" src="{{ url_for('static', filename='images/bear_icon.jpg') }}" alt="" aria-hidden="true">
+    <article class="progress-card" id="progressCard">
+      <div class="progress-card-top">
+        <span class="progress-badge"><i class="fa-solid fa-chart-line"></i> Weekly Progress</span>
+      </div>
+      <div class="progress-chart-wrap">
+        <svg class="progress-chart" id="progressChart" viewBox="0 0 320 160" role="img" aria-label="Line graph of study hours per day this week"></svg>
+      </div>
+    </article>
   </div>
 
   <div class="dash-grid">
@@ -62,10 +73,23 @@
       <div class="exam-date-line"><i class="fa-regular fa-calendar"></i> <span id="examDateText"></span></div>
     </article>
 
-    <article class="dash-placeholder">
-      <i class="fa-solid fa-list-check dash-placeholder-icon"></i>
-      <span class="dash-placeholder-title">Study Tasks</span>
-      <span class="dash-placeholder-tag">Coming soon</span>
+    <article class="study-card" id="studyCard" role="button" tabindex="0" aria-label="View and log study hours">
+      <div class="study-card-top">
+        <span class="study-badge"><i class="fa-solid fa-stopwatch"></i> Study Hours</span>
+        <span class="study-title">Time Tracked</span>
+      </div>
+
+      <div class="study-main">
+        <div class="study-stat">
+          <strong class="study-stat-num">{{ study_stats.weekly_hours if study_stats else 0 }}</strong>
+          <span class="study-stat-lbl">hours this week</span>
+        </div>
+      </div>
+
+      <div class="study-footer">
+        <span>Log & review sessions</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </div>
     </article>
 
     <article class="streak-card" id="streakCard" role="button" tabindex="0" aria-label="View study streaks details">
@@ -166,46 +190,226 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
 
-    <!-- Interactive log session -->
-    <div class="streak-log-section">
-      <span class="streak-section-title">Log Study Activity</span>
-      <form id="streakLogForm" class="streak-log-form">
-        <div class="streak-log-field">
-          <span>Subject</span>
-          <select id="streakSubject" name="subject" required>
-            <option value="Mathematics">Mathematics</option>
-            <option value="Science">Science</option>
-            <option value="Computer Science">Computer Science</option>
-            <option value="Language / Lit">Language / Lit</option>
-            <option value="History / Social">History / Social</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div class="streak-log-field">
-          <span>Duration (minutes)</span>
-          <input type="number" id="streakDuration" name="duration" min="5" max="480" placeholder="e.g. 45" required>
-        </div>
-        <button type="submit" class="streak-log-submit" id="streakLogSubmitBtn">
-          <i class="fa-solid fa-circle-check"></i>
-          <span>Log Session</span>
+<!-- Study Hours Modal -->
+<div class="study-modal-overlay" id="studyModal" aria-hidden="true">
+  <div class="study-modal" role="dialog" aria-modal="true" aria-labelledby="studyModalTitle">
+    <button type="button" class="study-modal-close" id="studyModalCloseBtn" aria-label="Close study hours">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <div class="study-modal-header">
+      <i class="fa-solid fa-stopwatch"></i>
+      <div>
+        <h3 class="study-modal-title" id="studyModalTitle">Study Hours</h3>
+        <p class="study-modal-subtitle">Log your study sessions and review your history</p>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="study-stats-row">
+      <div class="study-stat-card">
+        <strong class="study-stat-val">{{ study_stats.weekly_hours if study_stats else 0 }}</strong>
+        <span class="study-stat-lbl">This Week (hrs)</span>
+      </div>
+      <div class="study-stat-card">
+        <strong class="study-stat-val">{{ study_stats.total_hours if study_stats else 0 }}</strong>
+        <span class="study-stat-lbl">Total Hours</span>
+      </div>
+      <div class="study-stat-card">
+        <strong class="study-stat-val">{{ study_stats.recent_sessions|length if study_stats and study_stats.recent_sessions else 0 }}</strong>
+        <span class="study-stat-lbl">Recent Logs</span>
+      </div>
+    </div>
+
+    <!-- Log session form -->
+    <div class="study-log-section">
+      <div class="study-log-head">
+        <span class="study-section-title">Log a Session</span>
+        <span class="study-log-today"><i class="fa-regular fa-calendar"></i> <span id="studyTodayText">Today</span></span>
+      </div>
+      <form action="{{ url_for('home.study_hours_create') }}" method="POST" class="study-log-form">
+        <input type="number" name="duration_minutes" min="1" placeholder="Minutes studied" required class="study-log-input">
+        <input type="text" name="notes" placeholder="What did you study? (optional)" class="study-log-input study-log-input-notes">
+        <button type="submit" class="study-log-submit">
+          <i class="fa-solid fa-circle-plus"></i>
+          <span>Save</span>
         </button>
       </form>
     </div>
 
-    <!-- Developer/Mock panel -->
-    <div class="streak-dev-panel">
-      <span class="streak-dev-title">Developer Controls</span>
-      <div class="streak-dev-buttons">
-        <button type="button" class="streak-btn-sm streak-btn-sm-ghost" id="streakDevGenMock">Mock 12-day history</button>
-        <button type="button" class="streak-btn-sm streak-btn-sm-warn" id="streakDevReset">Reset all data</button>
-      </div>
+    <!-- Recent sessions -->
+    <div class="study-recent-section">
+      <span class="study-section-title">Recent Sessions</span>
+      {% if study_stats and study_stats.recent_sessions and study_stats.recent_sessions|length > 0 %}
+        <ul class="study-recent-list">
+          {% for s in study_stats.recent_sessions %}
+            <li class="study-recent-item">
+              <div class="study-recent-main">
+                <span class="study-recent-date"><i class="fa-regular fa-calendar"></i> {{ s.session_date }}</span>
+                <span class="study-recent-duration">{{ s.duration_minutes }} min</span>
+              </div>
+              {% if s.notes %}<span class="study-recent-notes">{{ s.notes }}</span>{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="study-recent-empty">No study sessions recorded yet. Log one above to get started.</p>
+      {% endif %}
     </div>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script id="studyDaysData" type="application/json">{{ (study_stats.study_days if study_stats else [])|tojson }}</script>
+<script>
+  (function () {
+    // Weekly Progress line graph: hours studied per day (Mon–Sun) for the
+    // current week, drawn as an inline SVG from the per-day study totals the
+    // backend exposes via `studyDaysData`.
+    const svg = document.getElementById('progressChart');
+    if (!svg) return;
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    // Chart geometry (matches the viewBox in the markup). Extra left padding
+    // leaves room for the y-axis tick labels.
+    const W = 320, H = 160;
+    const PAD_L = 30, PAD_R = 10, PAD_T = 14, PAD_B = 26;
+    const plotW = W - PAD_L - PAD_R;
+    const plotH = H - PAD_T - PAD_B;
+
+    // Round a value up to a "nice" axis maximum so ticks land on tidy numbers.
+    function niceMax(value) {
+      if (value <= 1) return 1;
+      const pow = Math.pow(10, Math.floor(Math.log10(value)));
+      const norm = value / pow;
+      let nice;
+      if (norm <= 1) nice = 1;
+      else if (norm <= 2) nice = 2;
+      else if (norm <= 5) nice = 5;
+      else nice = 10;
+      return nice * pow;
+    }
+
+    // Format a tick value compactly (e.g. 2, 2.5).
+    function fmtHours(h) {
+      return (Math.round(h * 10) / 10).toString();
+    }
+
+    function localDateString(date) {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function loadStudyHistory() {
+      try {
+        const raw = document.getElementById('studyDaysData');
+        const parsed = raw ? JSON.parse(raw.textContent || '[]') : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    // Monday of the current week through Sunday.
+    function getWeekDays() {
+      const now = new Date();
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(now.setDate(diff));
+      monday.setHours(0, 0, 0, 0);
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        days.push(d);
+      }
+      return days;
+    }
+
+    function make(tag, attrs) {
+      const node = document.createElementNS(SVG_NS, tag);
+      for (const k in attrs) node.setAttribute(k, attrs[k]);
+      return node;
+    }
+
+    function render() {
+      const history = loadStudyHistory();
+      const minutesByDate = {};
+      history.forEach((item) => {
+        minutesByDate[item.date] = (minutesByDate[item.date] || 0) + (item.minutes || 0);
+      });
+
+      const weekDays = getWeekDays();
+      const hours = weekDays.map((d) => (minutesByDate[localDateString(d)] || 0) / 60);
+
+      // Scale: round the busiest day up to a tidy axis max (at least 1h) so the
+      // y-axis ticks land on clean values.
+      const maxHours = niceMax(Math.max(...hours, 0));
+      const stepX = plotW / 6;
+      const points = hours.map((h, i) => ({
+        x: PAD_L + stepX * i,
+        y: PAD_T + plotH - (h / maxHours) * plotH,
+        h
+      }));
+
+      svg.textContent = '';
+
+      // Horizontal gridlines with dynamic y-axis tick labels.
+      const TICKS = 4;
+      for (let g = 0; g <= TICKS; g++) {
+        const y = PAD_T + (plotH / TICKS) * g;
+        svg.appendChild(make('line', {
+          x1: PAD_L, y1: y, x2: W - PAD_R, y2: y,
+          class: 'progress-gridline'
+        }));
+
+        const tickValue = maxHours * (1 - g / TICKS);
+        const tickLabel = make('text', {
+          x: PAD_L - 6, y: y + 3,
+          'text-anchor': 'end', class: 'progress-axis-label'
+        });
+        tickLabel.textContent = fmtHours(tickValue);
+        svg.appendChild(tickLabel);
+      }
+
+      // Area fill under the line.
+      const areaPath = `M ${points[0].x} ${PAD_T + plotH} `
+        + points.map((p) => `L ${p.x} ${p.y}`).join(' ')
+        + ` L ${points[points.length - 1].x} ${PAD_T + plotH} Z`;
+      svg.appendChild(make('path', { d: areaPath, class: 'progress-area' }));
+
+      // The line itself.
+      const linePath = 'M ' + points.map((p) => `${p.x} ${p.y}`).join(' L ');
+      svg.appendChild(make('path', { d: linePath, class: 'progress-line' }));
+
+      // Data points + day labels.
+      points.forEach((p, i) => {
+        const dot = make('circle', { cx: p.x, cy: p.y, r: 3.5, class: 'progress-dot' });
+        const title = make('title', {});
+        title.textContent = `${LABELS[i]}: ${Math.round(p.h * 10) / 10}h`;
+        dot.appendChild(title);
+        svg.appendChild(dot);
+
+        const label = make('text', {
+          x: p.x, y: H - 8,
+          'text-anchor': 'middle', class: 'progress-axis-label'
+        });
+        label.textContent = LABELS[i];
+        svg.appendChild(label);
+      });
+    }
+
+    render();
+  })();
+</script>
 <script>
   (function () {
     const el = document.getElementById('examCountdown');
@@ -372,8 +576,8 @@
 
 <script>
   (function() {
-    const STORAGE_KEY = 'loreviaStudyStreaks';
-
+    // Streak is read-only: it is built from the study sessions logged via the
+    // Study Hours widget, surfaced by the backend as `study_days`.
     const cardStreakCount = document.getElementById('cardStreakCount');
     const cardStreakLabel = document.getElementById('cardStreakLabel');
     const statCurrentStreak = document.getElementById('statCurrentStreak');
@@ -381,18 +585,10 @@
     const statTotalDays = document.getElementById('statTotalDays');
     const streakWeekTrack = document.getElementById('streakWeekTrack');
     const streakHeatmapGrid = document.getElementById('streakHeatmapGrid');
-    
+
     const streakCard = document.getElementById('streakCard');
     const streakModal = document.getElementById('streakModal');
     const streakModalCloseBtn = document.getElementById('streakModalCloseBtn');
-    
-    const streakLogForm = document.getElementById('streakLogForm');
-    const streakSubject = document.getElementById('streakSubject');
-    const streakDuration = document.getElementById('streakDuration');
-    const streakLogSubmitBtn = document.getElementById('streakLogSubmitBtn');
-    
-    const streakDevGenMock = document.getElementById('streakDevGenMock');
-    const streakDevReset = document.getElementById('streakDevReset');
 
     function getLocalDateString(date) {
       const yyyy = date.getFullYear();
@@ -401,30 +597,23 @@
       return `${yyyy}-${mm}-${dd}`;
     }
 
-    function loadStreakData() {
+    // Per-day study totals from the backend: [{ date: 'YYYY-MM-DD', minutes }].
+    function loadStudyHistory() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : { studyHistory: [] };
+        const raw = document.getElementById('studyDaysData');
+        const parsed = raw ? JSON.parse(raw.textContent || '[]') : [];
+        return Array.isArray(parsed) ? parsed : [];
       } catch (e) {
-        return { studyHistory: [] };
+        return [];
       }
-    }
-
-    function saveStreakData(data) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      } catch (e) { /* storage unavailable */ }
     }
 
     function calculateStreakStats(history) {
       const uniqueDates = [...new Set(history.map(item => item.date))].sort();
-      
-      if (uniqueDates.length === 0) {
-        return { currentStreak: 0, longestStreak: 0, totalDays: 0, totalHours: '0.0' };
-      }
 
-      const totalMinutes = history.reduce((sum, item) => sum + (item.minutes || 0), 0);
-      const totalHours = (totalMinutes / 60).toFixed(1);
+      if (uniqueDates.length === 0) {
+        return { currentStreak: 0, longestStreak: 0, totalDays: 0 };
+      }
 
       const dates = uniqueDates.map(dStr => {
         const parts = dStr.split('-');
@@ -485,8 +674,7 @@
       return {
         currentStreak: current,
         longestStreak: Math.max(longest, current),
-        totalDays: uniqueDates.length,
-        totalHours: totalHours
+        totalDays: uniqueDates.length
       };
     }
 
@@ -520,9 +708,9 @@
     }
 
     function renderUI() {
-      const data = loadStreakData();
-      const stats = calculateStreakStats(data.studyHistory);
-      const uniqueDates = [...new Set(data.studyHistory.map(item => item.date))];
+      const history = loadStudyHistory();
+      const stats = calculateStreakStats(history);
+      const uniqueDates = [...new Set(history.map(item => item.date))];
 
       // Update card
       if (cardStreakCount) cardStreakCount.textContent = stats.currentStreak;
@@ -537,7 +725,6 @@
       if (streakWeekTrack) {
         const weekDays = getWeekDays();
         const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        const todayStr = getLocalDateString(new Date());
         let html = '';
 
         weekDays.forEach((d, idx) => {
@@ -572,10 +759,10 @@
             const dateIndex = w * 7 + d;
             const dateObj = heatmapDates[dateIndex];
             const dateStr = getLocalDateString(dateObj);
-            
-            const daySessions = data.studyHistory.filter(item => item.date === dateStr);
+
+            const daySessions = history.filter(item => item.date === dateStr);
             const totalMins = daySessions.reduce((sum, item) => sum + (item.minutes || 0), 0);
-            
+
             let lvl = 0;
             if (totalMins > 0 && totalMins < 30) lvl = 1;
             else if (totalMins >= 30 && totalMins < 60) lvl = 2;
@@ -583,8 +770,8 @@
             else if (totalMins >= 120) lvl = 4;
 
             const formattedDate = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-            const tooltipText = totalMins > 0 
-              ? `${formattedDate}: ${totalMins}m studied` 
+            const tooltipText = totalMins > 0
+              ? `${formattedDate}: ${totalMins}m studied`
               : `${formattedDate}: No study logged`;
 
             html += `<div class="streak-heatmap-day lvl-${lvl}" data-date="${dateStr}" data-tooltip="${tooltipText}"></div>`;
@@ -603,44 +790,6 @@
     function closeModal() {
       streakModal.classList.remove('open');
       streakModal.setAttribute('aria-hidden', 'true');
-    }
-
-    function triggerConfetti(event) {
-      if (!streakLogSubmitBtn) return;
-      const btnRect = streakLogSubmitBtn.getBoundingClientRect();
-      const originX = event.clientX || (btnRect.left + btnRect.width / 2);
-      const originY = event.clientY || (btnRect.top + btnRect.height / 2);
-      
-      const container = document.createElement('div');
-      container.className = 'streak-particle-burst';
-      container.style.left = `${originX}px`;
-      container.style.top = `${originY}px`;
-      document.body.appendChild(container);
-      
-      const colors = ['#ff7675', '#ff9f43', '#ffd32a', '#ff5252', '#ff9f80'];
-      const particleCount = 20;
-      
-      for (let i = 0; i < particleCount; i++) {
-        const p = document.createElement('div');
-        p.className = 'streak-particle';
-        
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 35 + Math.random() * 65;
-        const x = Math.cos(angle) * distance;
-        const y = Math.sin(angle) * distance;
-        
-        p.style.setProperty('--x', `${x}px`);
-        p.style.setProperty('--y', `${y}px`);
-        p.style.background = colors[Math.floor(Math.random() * colors.length)];
-        p.style.left = '0px';
-        p.style.top = '0px';
-        
-        container.appendChild(p);
-      }
-      
-      setTimeout(() => {
-        container.remove();
-      }, 1000);
     }
 
     // Modal listeners
@@ -663,78 +812,51 @@
       if (e.key === 'Escape') closeModal();
     });
 
-    // Logging form listener
-    if (streakLogForm) {
-      streakLogForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const subject = streakSubject.value;
-        const duration = parseInt(streakDuration.value, 10);
-        if (!subject || isNaN(duration) || duration <= 0) return;
-
-        const todayStr = getLocalDateString(new Date());
-        const data = loadStreakData();
-        data.studyHistory.push({
-          date: todayStr,
-          minutes: duration,
-          subject: subject,
-          timestamp: Date.now()
-        });
-        saveStreakData(data);
-        
-        triggerConfetti(e);
-        renderUI();
-        
-        streakDuration.value = '';
-        
-        const originalContent = streakLogSubmitBtn.innerHTML;
-        streakLogSubmitBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Logged!';
-        streakLogSubmitBtn.style.background = '#2ecc71';
-        setTimeout(() => {
-          streakLogSubmitBtn.innerHTML = originalContent;
-          streakLogSubmitBtn.style.background = '';
-        }, 1500);
-      });
-    }
-
-    // Dev buttons
-    if (streakDevGenMock) {
-      streakDevGenMock.addEventListener('click', () => {
-        const mockData = { studyHistory: [] };
-        const today = new Date();
-        const subjects = ['Mathematics', 'Science', 'Computer Science', 'Language / Lit'];
-        
-        for (let i = 11; i >= 0; i--) {
-          const d = new Date(today);
-          d.setDate(today.getDate() - i);
-          mockData.studyHistory.push({
-            date: getLocalDateString(d),
-            minutes: 30 + Math.floor(Math.random() * 90),
-            subject: subjects[Math.floor(Math.random() * subjects.length)],
-            timestamp: d.getTime()
-          });
-        }
-        
-        saveStreakData(mockData);
-        renderUI();
-        
-        streakDevGenMock.textContent = 'Mocked!';
-        setTimeout(() => {
-          streakDevGenMock.textContent = 'Mock 12-day history';
-        }, 1500);
-      });
-    }
-
-    if (streakDevReset) {
-      streakDevReset.addEventListener('click', () => {
-        if (confirm('Are you sure you want to reset your study streaks data?')) {
-          localStorage.removeItem(STORAGE_KEY);
-          renderUI();
-        }
-      });
-    }
-
     // Initial render
     renderUI();
+  })();
+</script>
+
+<script>
+  (function () {
+    const studyCard = document.getElementById('studyCard');
+    const studyModal = document.getElementById('studyModal');
+    const studyModalCloseBtn = document.getElementById('studyModalCloseBtn');
+    const studyTodayText = document.getElementById('studyTodayText');
+
+    if (!studyCard || !studyModal) return;
+
+    // Sessions are always logged for today; show the actual date for clarity.
+    if (studyTodayText) {
+      studyTodayText.textContent = new Date().toLocaleDateString(undefined, {
+        month: 'short', day: 'numeric'
+      });
+    }
+
+    function openModal() {
+      studyModal.classList.add('open');
+      studyModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal() {
+      studyModal.classList.remove('open');
+      studyModal.setAttribute('aria-hidden', 'true');
+    }
+
+    studyCard.addEventListener('click', openModal);
+    studyCard.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openModal();
+      }
+    });
+    if (studyModalCloseBtn) studyModalCloseBtn.addEventListener('click', closeModal);
+    studyModal.addEventListener('click', (e) => {
+      if (e.target === studyModal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
   })();
 </script>
 {% endblock %}

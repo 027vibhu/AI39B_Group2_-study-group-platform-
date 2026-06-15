@@ -20,6 +20,8 @@ from app.models.shared_file import create_shared_file, get_shared_file_by_id, ge
 from app.controllers.moderation_controller import ModerationController
 from app.controllers.browse_rooms_controller import BrowseRoomsController
 from app.controllers.note_controller import NoteController
+from app.controllers.study_hour_controller import StudyHourController
+from app.controllers.whiteboard_controller import WhiteboardController
 from app import socketio
 import random
 import os
@@ -44,6 +46,8 @@ class HomeRoutes:
 
         # routes
         self.bp.route('/')(self.index)
+        self.bp.route('/features')(self.features)
+        self.bp.route('/about')(self.about)
         self.bp.route('/dashboard')(self.dashboard)
         self.bp.route('/join_room')(self.join_room)
         self.bp.route('/browse_rooms')(self.browse_rooms)
@@ -64,9 +68,18 @@ class HomeRoutes:
         self.bp.route('/profile/avatar', methods=['POST'])(self.update_avatar)
         self.bp.route('/notes')(self.notes)
         self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
+        self.bp.route('/notes/<int:note_id>/share', methods=['POST'])(self.share_note)
+        self.bp.route('/notes/<int:note_id>/delete', methods=['POST'])(self.delete_note)
+        self.bp.route('/whiteboard')(self.whiteboard)
+        self.bp.route('/whiteboard/new', methods=['POST'])(self.whiteboard_new)
+        self.bp.route('/whiteboard/join', methods=['POST'])(self.whiteboard_join)
+        self.bp.route('/whiteboard/<code>')(self.whiteboard_board)
+        # Study hours tracking (logged via the dashboard widget)
+        self.bp.route('/study-hours/create', methods=['POST'])(self.study_hours_create)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
         self.bp.route('/chat/<room_code>/upload', methods=['POST'])(self.upload_chat_image)
-
+        self.bp.route('/music')(self.music)
+        
         return self.bp
 
     def require_login_for_protected_pages(self):
@@ -78,10 +91,15 @@ class HomeRoutes:
 
         allowed_endpoints = {
             'home.index',
+            'home.features',
+            'home.about',
             'auth.login',
             'auth.login_post',
             'auth.register',
             'auth.reset_password',
+            'auth.send_reset_code',
+            'auth.verify_reset_code',
+            'auth.set_new_password',
             'auth.logout',
         }
 
@@ -96,12 +114,25 @@ class HomeRoutes:
     def index(self):
         return render_template('index.html')
 
+    def features(self):
+        return render_template('features.html')
+
+    def about(self):
+        return render_template('about.html')
+
     def dashboard(self):
         # Exam date drives the countdown square. Swap this for real data later.
+        user_id = session.get('user_id')
+        stats = {'total_hours': 0, 'streak': 0, 'recent_sessions': []}
+        if user_id:
+            controller = StudyHourController()
+            stats = controller.get_widget_stats(user_id)
+            
         return render_template(
             'dashboard.html',
             exam_date='2026-07-01T09:00:00',
             exam_name='Final Exams',
+            study_stats=stats
         )
 
     def join_room(self):
@@ -123,6 +154,53 @@ class HomeRoutes:
 
     def create(self):
         return redirect(url_for('home.create_room'))
+
+    def whiteboard(self):
+        """Whiteboard hub: list the user's boards + create/join entry points."""
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+        controller = WhiteboardController()
+        boards, _ = controller.list_boards(user_id)
+        return render_template('whiteboard/index.html', boards=boards or [])
+
+    def whiteboard_new(self):
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+        controller = WhiteboardController()
+        board, error = controller.create_board(user_id, request.form.get('title'))
+        if error:
+            flash(error, 'warning')
+            return redirect(url_for('home.whiteboard'))
+        return redirect(url_for('home.whiteboard_board', code=board['code']))
+
+    def whiteboard_join(self):
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+        controller = WhiteboardController()
+        board, error = controller.join_board(user_id, request.form.get('code'))
+        if error:
+            flash(error, 'warning')
+            return redirect(url_for('home.whiteboard'))
+        return redirect(url_for('home.whiteboard_board', code=board['code']))
+
+    def whiteboard_board(self, code):
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+        controller = WhiteboardController()
+        board, error = controller.get_board_for_user(user_id, code)
+        if error:
+            flash(error, 'warning')
+            return redirect(url_for('home.whiteboard'))
+        return render_template('whiteboard.html', board=board, code=code)
+
+    # --- Study hours route handler (logged from the dashboard widget) ---
+    def study_hours_create(self):
+        controller = StudyHourController()
+        return controller.create_session()
 
     def _generate_unique_room_code(self):
         while True:
@@ -351,7 +429,7 @@ class HomeRoutes:
             upload_dir,
             file_record['stored_filename'],
             as_attachment=True,
-            attachment_filename=file_record['original_filename'],
+            download_name=file_record['original_filename'],
         )
 
     def view_shared_file(self, file_id):
@@ -544,10 +622,21 @@ class HomeRoutes:
     def notes(self):
         controller = NoteController()
         return controller.list_notes()
+    
+    def music(self):
+        return render_template('backgroundmusic.html')
 
     def upload_note(self):
         controller = NoteController()
         return controller.upload_note()
+
+    def share_note(self, note_id):
+        controller = NoteController()
+        return controller.share_note(note_id)
+
+    def delete_note(self, note_id):
+        controller = NoteController()
+        return controller.delete_note(note_id)
 
     def create_room(self):
         if request.method == 'POST':

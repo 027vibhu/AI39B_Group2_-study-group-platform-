@@ -8,10 +8,25 @@ from app.models.room import get_room_by_code, get_room_by_id, is_user_banned_fro
 from app.models.message import get_message_by_id
 from app.models.presence_model import set_user_online, set_user_offline, get_online_users, get_offline_users
 from app.models.join_leave_notification import add_join_leave_notification
-from app.models.whiteboard import get_whiteboard_state, save_whiteboard_state, clear_whiteboard_state
+from app.models.whiteboard import (
+    get_whiteboard_by_code,
+    is_user_in_whiteboard,
+    add_whiteboard_member,
+    get_whiteboard_state,
+    save_whiteboard_state,
+    clear_whiteboard_state,
+)
 
 # Track joined sockets so disconnect can update presence
 _active_presence = {}
+
+# Track whiteboard participants per board code: {code: {sid: username}}
+_whiteboard_presence = {}
+
+
+def _broadcast_whiteboard_presence(code):
+    participants = sorted(set((_whiteboard_presence.get(code) or {}).values()))
+    emit('whiteboard_presence', {'code': code, 'participants': participants}, room=code)
 
 def _broadcast_presence(room_code, room_id):
     online = get_online_users(room_id)
@@ -83,6 +98,14 @@ def handle_join(data):
 
 @socketio.on('disconnect')
 def handle_disconnect():
+    # Clean up whiteboard presence for this socket, if any.
+    for code, members in list(_whiteboard_presence.items()):
+        if request.sid in members:
+            members.pop(request.sid, None)
+            if not members:
+                _whiteboard_presence.pop(code, None)
+            _broadcast_whiteboard_presence(code)
+
     presence = _active_presence.pop(request.sid, None)
     if not presence:
         return
@@ -294,52 +317,76 @@ def handle_send_file(data):
     }, room=room_code)
 
 
+@socketio.on('join_whiteboard')
+def handle_join_whiteboard(data):
+    code = data.get('board')
+    username = data.get('username') or ''
+    user_id = session.get('user_id')
+
+    if not user_id or not code:
+        return
+
+    board = get_whiteboard_by_code(code)
+    if not board:
+        return
+
+    # Opening a board via its code grants membership.
+    add_whiteboard_member(user_id, board['id'])
+
+    join_room(code)
+    _whiteboard_presence.setdefault(code, {})[request.sid] = username
+    _broadcast_whiteboard_presence(code)
+
+
 @socketio.on('whiteboard_action')
 def handle_whiteboard_action(data):
-    room_code = data.get('room')
+    code = data.get('board')
     username = data.get('username') or ''
     action = data.get('action')
     payload = data.get('payload')
     user_id = session.get('user_id')
 
-    if not user_id or not room_code or action is None:
+    if not user_id or not code or action is None:
         return
 
-    room = get_room_by_code(room_code)
-    if not room:
+    board = get_whiteboard_by_code(code)
+    if not board:
         return
 
-    if is_user_banned_from_room(username, room_code, room.get('name')):
+    if not is_user_in_whiteboard(user_id, board['id']):
         return
 
     emit(
         'whiteboard_action',
         {
-            'room_code': room_code,
+            'code': code,
             'username': username,
             'action': action,
             'payload': payload,
         },
-        room=room_code,
+        room=code,
         include_self=False,
     )
 
 
 @socketio.on('whiteboard_request_state')
 def handle_whiteboard_request_state(data):
-    room_code = data.get('room')
+    code = data.get('board')
     user_id = session.get('user_id')
 
-    if not user_id or not room_code:
+    if not user_id or not code:
         return
 
-    room = get_room_by_code(room_code)
-    if not room:
+    board = get_whiteboard_by_code(code)
+    if not board:
         return
 
-    stored_state = get_whiteboard_state(room['id'])
+    if not is_user_in_whiteboard(user_id, board['id']):
+        return
+
+    stored_state = get_whiteboard_state(board['id'])
     if not stored_state:
-        emit('whiteboard_state', {'room_code': room_code, 'state': None}, room=request.sid)
+        emit('whiteboard_state', {'code': code, 'state': None}, room=request.sid)
         return
 
     try:
@@ -347,24 +394,24 @@ def handle_whiteboard_request_state(data):
     except Exception:
         state = None
 
-    emit('whiteboard_state', {'room_code': room_code, 'state': state}, room=request.sid)
+    emit('whiteboard_state', {'code': code, 'state': state}, room=request.sid)
 
 
 @socketio.on('whiteboard_save_state')
 def handle_whiteboard_save_state(data):
-    room_code = data.get('room')
+    code = data.get('board')
     state_payload = data.get('state')
     user_id = session.get('user_id')
     username = data.get('username') or ''
 
-    if not user_id or not room_code or state_payload is None:
+    if not user_id or not code or state_payload is None:
         return
 
-    room = get_room_by_code(room_code)
-    if not room:
+    board = get_whiteboard_by_code(code)
+    if not board:
         return
 
-    if is_user_banned_from_room(username, room_code, room.get('name')):
+    if not is_user_in_whiteboard(user_id, board['id']):
         return
 
     try:
@@ -372,25 +419,26 @@ def handle_whiteboard_save_state(data):
     except Exception:
         return
 
-    save_whiteboard_state(room['id'], state_json, user_id, username)
-    emit('whiteboard_state', {'room_code': room_code, 'state': state_payload}, room=room_code)
+    save_whiteboard_state(board['id'], state_json, user_id, username)
+    # Persist only; no broadcast needed since live strokes already sync via
+    # whiteboard_action. State is for late-joiners / reloads.
 
 
 @socketio.on('whiteboard_clear')
 def handle_whiteboard_clear(data):
-    room_code = data.get('room')
+    code = data.get('board')
     username = data.get('username') or ''
     user_id = session.get('user_id')
 
-    if not user_id or not room_code:
+    if not user_id or not code:
         return
 
-    room = get_room_by_code(room_code)
-    if not room:
+    board = get_whiteboard_by_code(code)
+    if not board:
         return
 
-    if is_user_banned_from_room(username, room_code, room.get('name')):
+    if not is_user_in_whiteboard(user_id, board['id']):
         return
 
-    clear_whiteboard_state(room['id'])
-    emit('whiteboard_cleared', {'room_code': room_code}, room=room_code)
+    clear_whiteboard_state(board['id'])
+    emit('whiteboard_cleared', {'code': code}, room=code)

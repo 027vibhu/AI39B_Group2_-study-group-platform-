@@ -26,8 +26,9 @@
 
     <div class="nav">
       {% block nav %}
-        <a href="#" class="nav-item" id="homeLink">Home</a>
+        <a href="{{ url_for('home.dashboard') }}" class="nav-item" id="homeLink">Home</a>
         <a href="#" class="nav-item" id="roomsLink">Rooms</a>
+        <a href="{{ url_for('exam_countdown.view_exams_page') }}" class="nav-item" id="examsLink">Exams</a>
       {% endblock %}
     </div>
 
