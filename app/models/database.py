@@ -464,9 +464,10 @@ class Database:
             pass
 
         try:
-            from app.models.whiteboard import create_whiteboard_table
+            from app.models.whiteboard import create_whiteboard_table, create_whiteboard_member_table
 
             create_whiteboard_table()
+            create_whiteboard_member_table()
         except Exception:
             pass
 
