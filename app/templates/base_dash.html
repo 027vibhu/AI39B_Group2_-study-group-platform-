@@ -27,7 +27,7 @@
       <span class="nav-label">Admin</span>
     </a>
   {% endif %}
-  <a href="{{ url_for('home.whiteboard') }}" class="nav-item {% if request.endpoint == 'home.whiteboard' %}active{% endif %}" title="Whiteboard">
+  <a href="{{ url_for('home.whiteboard') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('home.whiteboard') %}active{% endif %}" title="Whiteboard">
     <i class="fa-solid fa-chalkboard"></i>
     <span class="nav-label">Whiteboard</span>
   </a>
