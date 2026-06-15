@@ -19,15 +19,16 @@
   <div class="sidebar">
     <div class="logo">
         <div class="logo-box">
-          <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="LOREVIA logo">
+          <a href="/"><img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="LOREVIA logo"></a>
         </div>
       <h2 class="sr-only">LOREVIA</h2>
     </div>
 
     <div class="nav">
       {% block nav %}
-        <a href="#" class="nav-item" id="homeLink">Home</a>
+        <a href="{{ url_for('home.dashboard') }}" class="nav-item" id="homeLink">Home</a>
         <a href="#" class="nav-item" id="roomsLink">Rooms</a>
+        <a href="{{ url_for('exam_countdown.view_exams_page') }}" class="nav-item" id="examsLink">Exams</a>
       {% endblock %}
     </div>
 

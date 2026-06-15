@@ -3,16 +3,28 @@
 {% block title %}My Notes - LOREVIA{% endblock %}
 
 {% block head %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/notes.css') }}">
 {% endblock %}
 
 {% block topbar_title %}My Notes{% endblock %}
 
 {% block content %}
-  <section class="notes-wrapper">
-    <div class="notes-header">
-      <h2>Upload Study Notes</h2>
-      <p>Upload PDFs that you want to keep in your account.</p>
+  <section class="notes-page">
+    <div class="notes-bar">
+      <div class="notes-bar-text">
+        <h2>Study Notes</h2>
+        <p>Upload, organize, and revisit your PDF study materials anytime.</p>
+      </div>
+      <div class="notes-bar-actions">
+        <span class="count-pill">
+          <i class="fa-solid fa-file-pdf"></i>
+          {{ notes|length if notes else 0 }} notes
+        </span>
+        <button type="button" class="toggle-upload-btn" id="toggleUpload" aria-expanded="false" aria-controls="uploadPanel">
+          <i class="fa-solid fa-plus"></i>
+          Add Note
+        </button>
+      </div>
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -23,44 +35,271 @@
       {% endif %}
     {% endwith %}
 
-    <form class="note-upload-form" method="POST" action="{{ url_for('home.upload_note') }}" enctype="multipart/form-data">
-      <div class="input-group">
-        <label for="title">Title</label>
-        <input type="text" name="title" id="title" placeholder="Add a title for the note">
-      </div>
-      <div class="input-group">
-        <label for="description">Description</label>
-        <textarea name="description" id="description" placeholder="Optional description"></textarea>
-      </div>
-      <div class="input-group">
-        <label for="pdf">PDF File</label>
-        <input type="file" name="pdf" id="pdf" accept="application/pdf" required>
-      </div>
-      <button type="submit" class="save-btn">Upload Note</button>
-    </form>
+    <div class="upload-panel" id="uploadPanel">
+      <div class="upload-panel-inner">
+        <form class="note-upload-form" method="POST" action="{{ url_for('home.upload_note') }}" enctype="multipart/form-data">
+          <div class="upload-grid">
+            <div class="input-group">
+              <label for="title">Title</label>
+              <input type="text" name="title" id="title" placeholder="Add a title for the note">
+            </div>
 
-    <div class="note-list">
-      <h3>Your Uploaded Notes</h3>
-      {% if notes %}
-        <div class="note-items">
-          {% for note in notes %}
-            <div class="note-card">
-              <div class="note-card-header">
-                <h4>{{ note.title }}</h4>
-                <span>{{ note.created_at.strftime('%b %d, %Y') }}</span>
+            <div class="input-group">
+              <label for="description">Description</label>
+              <textarea name="description" id="description" placeholder="Optional description"></textarea>
+            </div>
+
+            <div class="input-group dropzone-group">
+              <label for="pdf">PDF File</label>
+              <div class="dropzone" id="dropzone">
+                <input type="file" name="pdf" id="pdf" accept="application/pdf" required>
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span class="dz-primary">Drag &amp; drop your PDF here</span>
+                <span class="dz-secondary">or click to browse</span>
+                <span class="dz-filename" id="dzFilename"></span>
               </div>
+            </div>
+
+            <div class="upload-actions">
+              <button type="submit" class="save-btn">
+                <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                Upload Note
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% if notes %}
+      <div class="search-row">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="noteSearch" placeholder="Search notes...">
+        </div>
+      </div>
+
+      <div class="note-list" id="noteList">
+        {% for note in notes %}
+          <article class="note-row" data-title="{{ note.title|lower }}" data-desc="{{ (note.description or '')|lower }}">
+            <div class="note-icon">
+              <i class="fa-solid fa-file-pdf"></i>
+            </div>
+            <div class="note-main">
+              <h4>{{ note.title }}</h4>
               {% if note.description %}
                 <p>{{ note.description }}</p>
+              {% else %}
+                <p class="no-desc">No description provided.</p>
               {% endif %}
-              <a href="{{ url_for('static', filename=note.pdf_url) }}" target="_blank" rel="noopener noreferrer" class="view-link">
-                View PDF
-              </a>
             </div>
+            <span class="note-meta">
+              <i class="fa-regular fa-calendar"></i>
+              {{ note.created_at.strftime('%b %d, %Y') }}
+            </span>
+            <a href="{{ url_for('static', filename=note.pdf_url) }}" target="_blank" rel="noopener noreferrer" class="view-link">
+              <i class="fa-solid fa-eye"></i>
+              View
+            </a>
+            <button type="button" class="share-btn"
+                    data-share-url="{{ url_for('home.share_note', note_id=note.id) }}"
+                    data-note-title="{{ note.title }}">
+              <i class="fa-solid fa-share-nodes"></i>
+              Share
+            </button>
+            <form method="POST" action="{{ url_for('home.delete_note', note_id=note.id) }}"
+                  class="delete-note-form" data-note-title="{{ note.title }}">
+              <button type="submit" class="delete-btn">
+                <i class="fa-solid fa-trash"></i>
+                Delete
+              </button>
+            </form>
+          </article>
+        {% endfor %}
+      </div>
+      <p class="no-search-results hidden" id="noSearchResults">No notes match your search.</p>
+    {% else %}
+      <div class="empty-state">
+        <i class="fa-solid fa-folder-open"></i>
+        <strong>No notes yet</strong>
+        <span>Click “Add Note” above to upload your first PDF.</span>
+      </div>
+    {% endif %}
+
+    {% if shared_notes %}
+      <div class="shared-section">
+        <h3 class="shared-heading">
+          <i class="fa-solid fa-user-group"></i>
+          Shared with me
+        </h3>
+        <div class="note-list">
+          {% for note in shared_notes %}
+            <article class="note-row">
+              <div class="note-icon">
+                <i class="fa-solid fa-file-pdf"></i>
+              </div>
+              <div class="note-main">
+                <h4>{{ note.title }}</h4>
+                {% if note.description %}
+                  <p>{{ note.description }}</p>
+                {% else %}
+                  <p class="no-desc">No description provided.</p>
+                {% endif %}
+                <span class="shared-by">Shared by {{ note.shared_by }}</span>
+              </div>
+              <span class="note-meta">
+                <i class="fa-regular fa-calendar"></i>
+                {{ note.created_at.strftime('%b %d, %Y') }}
+              </span>
+              <a href="{{ url_for('static', filename=note.pdf_url) }}" target="_blank" rel="noopener noreferrer" class="view-link">
+                <i class="fa-solid fa-eye"></i>
+                View
+              </a>
+            </article>
           {% endfor %}
         </div>
-      {% else %}
-        <p class="empty-state">No notes uploaded yet. Use the form above to add your first PDF.</p>
-      {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="share-modal" id="shareModal" aria-hidden="true">
+      <div class="share-modal-backdrop" data-close-share></div>
+      <div class="share-modal-box" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+        <h3 id="shareModalTitle">Share note</h3>
+        <p class="share-modal-sub" id="shareModalSub">Enter the username of the person to share with.</p>
+        <form method="POST" id="shareForm">
+          <div class="input-group">
+            <label for="shareUsername">Username</label>
+            <input type="text" name="username" id="shareUsername" placeholder="e.g. janedoe" autocomplete="off" required>
+          </div>
+          <div class="share-modal-actions">
+            <button type="button" class="cancel-btn" data-close-share>Cancel</button>
+            <button type="submit" class="save-btn">
+              <i class="fa-solid fa-share-nodes"></i>
+              Share
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    (function () {
+      const toggle = document.getElementById('toggleUpload');
+      const panel = document.getElementById('uploadPanel');
+
+      if (toggle && panel) {
+        toggle.addEventListener('click', () => {
+          const open = panel.classList.toggle('open');
+          toggle.setAttribute('aria-expanded', String(open));
+          if (open) {
+            const title = document.getElementById('title');
+            if (title) title.focus();
+          }
+        });
+      }
+
+      const dropzone = document.getElementById('dropzone');
+      const fileInput = document.getElementById('pdf');
+      const filename = document.getElementById('dzFilename');
+
+      if (dropzone && fileInput) {
+        const showFile = () => {
+          if (fileInput.files.length) {
+            filename.textContent = fileInput.files[0].name;
+            dropzone.classList.add('has-file');
+          } else {
+            dropzone.classList.remove('has-file');
+          }
+        };
+
+        fileInput.addEventListener('change', showFile);
+
+        ['dragenter', 'dragover'].forEach((evt) =>
+          dropzone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+          })
+        );
+
+        ['dragleave', 'drop'].forEach((evt) =>
+          dropzone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+          })
+        );
+
+        dropzone.addEventListener('drop', (e) => {
+          if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            showFile();
+          }
+        });
+      }
+
+      const shareModal = document.getElementById('shareModal');
+      const shareForm = document.getElementById('shareForm');
+      const shareUsername = document.getElementById('shareUsername');
+      const shareSub = document.getElementById('shareModalSub');
+
+      if (shareModal && shareForm) {
+        const openShare = (url, title) => {
+          shareForm.action = url;
+          shareUsername.value = '';
+          shareSub.textContent = 'Enter the username of the person to share "' + title + '" with.';
+          shareModal.classList.add('open');
+          shareModal.setAttribute('aria-hidden', 'false');
+          shareUsername.focus();
+        };
+
+        const closeShare = () => {
+          shareModal.classList.remove('open');
+          shareModal.setAttribute('aria-hidden', 'true');
+        };
+
+        document.querySelectorAll('.share-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            openShare(btn.dataset.shareUrl, btn.dataset.noteTitle || 'this note');
+          });
+        });
+
+        shareModal.querySelectorAll('[data-close-share]').forEach((el) => {
+          el.addEventListener('click', closeShare);
+        });
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && shareModal.classList.contains('open')) closeShare();
+        });
+      }
+
+      document.querySelectorAll('.delete-note-form').forEach((form) => {
+        form.addEventListener('submit', (e) => {
+          const title = form.dataset.noteTitle || 'this note';
+          if (!window.confirm('Delete "' + title + '"? This cannot be undone.')) {
+            e.preventDefault();
+          }
+        });
+      });
+
+      const search = document.getElementById('noteSearch');
+      const rows = Array.from(document.querySelectorAll('#noteList .note-row'));
+      const noResults = document.getElementById('noSearchResults');
+
+      if (search) {
+        search.addEventListener('input', () => {
+          const q = search.value.trim().toLowerCase();
+          let visible = 0;
+          rows.forEach((row) => {
+            const match =
+              row.dataset.title.includes(q) || row.dataset.desc.includes(q);
+            row.style.display = match ? '' : 'none';
+            if (match) visible++;
+          });
+          if (noResults) noResults.classList.toggle('hidden', visible !== 0);
+        });
+      }
+    })();
+  </script>
 {% endblock %}
