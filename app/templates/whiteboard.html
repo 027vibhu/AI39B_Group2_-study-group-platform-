@@ -1,136 +1,131 @@
 {% extends "base_dash.html" %}
 
-{% block title %}Shared Whiteboard{% endblock %}
+{% block title %}{{ board.title if board else 'Whiteboard' }}{% endblock %}
 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/whiteboard.css') }}">
 {% endblock %}
 
 {% block topbar_title %}
-  {% if room %}
-    <span class="topbar-room-meta">
-      <i class="fa-solid fa-chalkboard"></i>
-      {{ room.name if room.name else 'Room ' ~ room_code }} Whiteboard
-      <span class="room-code-chip">#{{ room_code }}</span>
-    </span>
-  {% else %}
-    Shared Whiteboard
-  {% endif %}
+  <div class="whiteboard-header">
+    <div class="whiteboard-info">
+      <span class="whiteboard-title">
+        {{ board.title if board and board.title else 'Collaborative Whiteboard' }}
+        <span class="room-code-chip">#{{ code }}</span>
+      </span>
+      <span class="whiteboard-subtitle">Draw, annotate, and share ideas in real time with your study group.</span>
+    </div>
+    <div class="whiteboard-actions">
+      <button class="wb-btn wb-btn-secondary" type="button" id="clearButton">
+        <i class="fa-solid fa-trash-can"></i> Clear
+      </button>
+      <button class="wb-btn wb-btn-secondary" type="button" id="downloadButton">
+        <i class="fa-solid fa-download"></i> Download
+      </button>
+      <button class="wb-btn wb-btn-primary" type="button" id="inviteButton">
+        <i class="fa-solid fa-user-plus"></i> Invite
+      </button>
+    </div>
+  </div>
 {% endblock %}
 
 {% block content %}
   <section class="whiteboard-page">
-    <div class="whiteboard-header">
-      <div class="whiteboard-info">
-        <h2 class="whiteboard-title">Collaborative Whiteboard</h2>
-        <p class="whiteboard-subtitle">Draw, annotate, and share ideas in real time with your study group.</p>
-        {% if room %}
-        <p class="whiteboard-room-detail">Room: <strong>{{ room.name if room.name else 'Room ' ~ room_code }}</strong></p>
-        {% endif %}
-      </div>
-      <div class="whiteboard-actions">
-        <button class="wb-btn wb-btn-secondary" type="button">Clear board</button>
-        <button class="wb-btn wb-btn-secondary" type="button" id="downloadButton">Download board</button>
-        <button class="wb-btn wb-btn-primary" type="button" id="inviteButton">Invite collaborators</button>
-      </div>
-    </div>
-
     <div class="whiteboard-layout">
-      <aside class="whiteboard-sidebar">
-        <div class="sidebar-panel">
-          <h3>Tools</h3>
-          <ul class="tool-list" role="list">
-            <li class="tool-item active" role="button" tabindex="0" aria-pressed="true">Pen</li>
-            <li class="tool-item" role="button" tabindex="0" aria-pressed="false">Highlighter</li>
-            <li class="tool-item" role="button" tabindex="0" aria-pressed="false">Eraser</li>
-            <li class="tool-item" role="button" tabindex="0" aria-pressed="false">Text</li>
-            <li class="tool-item" role="button" tabindex="0" aria-pressed="false">Shapes</li>
-          </ul>
+      <main class="whiteboard-stage">
+        <!-- Floating tool dock at the top of the drawing area -->
+        <div class="wb-dock" role="toolbar" aria-label="Drawing tools">
+          <div class="wb-tool-group" role="group" aria-label="Tools">
+            <button class="wb-tool active" type="button" data-tool="Pen" aria-pressed="true" title="Pen">
+              <i class="fa-solid fa-pen"></i><span class="wb-tool-tip">Pen</span>
+            </button>
+            <button class="wb-tool" type="button" data-tool="Highlighter" aria-pressed="false" title="Highlighter">
+              <i class="fa-solid fa-highlighter"></i><span class="wb-tool-tip">Highlighter</span>
+            </button>
+            <button class="wb-tool" type="button" data-tool="Eraser" aria-pressed="false" title="Eraser">
+              <i class="fa-solid fa-eraser"></i><span class="wb-tool-tip">Eraser</span>
+            </button>
+            <button class="wb-tool" type="button" data-tool="Text" aria-pressed="false" title="Text">
+              <i class="fa-solid fa-font"></i><span class="wb-tool-tip">Text</span>
+            </button>
 
-          <div class="tool-settings">
-            <div class="setting-group">
-              <span class="setting-label">Color</span>
-              <div class="color-palette">
-                <button class="color-swatch active" type="button" data-color="#111827" style="background: #111827"></button>
-                <button class="color-swatch" type="button" data-color="#2563eb" style="background: #2563eb"></button>
-                <button class="color-swatch" type="button" data-color="#16a34a" style="background: #16a34a"></button>
-                <button class="color-swatch" type="button" data-color="#dc2626" style="background: #dc2626"></button>
-                <button class="color-swatch" type="button" data-color="#f59e0b" style="background: #f59e0b"></button>
-              </div>
-            </div>
-            <div class="setting-group">
-              <span class="setting-label">Stroke</span>
-              <div class="stroke-options">
-                <button class="stroke-size active" type="button" data-size="2">2px</button>
-                <button class="stroke-size" type="button" data-size="4">4px</button>
-                <button class="stroke-size" type="button" data-size="6">6px</button>
-                <button class="stroke-size" type="button" data-size="8">8px</button>
+            <div class="wb-shapes-wrap">
+              <button class="wb-tool" type="button" data-tool="Shapes" id="shapesToolBtn" aria-pressed="false" title="Shapes">
+                <i class="fa-solid fa-shapes"></i><span class="wb-tool-tip">Shapes</span>
+              </button>
+              <div class="wb-shapes-flyout" id="shapesFlyout" role="menu" aria-label="Shape type">
+                <button class="wb-shape-opt active" type="button" data-shape="rectangle" title="Rectangle"><i class="fa-regular fa-square"></i></button>
+                <button class="wb-shape-opt" type="button" data-shape="ellipse" title="Ellipse"><i class="fa-regular fa-circle"></i></button>
+                <button class="wb-shape-opt" type="button" data-shape="line" title="Line"><i class="fa-solid fa-minus"></i></button>
+                <button class="wb-shape-opt" type="button" data-shape="arrow" title="Arrow"><i class="fa-solid fa-arrow-right-long"></i></button>
               </div>
             </div>
           </div>
+
+          <div class="wb-dock-divider"></div>
+
+          <div class="wb-color-group" role="group" aria-label="Color">
+            <button class="color-swatch active" type="button" data-color="#111827" style="background:#111827" title="Ink"></button>
+            <button class="color-swatch" type="button" data-color="#2563eb" style="background:#2563eb" title="Blue"></button>
+            <button class="color-swatch" type="button" data-color="#16a34a" style="background:#16a34a" title="Green"></button>
+            <button class="color-swatch" type="button" data-color="#dc2626" style="background:#dc2626" title="Red"></button>
+            <button class="color-swatch" type="button" data-color="#f59e0b" style="background:#f59e0b" title="Amber"></button>
+            <label class="wb-color-custom" title="Custom color">
+              <i class="fa-solid fa-eye-dropper"></i>
+              <input type="color" id="customColor" value="#7c3aed" aria-label="Pick a custom color">
+            </label>
+          </div>
+
+          <div class="wb-dock-divider"></div>
+
+          <div class="wb-stroke-group" role="group" aria-label="Stroke width">
+            <i class="fa-solid fa-pencil wb-stroke-icon" aria-hidden="true"></i>
+            <input type="range" id="strokeRange" class="wb-stroke-range" min="1" max="24" value="3" aria-label="Stroke width">
+            <span class="wb-stroke-value" id="strokeValue">3 px</span>
+          </div>
         </div>
 
-        <div class="sidebar-panel">
-          <h3>Layers</h3>
-          <div class="layers-placeholder">Layer controls and visibility toggles.</div>
-        </div>
-      </aside>
-
-      <main class="whiteboard-canvas-container">
-        <div class="whiteboard-toolbar">
-          <div class="toolbar-info">
-            <span class="toolbar-label">Current room: <strong>Study Session</strong></span>
-            <span class="toolbar-label">Participants: <strong>4</strong></span>
-          </div>
-          <div class="toolbar-meta">
-            <span class="toolbar-status" id="toolbarStatus">Tool: Pen • #111827 • 2px</span>
-          </div>
-        </div>
-        <div class="whiteboard-canvas" aria-label="Shared whiteboard drawing surface">
+        <!-- Drawing surface -->
+        <div class="whiteboard-canvas" id="canvasWrapper" aria-label="Shared whiteboard drawing surface">
           <canvas id="whiteboardCanvas" role="img" aria-label="Canvas drawing area"></canvas>
-          <div class="whiteboard-placeholder">Select a drawing tool to begin sketching.</div>
+          <div class="whiteboard-placeholder">Pick a tool and start drawing</div>
         </div>
-        <div class="whiteboard-helper">
-          <span>Tip: drag on the canvas with a tool selected.</span>
-          <span>Hold the eraser to remove strokes.</span>
+
+        <!-- Status strip -->
+        <div class="whiteboard-statusbar">
+          <span class="toolbar-status" id="toolbarStatus">
+            <i class="fa-solid fa-pen"></i> Pen • #111827 • 3px
+          </span>
+          <span class="status-hint">
+            <i class="fa-solid fa-circle-info"></i>
+            <span id="statusHint">Drag on the canvas to draw</span>
+          </span>
         </div>
       </main>
 
-      <aside class="whiteboard-chat-panel">
-        <div class="chat-panel-header">
-          <h3>Live Notes</h3>
-        </div>
+      <!-- People + tips -->
+      <aside class="whiteboard-side">
+        <h4>
+          <i class="fa-solid fa-users"></i> Participants
+          <span class="participant-count-pill" id="participantCount">1</span>
+        </h4>
+        <ul class="collaborators" id="participantList">
+          <!-- Populated live via Socket.IO -->
+        </ul>
 
-        <div class="collaborator-panel">
-          <h4>Participants</h4>
-          <ul class="collaborators">
-            <li class="collaborator">
-              <span class="avatar">ML</span>
-              <div>
-                <span class="collab-name">Mia Leaders</span>
-                <span class="collab-status">Editing</span>
-              </div>
-            </li>
-            <li class="collaborator">
-              <span class="avatar">SJ</span>
-              <div>
-                <span class="collab-name">Sam Jones</span>
-                <span class="collab-status">Viewing</span>
-              </div>
-            </li>
-            <li class="collaborator">
-              <span class="avatar">NV</span>
-              <div>
-                <span class="collab-name">Nina Vo</span>
-                <span class="collab-status">Offline</span>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <div class="chat-note-list">
-          <div class="chat-note">Annotate with text, comments, and quick highlights.</div>
-          <div class="chat-note">Use the tool palette to switch drawing modes.</div>
+        <div class="wb-side-tips">
+          <div class="wb-tip">
+            <i class="fa-solid fa-share-nodes"></i>
+            <span>Share code <strong>#{{ code }}</strong> so others can join this board.</span>
+          </div>
+          <div class="wb-tip">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Everyone's strokes sync in real time.</span>
+          </div>
+          <div class="wb-tip">
+            <i class="fa-solid fa-keyboard"></i>
+            <span>Press <strong>Esc</strong> to cancel a text box or close dialogs.</span>
+          </div>
         </div>
       </aside>
     </div>
@@ -139,19 +134,28 @@
   <div class="modal-overlay" id="inviteModal" aria-hidden="true">
     <div class="invite-modal" role="dialog" aria-modal="true" aria-labelledby="inviteModalTitle">
       <h3 class="invite-modal-title" id="inviteModalTitle">Invite collaborators</h3>
-      <p class="invite-modal-copy">Share this board link with your study group.</p>
+      <p class="invite-modal-copy">Share this board link or code <strong>#{{ code }}</strong> with your study group.</p>
       <div class="invite-link-group">
         <input id="inviteLinkInput" type="text" readonly value="{{ request.url }}">
-        <button type="button" class="wb-btn wb-btn-secondary" id="copyInviteLink">Copy link</button>
+        <button type="button" class="wb-btn wb-btn-secondary" id="copyInviteLink">
+          <i class="fa-solid fa-copy"></i> Copy
+        </button>
       </div>
       <div class="invite-modal-actions">
         <button type="button" class="wb-btn wb-btn-secondary" id="closeInviteModal">Close</button>
       </div>
     </div>
   </div>
-
 {% endblock %}
 
 {% block scripts %}
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    window.WHITEBOARD = {
+      code: "{{ code }}",
+      username: "{{ current_user.username if current_user else '' }}",
+      userId: "{{ current_user.id if current_user else '' }}"
+    };
+  </script>
   <script src="{{ url_for('static', filename='js/whiteboard.js') }}"></script>
 {% endblock %}
