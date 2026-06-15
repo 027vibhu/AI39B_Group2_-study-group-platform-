@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, jsonify
+from app.controllers.database_setup_controller import DatabaseSetupController
 
 
 class StatusRoutes:
@@ -7,6 +8,8 @@ class StatusRoutes:
 
     def register(self):
         self.bp.route("/status")(self.status)
+        self.bp.route("/notift")(self.notift)
+        self.bp.route("/initialize_database", methods=["POST"])(self.initialize_database)
         return self.bp
 
     def status(self):
@@ -20,6 +23,14 @@ class StatusRoutes:
             "status.html",
             members=members
         )
+
+    def notift(self):
+        return render_template('notift.html')
+
+    def initialize_database(self):
+        controller = DatabaseSetupController()
+        result = controller.initialize_database()
+        return jsonify(result)
 
 
 # expose module-level blueprint for compatibility

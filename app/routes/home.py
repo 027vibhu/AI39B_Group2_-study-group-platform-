@@ -20,11 +20,15 @@ from app.models.shared_file import create_shared_file, get_shared_file_by_id, ge
 from app.controllers.moderation_controller import ModerationController
 from app.controllers.browse_rooms_controller import BrowseRoomsController
 from app.controllers.note_controller import NoteController
-from app import socketio
 import random
 import os
 import uuid
 from werkzeug.utils import secure_filename
+
+
+def _get_socketio():
+    from app import socketio
+    return socketio
 
 ALLOWED_SHARED_FILE_EXTENSIONS = {
     '.png', '.jpg', '.jpeg', '.gif', '.webp',
@@ -61,6 +65,9 @@ class HomeRoutes:
         self.bp.context_processor(self.inject_joined_rooms)
         self.bp.route('/profile')(self.profile)
         self.bp.route('/moderation')(self.moderation)
+        self.bp.route('/track-study-hours')(self.track_study_hours)
+        # alias with underscore to support URLs that use underscores
+        self.bp.route('/track_study_hours')(self.track_study_hours)
         self.bp.route('/moderation/action', methods=['POST'])(self.moderation_action)
         self.bp.route('/profile/update', methods=['POST'])(self.update_profile)
         self.bp.route('/profile/avatar', methods=['POST'])(self.update_avatar)
@@ -289,7 +296,7 @@ class HomeRoutes:
         file_id = create_shared_file(room['id'], current_user['username'], original_filename, stored_filename, mime_type, file_size)
 
         # Broadcast the file upload to all clients in the room
-        socketio.emit('file_uploaded', {
+        _get_socketio().emit('file_uploaded', {
             'room_code': room_code,
             'id': file_id,
             'original_filename': original_filename,
@@ -503,7 +510,7 @@ class HomeRoutes:
             reason,
         )
 
-        socketio.emit(
+        _get_socketio().emit(
             'moderation_action',
             {
                 'action': action,

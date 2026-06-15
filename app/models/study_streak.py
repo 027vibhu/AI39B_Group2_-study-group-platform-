@@ -12,12 +12,12 @@ class StudyStreakModel(BaseModel):
         return self.execute(
             "CREATE TABLE IF NOT EXISTS study_streaks ("
             "id INT AUTO_INCREMENT PRIMARY KEY,"
-            "user_id INT NOT NULL," 
+            "user_id INT NOT NULL,"
             "current_streak INT NOT NULL DEFAULT 0,"
             "longest_streak INT NOT NULL DEFAULT 0,"
-            "last_study_date DATE NULL," 
+            "last_study_date DATE NULL,"
             "updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,"
-            "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP," 
+            "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
             "UNIQUE KEY uq_study_streak_user (user_id),"
             "INDEX idx_study_streak_user (user_id)"
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
@@ -37,7 +37,8 @@ class StudyStreakModel(BaseModel):
             "INSERT INTO study_streaks (user_id, current_streak, longest_streak, last_study_date) "
             "VALUES (%s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE current_streak = VALUES(current_streak), "
-            "longest_streak = VALUES(longest_streak), last_study_date = VALUES(last_study_date), "
+            "longest_streak = VALUES(longest_streak), "
+            "last_study_date = VALUES(last_study_date), "
             "updated_at = CURRENT_TIMESTAMP",
             (user_id, current_streak, longest_streak, last_study_date),
         )

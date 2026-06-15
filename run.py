@@ -32,4 +32,4 @@ if __name__ == "__main__":
     port = find_available_port(preferred_port)
     if port != preferred_port:
         print(f"Port {preferred_port} is in use. Starting on port {port} instead.")
-    socketio.run(app, host='127.0.0.1', port=port, debug=True)
+    socketio.run(app, host='0.0.0.0', port=port, debug=True, use_reloader=False)
