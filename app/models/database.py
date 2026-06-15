@@ -335,6 +335,13 @@ def create_room_actions_table():
                 cursor.execute("ALTER TABLE room_actions ADD INDEX idx_room_actions_room_code (room_code)")
             except Exception:
                 pass
+
+                try:
+                    from app.models.exam_countdown import ensure_table_exists as _ensure_exam_table
+
+                    _ensure_exam_table()
+                except Exception:
+                    pass
     finally:
         connection.close()
 
