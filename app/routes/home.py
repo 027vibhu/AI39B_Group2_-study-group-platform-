@@ -69,6 +69,12 @@ class HomeRoutes:
         self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
         self.bp.route('/notes/<int:note_id>/share', methods=['POST'])(self.share_note)
         self.bp.route('/notes/<int:note_id>/delete', methods=['POST'])(self.delete_note)
+        self.bp.route('/whiteboard')(self.whiteboard)
+        self.bp.route('/chat/<room_code>/whiteboard')(self.whiteboard_room)
+        # Study hours tracking routes
+        self.bp.route('/study-hours')(self.study_hours_index)
+        self.bp.route('/study-hours/new')(self.study_hours_new)
+        self.bp.route('/study-hours/create', methods=['POST'])(self.study_hours_create)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
         self.bp.route('/chat/<room_code>/upload', methods=['POST'])(self.upload_chat_image)
         self.bp.route('/music')(self.music)
@@ -147,6 +153,28 @@ class HomeRoutes:
 
     def create(self):
         return redirect(url_for('home.create_room'))
+
+    def whiteboard(self):
+        return render_template('whiteboard.html')
+
+    def whiteboard_room(self, room_code):
+        room = get_room_by_code(room_code)
+        if not room:
+            return redirect(url_for('home.chat', room_code=room_code))
+        return render_template('whiteboard.html', room_code=room_code, room=room)
+
+    # --- Study hours route handlers (thin wrappers around controller) ---
+    def study_hours_index(self):
+        controller = StudyHourController()
+        return controller.list_sessions()
+
+    def study_hours_new(self):
+        controller = StudyHourController()
+        return controller.new_session_form()
+
+    def study_hours_create(self):
+        controller = StudyHourController()
+        return controller.create_session()
 
     def _generate_unique_room_code(self):
         while True:

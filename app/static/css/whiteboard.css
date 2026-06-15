@@ -1,0 +1,478 @@
+.whiteboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding: 1.5rem 1.75rem;
+}
+
+.whiteboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.whiteboard-info {
+  max-width: 56rem;
+}
+
+.whiteboard-title {
+  margin: 0;
+  font-size: 1.95rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.whiteboard-subtitle {
+  margin: 0.5rem 0 0;
+  color: #4b5563;
+  line-height: 1.65;
+}
+
+.whiteboard-room-detail {
+  margin: 0.75rem 0 0;
+  color: #373f51;
+  font-size: 0.95rem;
+}
+
+.whiteboard-room-detail strong {
+  color: #111827;
+}
+
+.whiteboard-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.wb-btn {
+  border: none;
+  border-radius: 0.85rem;
+  padding: 0.95rem 1.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wb-btn-primary {
+  background: #4f46e5;
+  color: #ffffff;
+}
+
+.wb-btn-secondary {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.whiteboard-layout {
+  display: grid;
+  grid-template-columns: minmax(16rem, 18rem) minmax(0, 1fr) minmax(16rem, 18rem);
+  gap: 1.5rem;
+}
+
+.whiteboard-sidebar,
+.whiteboard-chat-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  min-height: 32rem;
+}
+
+.sidebar-panel h3,
+.chat-panel-header h3 {
+  margin: 0 0 0.85rem;
+  font-size: 1.1rem;
+  color: #111827;
+}
+
+.tool-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.tool-item {
+  display: block;
+  padding: 0.85rem 1rem;
+  border-radius: 0.95rem;
+  background: #f8fafc;
+  color: #334155;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tool-item:hover,
+.tool-item.active {
+  background: #eef2ff;
+  color: #1d4ed8;
+}
+
+.tool-item.active {
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+
+.tool-settings {
+  margin-top: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.setting-group {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.setting-label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.color-palette,
+.stroke-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.color-swatch,
+.stroke-size {
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.color-swatch {
+  width: 2rem;
+  height: 2rem;
+  box-shadow: 0 0 0 2px rgba(156, 163, 175, 0.18);
+}
+
+.color-swatch.active {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+}
+
+.stroke-size {
+  padding: 0.65rem 0.9rem;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.stroke-size.active {
+  background: #eef2ff;
+  color: #1d4ed8;
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+
+.whiteboard-canvas.board-cleared {
+  animation: flashClear 0.3s ease-in-out;
+}
+
+@keyframes flashClear {
+  0% { background-color: rgba(79, 70, 229, 0.1); }
+  100% { background-color: transparent; }
+}
+
+.layers-placeholder,
+.whiteboard-placeholder {
+  min-height: 12rem;
+  border: 1px dashed #d1d5db;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  color: #6b7280;
+  font-size: 0.98rem;
+  background: #f8fafc;
+}
+
+.whiteboard-canvas-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  min-height: 32rem;
+}
+
+.whiteboard-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: #f8fafc;
+  border-radius: 1rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid #e5e7eb;
+}
+
+.toolbar-info {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.toolbar-meta {
+  display: flex;
+  min-width: 18rem;
+  justify-content: flex-end;
+}
+
+.toolbar-status {
+  font-size: 0.95rem;
+  color: #475569;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.toolbar-label {
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.whiteboard-canvas {
+  flex: 1;
+  min-height: 28rem;
+  border-radius: 1.25rem;
+  border: 1px solid #d1d5db;
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  background-image:
+    linear-gradient(rgba(156, 163, 175, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(156, 163, 175, 0.15) 1px, transparent 1px),
+    linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  background-size: 40px 40px, 40px 40px, auto;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.whiteboard-canvas canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: transparent;
+  cursor: crosshair;
+}
+
+.whiteboard-helper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.75rem 0 0;
+  font-size: 0.95rem;
+  color: #525252;
+}
+
+.whiteboard-helper span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 1000;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.invite-modal {
+  width: 100%;
+  max-width: 480px;
+  padding: 1.75rem;
+  border-radius: 1.5rem;
+  background: #ffffff;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.18);
+}
+
+.invite-modal-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.3rem;
+  color: #111827;
+}
+
+.invite-modal-copy {
+  margin: 0 0 1.5rem;
+  color: #475569;
+  line-height: 1.7;
+}
+
+.invite-link-group {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+#inviteLinkInput {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 1rem;
+  background: #f8fafc;
+  color: #111827;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.invite-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.whiteboard-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  text-align: center;
+  font-style: italic;
+  color: #6b7280;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.whiteboard-placeholder.hidden {
+  display: none;
+}
+
+.collaborator-panel {
+  background: #f8fafc;
+  border-radius: 1rem;
+  padding: 1rem 1rem 0.75rem;
+  border: 1px solid #e5e7eb;
+}
+
+.collaborator-panel h4 {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  color: #111827;
+}
+
+.collaborators {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.collaborator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #ffffff;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+}
+
+.avatar {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: #4338ca;
+}
+
+.collab-name {
+  display: block;
+  font-weight: 600;
+  color: #111827;
+}
+
+.collab-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.83rem;
+  color: #6b7280;
+}
+
+.collab-status::before {
+  content: '';
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  display: inline-block;
+  background: #22c55e;
+}
+
+.collaborator:nth-child(3) .collab-status::before {
+  background: #f59e0b;
+}
+
+.chat-note-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.chat-note {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #f8fafc;
+  color: #374151;
+  line-height: 1.5;
+}
+
+@media (max-width: 1150px) {
+  .whiteboard-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .whiteboard-page {
+    padding: 1rem;
+  }
+
+  .whiteboard-header,
+  .whiteboard-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .whiteboard-actions {
+    justify-content: stretch;
+  }
+
+  .wb-btn {
+    width: 100%;
+  }
+}

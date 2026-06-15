@@ -1,0 +1,157 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Shared Whiteboard{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/whiteboard.css') }}">
+{% endblock %}
+
+{% block topbar_title %}
+  {% if room %}
+    <span class="topbar-room-meta">
+      <i class="fa-solid fa-chalkboard"></i>
+      {{ room.name if room.name else 'Room ' ~ room_code }} Whiteboard
+      <span class="room-code-chip">#{{ room_code }}</span>
+    </span>
+  {% else %}
+    Shared Whiteboard
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <section class="whiteboard-page">
+    <div class="whiteboard-header">
+      <div class="whiteboard-info">
+        <h2 class="whiteboard-title">Collaborative Whiteboard</h2>
+        <p class="whiteboard-subtitle">Draw, annotate, and share ideas in real time with your study group.</p>
+        {% if room %}
+        <p class="whiteboard-room-detail">Room: <strong>{{ room.name if room.name else 'Room ' ~ room_code }}</strong></p>
+        {% endif %}
+      </div>
+      <div class="whiteboard-actions">
+        <button class="wb-btn wb-btn-secondary" type="button">Clear board</button>
+        <button class="wb-btn wb-btn-secondary" type="button" id="downloadButton">Download board</button>
+        <button class="wb-btn wb-btn-primary" type="button" id="inviteButton">Invite collaborators</button>
+      </div>
+    </div>
+
+    <div class="whiteboard-layout">
+      <aside class="whiteboard-sidebar">
+        <div class="sidebar-panel">
+          <h3>Tools</h3>
+          <ul class="tool-list" role="list">
+            <li class="tool-item active" role="button" tabindex="0" aria-pressed="true">Pen</li>
+            <li class="tool-item" role="button" tabindex="0" aria-pressed="false">Highlighter</li>
+            <li class="tool-item" role="button" tabindex="0" aria-pressed="false">Eraser</li>
+            <li class="tool-item" role="button" tabindex="0" aria-pressed="false">Text</li>
+            <li class="tool-item" role="button" tabindex="0" aria-pressed="false">Shapes</li>
+          </ul>
+
+          <div class="tool-settings">
+            <div class="setting-group">
+              <span class="setting-label">Color</span>
+              <div class="color-palette">
+                <button class="color-swatch active" type="button" data-color="#111827" style="background: #111827"></button>
+                <button class="color-swatch" type="button" data-color="#2563eb" style="background: #2563eb"></button>
+                <button class="color-swatch" type="button" data-color="#16a34a" style="background: #16a34a"></button>
+                <button class="color-swatch" type="button" data-color="#dc2626" style="background: #dc2626"></button>
+                <button class="color-swatch" type="button" data-color="#f59e0b" style="background: #f59e0b"></button>
+              </div>
+            </div>
+            <div class="setting-group">
+              <span class="setting-label">Stroke</span>
+              <div class="stroke-options">
+                <button class="stroke-size active" type="button" data-size="2">2px</button>
+                <button class="stroke-size" type="button" data-size="4">4px</button>
+                <button class="stroke-size" type="button" data-size="6">6px</button>
+                <button class="stroke-size" type="button" data-size="8">8px</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-panel">
+          <h3>Layers</h3>
+          <div class="layers-placeholder">Layer controls and visibility toggles.</div>
+        </div>
+      </aside>
+
+      <main class="whiteboard-canvas-container">
+        <div class="whiteboard-toolbar">
+          <div class="toolbar-info">
+            <span class="toolbar-label">Current room: <strong>Study Session</strong></span>
+            <span class="toolbar-label">Participants: <strong>4</strong></span>
+          </div>
+          <div class="toolbar-meta">
+            <span class="toolbar-status" id="toolbarStatus">Tool: Pen • #111827 • 2px</span>
+          </div>
+        </div>
+        <div class="whiteboard-canvas" aria-label="Shared whiteboard drawing surface">
+          <canvas id="whiteboardCanvas" role="img" aria-label="Canvas drawing area"></canvas>
+          <div class="whiteboard-placeholder">Select a drawing tool to begin sketching.</div>
+        </div>
+        <div class="whiteboard-helper">
+          <span>Tip: drag on the canvas with a tool selected.</span>
+          <span>Hold the eraser to remove strokes.</span>
+        </div>
+      </main>
+
+      <aside class="whiteboard-chat-panel">
+        <div class="chat-panel-header">
+          <h3>Live Notes</h3>
+        </div>
+
+        <div class="collaborator-panel">
+          <h4>Participants</h4>
+          <ul class="collaborators">
+            <li class="collaborator">
+              <span class="avatar">ML</span>
+              <div>
+                <span class="collab-name">Mia Leaders</span>
+                <span class="collab-status">Editing</span>
+              </div>
+            </li>
+            <li class="collaborator">
+              <span class="avatar">SJ</span>
+              <div>
+                <span class="collab-name">Sam Jones</span>
+                <span class="collab-status">Viewing</span>
+              </div>
+            </li>
+            <li class="collaborator">
+              <span class="avatar">NV</span>
+              <div>
+                <span class="collab-name">Nina Vo</span>
+                <span class="collab-status">Offline</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="chat-note-list">
+          <div class="chat-note">Annotate with text, comments, and quick highlights.</div>
+          <div class="chat-note">Use the tool palette to switch drawing modes.</div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <div class="modal-overlay" id="inviteModal" aria-hidden="true">
+    <div class="invite-modal" role="dialog" aria-modal="true" aria-labelledby="inviteModalTitle">
+      <h3 class="invite-modal-title" id="inviteModalTitle">Invite collaborators</h3>
+      <p class="invite-modal-copy">Share this board link with your study group.</p>
+      <div class="invite-link-group">
+        <input id="inviteLinkInput" type="text" readonly value="{{ request.url }}">
+        <button type="button" class="wb-btn wb-btn-secondary" id="copyInviteLink">Copy link</button>
+      </div>
+      <div class="invite-modal-actions">
+        <button type="button" class="wb-btn wb-btn-secondary" id="closeInviteModal">Close</button>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/whiteboard.js') }}"></script>
+{% endblock %}
