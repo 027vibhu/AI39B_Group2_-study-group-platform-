@@ -9,65 +9,100 @@
 {% block topbar_title %}{% endblock %}
 
 {% block content %}
-    <div class="auth-box join-box-wrap">
-      <div class="left-panel">
-        <div class="left-content">
-          <h1>Join Room</h1>
-          <p>Enter the 6 digit room code to connect with your study team instantly.</p>
-        </div>
-      </div>
+  <div class="workspace">
 
-      <div class="right-panel">
-        <div class="form-box">
-          <h2 class="title">Join</h2>
-          <p class="sub">Type your 6 digit room code below</p>
+    <!-- Left -->
+    <div class="left">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
 
-          <div class="code-inputs">
-            <input type="text" maxlength="1">
-            <input type="text" maxlength="1">
-            <input type="text" maxlength="1">
-            <input type="text" maxlength="1">
-            <input type="text" maxlength="1">
-            <input type="text" maxlength="1">
-          </div>
-          <button class="main-btn" id="joinBtn">
-            Join Room
-          </button>
-        </div>
+      <div class="left-content">
+        <h1>Join<br>Room</h1>
+        <p>
+          Enter the 6 digit room code to connect
+          with your study team instantly.
+        </p>
       </div>
     </div>
+
+    <!-- Right -->
+    <div class="right">
+      <div class="form-box">
+
+        <div class="field f-1">
+          <label class="label"><i class="fa-solid fa-hashtag"></i> Room code</label>
+          <div class="code-inputs" id="code-inputs">
+            {% for i in range(6) %}
+            <input type="text" maxlength="1" inputmode="latin" autocomplete="off" style="animation-delay: {{ i * 80 }}ms" {% if i == 0 %}autofocus{% endif %}>
+            {% endfor %}
+          </div>
+        </div>
+
+        <button class="main-btn f-2" id="joinBtn">
+          <span>Join Room</span> <i class="fa-solid fa-arrow-right"></i>
+        </button>
+
+      </div>
+    </div>
+
+  </div>
 {% endblock %}
 
 {% block scripts %}
   <script>
     const inputs = document.querySelectorAll('.code-inputs input');
     const joinBtn = document.getElementById('joinBtn');
+    const codeInputsWrap = document.getElementById('code-inputs');
+
+    function currentCode() {
+      return Array.from(inputs).map(i => i.value).join('');
+    }
 
     inputs.forEach((input, index) => {
       input.addEventListener('input', () => {
-        if(input.value.length === 1 && index < inputs.length - 1){
+        input.value = input.value.toUpperCase();
+        input.classList.toggle('filled', input.value.length === 1);
+        if (input.value.length === 1 && index < inputs.length - 1) {
           inputs[index + 1].focus();
         }
       });
 
       input.addEventListener('keydown', (e) => {
-        if(e.key === 'Backspace' && input.value === '' && index > 0){
+        if (e.key === 'Backspace' && input.value === '' && index > 0) {
           inputs[index - 1].focus();
         }
+        if (e.key === 'Enter') {
+          joinBtn.click();
+        }
+      });
+
+      // Paste full code into any box
+      input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData.getData('text') || '').replace(/\s/g, '').toUpperCase().slice(0, 6);
+        if (!text) return;
+        text.split('').forEach((ch, i) => {
+          if (inputs[i]) {
+            inputs[i].value = ch;
+            inputs[i].classList.add('filled');
+          }
+        });
+        inputs[Math.min(text.length, 5)].focus();
       });
     });
 
     joinBtn.addEventListener('click', () => {
-        let code = "";
-        inputs.forEach(input => {
-            code += input.value;
-        });
-
-        if (code.length === 6) {
-            window.location.href = `/chat/${code}`;
-        } else {
-            alert("Please enter a 6-digit room code.");
-        }
+      const code = currentCode();
+      if (code.length === 6) {
+        window.location.href = `/chat/${code}`;
+      } else {
+        codeInputsWrap.classList.remove('shake');
+        void codeInputsWrap.offsetWidth; // restart animation
+        codeInputsWrap.classList.add('shake');
+      }
     });
   </script>
 {% endblock %}

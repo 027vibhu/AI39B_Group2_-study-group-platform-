@@ -160,6 +160,13 @@ body{
   transition:0.3s;
 }
 
+.ghost-btn{
+  display:inline-flex;
+  align-items:center;
+  color:inherit;
+  text-decoration:none;
+}
+
 .primary-btn{
   border:none;
 

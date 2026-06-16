@@ -335,6 +335,13 @@ def create_room_actions_table():
                 cursor.execute("ALTER TABLE room_actions ADD INDEX idx_room_actions_room_code (room_code)")
             except Exception:
                 pass
+
+                try:
+                    from app.models.exam_countdown import ensure_table_exists as _ensure_exam_table
+
+                    _ensure_exam_table()
+                except Exception:
+                    pass
     finally:
         connection.close()
 
@@ -415,6 +422,13 @@ class Database:
             pass
 
         try:
+            from app.models.exam_countdown import create_exam_countdown_table
+
+            create_exam_countdown_table()
+        except Exception:
+            pass
+
+        try:
             from app.models.chat_attachment import create_attachment, ensure_table_exists
 
             ensure_table_exists()
@@ -446,6 +460,21 @@ class Database:
             from app.models.shared_file import create_shared_files_table
 
             create_shared_files_table()
+        except Exception:
+            pass
+
+        try:
+            from app.models.whiteboard import create_whiteboard_table, create_whiteboard_member_table
+
+            create_whiteboard_table()
+            create_whiteboard_member_table()
+        except Exception:
+            pass
+
+        try:
+            from app.models.pomodoro import create_pomodoro_table
+
+            create_pomodoro_table()
         except Exception:
             pass
 
