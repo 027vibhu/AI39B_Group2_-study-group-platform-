@@ -5,7 +5,11 @@ from app.routes.roomroutes import room_bp
 
 # Use a compatible async mode for the current environment.
 # threading is the safest fallback when eventlet/gevent are unavailable or unsupported.
-socketio = SocketIO(async_mode='threading')
+# max_http_buffer_size is raised from the 1 MB default so large persisted-board
+# saves (many objects in one whiteboard_save_state JSON) aren't truncated.
+# Image bytes never travel over the socket — only their URLs — but object-heavy
+# boards still grow the state payload.
+socketio = SocketIO(async_mode='threading', max_http_buffer_size=10_000_000)
 
 def create_app():
 

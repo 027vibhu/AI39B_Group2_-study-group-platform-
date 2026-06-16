@@ -60,6 +60,16 @@ class WhiteboardModel(BaseModel):
             self.execute("ALTER TABLE whiteboard_state ADD UNIQUE KEY uq_whiteboard_state (whiteboard_id)")
         except Exception:
             pass
+        # Drop the legacy room-keyed unique key / index / column if they still exist.
+        for stmt in (
+            "ALTER TABLE whiteboard_state DROP INDEX uq_whiteboard_room",
+            "ALTER TABLE whiteboard_state DROP INDEX idx_whiteboard_room",
+            "ALTER TABLE whiteboard_state DROP COLUMN room_id",
+        ):
+            try:
+                self.execute(stmt)
+            except Exception:
+                pass
 
     # --- Board CRUD -----------------------------------------------------
     def create_whiteboard(self, code, title, owner_id=None):
