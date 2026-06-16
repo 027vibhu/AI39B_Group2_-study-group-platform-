@@ -77,7 +77,6 @@ class HomeRoutes:
         # Study hours tracking (logged via the dashboard widget)
         self.bp.route('/study-hours/create', methods=['POST'])(self.study_hours_create)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
-        self.bp.route('/chat/<room_code>/upload', methods=['POST'])(self.upload_chat_image)
         self.bp.route('/music')(self.music)
         
         return self.bp
