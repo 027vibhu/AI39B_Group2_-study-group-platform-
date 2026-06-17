@@ -2,3 +2,4 @@ Flask
 flask-socketio
 eventlet
 pymysql
+python-dotenv
