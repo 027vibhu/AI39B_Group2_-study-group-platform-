@@ -20,6 +20,7 @@ from app.models.shared_file import create_shared_file, get_shared_file_by_id, ge
 from app.controllers.moderation_controller import ModerationController
 from app.controllers.browse_rooms_controller import BrowseRoomsController
 from app.controllers.note_controller import NoteController
+from app.controllers.flashcard_controller import FlashcardController
 from app import socketio
 import random
 import os
@@ -68,6 +69,9 @@ class HomeRoutes:
         self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
         self.bp.route('/notes/<int:note_id>/share', methods=['POST'])(self.share_note)
         self.bp.route('/notes/<int:note_id>/delete', methods=['POST'])(self.delete_note)
+        self.bp.route('/notes/<int:note_id>/flashcards')(self.list_flashcards)
+        self.bp.route('/notes/<int:note_id>/flashcards/add', methods=['POST'])(self.add_flashcard)
+        self.bp.route('/flashcards/<int:flashcard_id>/delete', methods=['POST'])(self.delete_flashcard)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
         self.bp.route('/music')(self.music)
         
@@ -574,6 +578,18 @@ class HomeRoutes:
     def delete_note(self, note_id):
         controller = NoteController()
         return controller.delete_note(note_id)
+
+    def list_flashcards(self, note_id):
+        controller = FlashcardController()
+        return controller.list_flashcards(note_id)
+
+    def add_flashcard(self, note_id):
+        controller = FlashcardController()
+        return controller.add_flashcard(note_id)
+
+    def delete_flashcard(self, flashcard_id):
+        controller = FlashcardController()
+        return controller.delete_flashcard(flashcard_id)
 
     def create_room(self):
         if request.method == 'POST':
