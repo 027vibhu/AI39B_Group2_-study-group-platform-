@@ -8,6 +8,7 @@ from app.models.database import (
     create_user,
     update_user_password_by_email,
 )
+from app.models.deactivated_account import is_deactivated
 from app.utils.email import send_reset_code
 import re
 import time
@@ -32,6 +33,9 @@ class AuthController(BaseController):
             user = get_user_by_identifier(identifier)
             if not user or not check_password_hash(user['password_hash'], password):
                 return render_template('login.html', active_form='sign-in', login_error='Invalid credentials. Please try again.'), 401
+
+            if is_deactivated(user['id']):
+                return render_template('login.html', active_form='sign-in', login_error='This account has been deactivated and cannot be accessed.'), 403
 
             session['user_id'] = user['id']
             session['username'] = user['username']

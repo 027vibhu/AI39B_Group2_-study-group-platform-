@@ -82,6 +82,20 @@
 
           <button type="submit" class="save-btn">Save Changes</button>
         </form>
+
+        <div class="danger-zone">
+          <h2>Deactivate Account</h2>
+          <p class="danger-description">
+            Deactivating your account will close access. You can optionally provide a reason below.
+          </p>
+          <form method="POST" action="{{ url_for('account.deactivate_account') }}">
+            <div class="input-group">
+              <label>Reason for deactivation (optional)</label>
+              <textarea name="deactivation_reason" placeholder="Tell us why..."></textarea>
+            </div>
+            <button type="submit" class="save-btn">Deactivate Account</button>
+          </form>
+        </div>
       </div>
 
     </div>

@@ -491,3 +491,10 @@ class Database:
             create_study_streaks_table()
         except Exception:
             pass
+
+        try:
+            from app.models.deactivated_account import ensure_table_exists as _ensure_deactivated_table
+
+            _ensure_deactivated_table()
+        except Exception:
+            pass

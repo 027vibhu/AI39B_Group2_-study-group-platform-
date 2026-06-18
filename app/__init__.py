@@ -18,6 +18,7 @@ def create_app():
     from app.routes.status import status_bp
     from app.routes.message_vote_routes import message_vote_bp
     from app.routes.join_leave_notification_routes import join_leave_notification_bp
+    from app.routes.account_routes import account_bp
     from app.routes.quotes import quote_bp
     from app.routes import admin as admin_bp
     from app.routes.whiteboard_routes import whiteboard_bp
@@ -28,6 +29,7 @@ def create_app():
     app.register_blueprint(status_bp)
     app.register_blueprint(message_vote_bp)
     app.register_blueprint(join_leave_notification_bp)
+    app.register_blueprint(account_bp)
     app.register_blueprint(quote_bp)
     app.register_blueprint(admin_bp.bp)
     app.register_blueprint(whiteboard_bp)
