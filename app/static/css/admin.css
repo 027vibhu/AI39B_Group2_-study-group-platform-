@@ -168,6 +168,45 @@
 }
 .msg-group-title i{ color:#9095ab; }
 
+/* Role management */
+.role-management{
+  margin-bottom:24px;
+}
+.section-note{
+  margin-bottom:16px;
+  color:#646c85;
+  font-size:13px;
+}
+.role-form{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:0;
+}
+.role-select{
+  min-width:150px;
+  padding:10px 12px;
+  border:1px solid #d7dae6;
+  border-radius:10px;
+  background:#fff;
+  color:#2b2f3a;
+  font-size:14px;
+}
+.save-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 16px;
+  border:none;
+  border-radius:10px;
+  background:#4b4f78;
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+  transition:background .15s;
+}
+.save-btn:hover{ background:#3c425f; }
+
 /* Empty state */
 .empty-state{
   display:flex;

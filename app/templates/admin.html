@@ -35,9 +35,55 @@
       <button type="button" class="admin-tab" data-tab="users">
         <i class="fa-solid fa-users"></i> Users <span class="pill">{{ users|length }}</span>
       </button>
+      <button type="button" class="admin-tab" data-tab="roles">
+        <i class="fa-solid fa-user-gear"></i> Roles
+      </button>
       <button type="button" class="admin-tab" data-tab="messages">
         <i class="fa-solid fa-message"></i> Messages
       </button>
+    </div>
+
+    {# ----- ROLES ----- #}
+    <div class="admin-panel" data-panel="roles">
+      {% if users %}
+        <div class="role-management">
+          <p class="section-note">Assign and update user roles directly from the admin dashboard.</p>
+          <table class="admin-table">
+            <thead>
+              <tr><th>Username</th><th>Email</th><th>Current Role</th><th>Assign Role</th><th></th></tr>
+            </thead>
+            <tbody>
+              {% for user in users %}
+                <tr>
+                  <td>{{ user.username }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>
+                    {% if user.role == 'admin' %}
+                      <span class="tag tag-admin">Admin</span>
+                    {% else %}
+                      <span class="tag">{{ user.role }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <form method="POST" action="{{ url_for('admin.update_role', user_id=user.id) }}" class="role-form">
+                      <select name="role" class="role-select">
+                        <option value="member" {% if user.role == 'member' %}selected{% endif %}>Member</option>
+                        <option value="moderator" {% if user.role == 'moderator' %}selected{% endif %}>Moderator</option>
+                        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                      </select>
+                  </td>
+                  <td class="action-cell">
+                      <button type="submit" class="save-btn">Save</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state"><i class="fa-solid fa-user-gear"></i><strong>No users available for role assignment</strong></div>
+      {% endif %}
     </div>
 
     {# ----- ROOMS ----- #}
@@ -178,25 +224,5 @@
 {% endblock %}
 
 {% block scripts %}
-  <script>
-    (function () {
-      const tabs = document.querySelectorAll('.admin-tab');
-      const panels = document.querySelectorAll('.admin-panel');
-      tabs.forEach((tab) => {
-        tab.addEventListener('click', () => {
-          const target = tab.dataset.tab;
-          tabs.forEach((t) => t.classList.toggle('active', t === tab));
-          panels.forEach((p) => p.classList.toggle('active', p.dataset.panel === target));
-        });
-      });
-
-      document.querySelectorAll('.confirm-form').forEach((form) => {
-        form.addEventListener('submit', (e) => {
-          if (!window.confirm(form.dataset.confirm || 'Are you sure?')) {
-            e.preventDefault();
-          }
-        });
-      });
-    })();
-  </script>
+  <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 {% endblock %}
