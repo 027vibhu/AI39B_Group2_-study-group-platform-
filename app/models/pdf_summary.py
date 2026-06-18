@@ -27,10 +27,23 @@ class PdfSummary(BaseModel):
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
         )
 
+    def create_summary(self, slug, title, content, source_file=None, author_id=None, published=False):
+        """Insert a new PDF summary record using raw SQL."""
+        ensure_database_exists()
+        return self.execute(
+            "INSERT INTO pdf_summaries (slug, title, content, source_file, author_id, published) "
+            "VALUES (%s, %s, %s, %s, %s, %s)",
+            (slug, title, content, source_file, author_id, bool(published)),
+        )
+
 
 # Module-level convenience
 _pdf_summary = PdfSummary()
 
 
 def ensure_table_exists():
+    return PdfSummary.ensure_table_exists()
+
+
+def create_pdf_summaries_table():
     return PdfSummary.ensure_table_exists()

@@ -23,6 +23,7 @@ def create_app():
     from app.routes import admin as admin_bp
     from app.routes.whiteboard_routes import whiteboard_bp
     from app.routes import exam_countdown_routes as exam_countdown
+    from app.routes.pdf_summary_routes import pdf_summary_bp
 
     app.register_blueprint(auth_bp.bp)
     app.register_blueprint(room_bp)
@@ -34,6 +35,7 @@ def create_app():
     app.register_blueprint(admin_bp.bp)
     app.register_blueprint(whiteboard_bp)
     app.register_blueprint(exam_countdown.exam_bp)
+    app.register_blueprint(pdf_summary_bp)
 
     from app import sockets, models
     # Import the database module as a module object so tests can monkeypatch

@@ -20,3 +20,8 @@ class PdfSummaryController(BaseController):
         """Fetch a single summary by its slug."""
         self._model.ensure_table_exists()
         return self._model.find_by('slug', slug)
+
+    def create_summary(self, slug: str, title: str, content: str, source_file=None, author_id=None, published=False):
+        """Create a new PDF summary record."""
+        self._model.ensure_table_exists()
+        return self._model.create_summary(slug, title, content, source_file, author_id, published)

@@ -429,6 +429,13 @@ class Database:
             pass
 
         try:
+            from app.models.pdf_summary import create_pdf_summaries_table
+
+            create_pdf_summaries_table()
+        except Exception:
+            pass
+
+        try:
             from app.models.chat_attachment import create_attachment, ensure_table_exists
 
             ensure_table_exists()
