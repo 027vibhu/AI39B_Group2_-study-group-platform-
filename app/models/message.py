@@ -68,10 +68,6 @@ def get_messages_for_room(room_id):
     return _message_model.get_messages_for_room(room_id)
 
 
-def get_message_by_id(message_id):
-    return _message_model.get_message_by_id(message_id)
-
-
 def delete_message(message_id):
     return _message_model.delete_message(message_id)
 

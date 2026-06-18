@@ -6,13 +6,13 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/notes.css') }}">
 {% endblock %}
 
-{% block topbar_title %}My Notes{% endblock %}
+{% block topbar_title %}{% endblock %}
 
 {% block content %}
   <section class="notes-page">
     <div class="notes-bar">
       <div class="notes-bar-text">
-        <h2>Study Notes</h2>
+        <h2>My Notes</h2>
         <p>Upload, organize, and revisit your PDF study materials anytime.</p>
       </div>
       <div class="notes-bar-actions">
@@ -70,6 +70,37 @@
         </form>
       </div>
     </div>
+
+    <section class="ai-summary-section">
+      <div class="ai-summary-header">
+        <div>
+          <h2>AI PDF Summaries</h2>
+          <p>Generate a concise summary from your uploaded PDF directly inside your notes dashboard.</p>
+        </div>
+        <button type="button" class="generate-summary-btn" id="generateSummaryBtn">
+          <i class="fa-solid fa-robot"></i>
+          Generate Summary
+        </button>
+      </div>
+
+      <div class="summary-upload-group">
+        <label for="summaryPdf">Upload PDF for AI summary</label>
+        <div class="summary-dropzone" id="summaryDropzone">
+          <input type="file" name="summaryPdf" id="summaryPdf" accept="application/pdf">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span class="dz-primary">Drag &amp; drop a PDF here</span>
+          <span class="dz-secondary">or click to select a file</span>
+          <span class="summary-file-name" id="summaryFilename"></span>
+        </div>
+      </div>
+
+      <div class="ai-summary-content" id="aiSummaryContent" aria-live="polite" role="status">
+        <div class="summary-placeholder">
+          <h3>Summary Preview</h3>
+          <p>Your AI-generated summary will appear here once you upload a PDF and request generation.</p>
+        </div>
+      </div>
+    </section>
 
     {% if notes %}
       <div class="search-row">
@@ -302,4 +333,5 @@
       }
     })();
   </script>
+  <script src="{{ url_for('static', filename='js/notes-summary.js') }}"></script>
 {% endblock %}

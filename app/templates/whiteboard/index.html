@@ -1,0 +1,317 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Whiteboards{% endblock %}
+
+{% block topbar_title %}My Whiteboards{% endblock %}
+
+{% block head %}
+  <style>
+    /* Whiteboards hub — styled to match the Notes page design language. */
+    .wb-hub{
+      width:100%;
+      max-width:1100px;
+      margin:0;
+      padding:8px 24px 60px;
+    }
+
+    /* HEADER BAR (notes-bar style) */
+    .wb-bar{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:20px;
+      flex-wrap:wrap;
+      padding-bottom:22px;
+      margin-bottom:26px;
+      border-bottom:1px solid rgba(24,32,56,0.1);
+    }
+    .wb-bar-text h2{
+      font-size:32px;
+      color:#2b2f3a;
+      letter-spacing:-0.5px;
+      margin:0 0 6px;
+    }
+    .wb-bar-text p{
+      color:#7a7f95;
+      font-size:14px;
+      margin:0;
+      max-width:52ch;
+      line-height:1.6;
+    }
+    .wb-count-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 16px;
+      border-radius:999px;
+      background:#eef0f8;
+      color:#4b4f78;
+      font-size:13px;
+      font-weight:600;
+      white-space:nowrap;
+    }
+
+    /* ACTION CARDS */
+    .wb-actions{
+      display:flex;
+      gap:20px;
+      flex-wrap:wrap;
+      margin-bottom:38px;
+    }
+    .wb-action-card{
+      flex:1 1 20rem;
+      background:#fff;
+      border:1px solid rgba(24,32,56,0.08);
+      border-radius:24px;
+      padding:28px 30px;
+      box-shadow:0 8px 22px rgba(24,32,56,0.04);
+    }
+    .wb-action-card h3{
+      margin:0 0 6px;
+      font-size:17px;
+      color:#2b2f3a;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .wb-action-card h3 i{ color:#4b4f78; }
+    .wb-action-card p{
+      margin:0 0 18px;
+      color:#7a7f95;
+      font-size:13.5px;
+      line-height:1.55;
+    }
+    .wb-action-card form{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .wb-action-card input[type="text"]{
+      flex:1 1 9rem;
+      min-width:0;
+      border:1px solid transparent;
+      background:#f4f5f9;
+      padding:14px 16px;
+      border-radius:14px;
+      font-size:14px;
+      font-family:inherit;
+      outline:none;
+      transition:0.25s;
+    }
+    .wb-action-card input[type="text"]:focus{
+      background:#fff;
+      border-color:rgba(75,79,120,0.35);
+      box-shadow:0 0 0 3px rgba(75,79,120,0.12);
+    }
+
+    .wb-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:9px;
+      border:none;
+      cursor:pointer;
+      font-size:14px;
+      font-weight:600;
+      font-family:inherit;
+      padding:14px 24px;
+      border-radius:14px;
+      text-decoration:none;
+      transition:0.25s;
+    }
+    .wb-btn-primary{ background:#4b4f78; color:#fff; }
+    .wb-btn-primary:hover{
+      background:#3f456a;
+      transform:translateY(-2px);
+      box-shadow:0 10px 20px rgba(75,79,120,0.25);
+    }
+    .wb-btn-secondary{ background:#eef0f8; color:#4b4f78; }
+    .wb-btn-secondary:hover{ background:#4b4f78; color:#fff; }
+
+    /* YOUR BOARDS */
+    .wb-section-title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:#4b4f78;
+      font-size:17px;
+      margin:0 0 16px;
+    }
+
+    .wb-board-list{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .wb-board-card{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      background:#fff;
+      border:1px solid rgba(24,32,56,0.08);
+      border-radius:18px;
+      padding:18px 22px;
+      box-shadow:0 8px 22px rgba(24,32,56,0.04);
+      text-decoration:none;
+      color:inherit;
+      transition:transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+    .wb-board-card:hover{
+      transform:translateX(4px);
+      border-color:rgba(75,79,120,0.25);
+      box-shadow:0 14px 30px rgba(24,32,56,0.1);
+    }
+    .wb-board-icon{
+      flex-shrink:0;
+      width:50px;
+      height:50px;
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(75,79,120,0.1);
+      color:#4b4f78;
+      font-size:22px;
+    }
+    .wb-board-main{ flex:1; min-width:0; }
+    .wb-board-title{
+      display:block;
+      font-size:16px;
+      font-weight:600;
+      color:#2b2f3a;
+      margin:0 0 4px;
+      word-break:break-word;
+    }
+    .wb-code-chip{
+      display:inline-block;
+      font-family:monospace;
+      font-size:12.5px;
+      background:#eef0f8;
+      color:#4b4f78;
+      padding:3px 10px;
+      border-radius:999px;
+    }
+    .wb-board-updated{
+      flex-shrink:0;
+      display:flex;
+      align-items:center;
+      gap:7px;
+      color:#9499ad;
+      font-size:12.5px;
+      white-space:nowrap;
+    }
+    .wb-board-open{
+      flex-shrink:0;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      color:#4b4f78;
+      background:#eef0f8;
+      font-weight:600;
+      font-size:13.5px;
+      padding:10px 18px;
+      border-radius:12px;
+      transition:0.25s;
+    }
+    .wb-board-card:hover .wb-board-open{ background:#4b4f78; color:#fff; }
+
+    /* EMPTY STATE */
+    .wb-empty{
+      text-align:center;
+      padding:64px 30px;
+      background:#fff;
+      border:1px dashed rgba(75,79,120,0.25);
+      border-radius:20px;
+      color:#7a7f95;
+    }
+    .wb-empty i{
+      font-size:46px;
+      color:#c7cadb;
+      margin-bottom:16px;
+    }
+    .wb-empty strong{
+      display:block;
+      font-size:17px;
+      color:#3f456a;
+      margin-bottom:6px;
+    }
+    .wb-empty span{ font-size:14px; }
+
+    @media (max-width:760px){
+      .wb-bar-text h2{ font-size:26px; }
+      .wb-board-card{ flex-wrap:wrap; align-items:flex-start; }
+      .wb-board-updated{ order:3; }
+      .wb-board-open{ order:4; margin-left:auto; }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="wb-hub">
+    <div class="wb-bar">
+      <div class="wb-bar-text">
+        <p>Create a new board, reopen one of yours, or join a friend's board with a code to sketch together in real time.</p>
+      </div>
+      <span class="wb-count-pill">
+        <i class="fa-solid fa-chalkboard"></i>
+        {{ boards|length if boards else 0 }} boards
+      </span>
+    </div>
+
+    <div class="wb-actions">
+      <div class="wb-action-card">
+        <h3><i class="fa-solid fa-plus"></i> New whiteboard</h3>
+        <p>Start a fresh board you own and can share with others.</p>
+        <form action="{{ url_for('home.whiteboard_new') }}" method="POST">
+          <input type="text" name="title" placeholder="Board title (optional)" maxlength="120">
+          <button type="submit" class="wb-btn wb-btn-primary">
+            <i class="fa-solid fa-pen-ruler"></i> Create board
+          </button>
+        </form>
+      </div>
+
+      <div class="wb-action-card">
+        <h3><i class="fa-solid fa-user-plus"></i> Join a board</h3>
+        <p>Enter a share code to collaborate on someone else's board.</p>
+        <form action="{{ url_for('home.whiteboard_join') }}" method="POST">
+          <input type="text" name="code" placeholder="Enter code" required>
+          <button type="submit" class="wb-btn wb-btn-secondary">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Join
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <h3 class="wb-section-title">
+      <i class="fa-solid fa-layer-group"></i>
+      Your boards
+    </h3>
+    {% if boards and boards|length > 0 %}
+      <div class="wb-board-list">
+        {% for b in boards %}
+          <a class="wb-board-card" href="{{ url_for('home.whiteboard_board', code=b.code) }}" title="Open whiteboard">
+            <span class="wb-board-icon"><i class="fa-solid fa-chalkboard"></i></span>
+            <div class="wb-board-main">
+              <span class="wb-board-title">{{ b.title or ('Whiteboard ' ~ b.code) }}</span>
+              <span class="wb-code-chip">#{{ b.code }}</span>
+            </div>
+            <span class="wb-board-updated">
+              <i class="fa-regular fa-calendar"></i>
+              {{ b.updated_at }}
+            </span>
+            <span class="wb-board-open">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              Open
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="wb-empty">
+        <i class="fa-solid fa-chalkboard"></i>
+        <strong>No whiteboards yet</strong>
+        <span>Create one above to start sketching with your study group.</span>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

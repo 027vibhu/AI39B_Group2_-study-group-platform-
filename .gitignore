@@ -1,6 +1,9 @@
 venv
 .env
 config.py
+**/__pycache__/
+*.pyc
+.env
 app/controllers/__pycache__
 app/__pycache__
 app/models/__pycache__

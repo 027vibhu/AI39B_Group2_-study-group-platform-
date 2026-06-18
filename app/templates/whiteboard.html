@@ -1,0 +1,191 @@
+{% extends "base_dash.html" %}
+
+{% block title %}{{ board.title if board else 'Whiteboard' }}{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/whiteboard.css') }}">
+{% endblock %}
+
+{% block topbar_title %}
+  <div class="whiteboard-header">
+    <div class="whiteboard-info">
+      <span class="whiteboard-title-box">
+        {{ board.title if board and board.title else 'Collaborative Whiteboard' }}
+      </span>
+      <span class="room-code-chip">#{{ code }}</span>
+    </div>
+    <div class="whiteboard-actions">
+      <button class="wb-btn wb-btn-secondary" type="button" id="clearButton">
+        <i class="fa-solid fa-trash-can"></i> Clear
+      </button>
+      <button class="wb-btn wb-btn-secondary" type="button" id="downloadButton">
+        <i class="fa-solid fa-download"></i> Download
+      </button>
+      <button class="wb-btn wb-btn-secondary" type="button" id="uploadButton" title="Add image or PDF">
+        <i class="fa-solid fa-file-arrow-up"></i> Upload
+      </button>
+      <input type="file" id="uploadInput" accept="image/*,application/pdf" multiple hidden>
+      <button class="wb-btn wb-btn-primary" type="button" id="inviteButton">
+        <i class="fa-solid fa-user-plus"></i> Invite
+      </button>
+      <button class="wb-btn wb-btn-secondary wb-people-toggle" type="button" id="participantsToggle"
+              aria-expanded="false" aria-controls="participantsPanel" title="Participants">
+        <i class="fa-solid fa-users"></i>
+        <span class="wb-people-count" id="participantCount">1</span>
+      </button>
+    </div>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <section class="whiteboard-page">
+    <div class="whiteboard-layout">
+      <main class="whiteboard-stage">
+        <!-- Drawing surface fills the entire stage -->
+        <div class="whiteboard-canvas" id="canvasWrapper" aria-label="Shared whiteboard drawing surface">
+          <canvas id="whiteboardCanvas" role="img" aria-label="Canvas drawing area"></canvas>
+          <div class="whiteboard-placeholder">Pick a tool and start drawing</div>
+        </div>
+
+        <!-- Frosted-glass tool dock floating over the canvas -->
+        <div class="wb-dock" role="toolbar" aria-label="Drawing tools">
+          <div class="wb-tool-group" role="group" aria-label="Tools">
+            <button class="wb-tool active" type="button" data-tool="Pen" aria-pressed="true" title="Pen">
+              <i class="fa-solid fa-pen"></i><span class="wb-tool-tip">Pen</span>
+            </button>
+            <button class="wb-tool" type="button" data-tool="Highlighter" aria-pressed="false" title="Highlighter">
+              <i class="fa-solid fa-highlighter"></i><span class="wb-tool-tip">Highlighter</span>
+            </button>
+            <button class="wb-tool" type="button" data-tool="Eraser" aria-pressed="false" title="Eraser">
+              <i class="fa-solid fa-eraser"></i><span class="wb-tool-tip">Eraser</span>
+            </button>
+            <button class="wb-tool" type="button" data-tool="Move" aria-pressed="false" title="Move">
+              <i class="fa-solid fa-up-down-left-right"></i><span class="wb-tool-tip">Move</span>
+            </button>
+            <button class="wb-tool" type="button" data-tool="Hand" aria-pressed="false" title="Pan (Hand)">
+              <i class="fa-solid fa-hand"></i><span class="wb-tool-tip">Pan</span>
+            </button>
+            <button class="wb-tool" type="button" data-tool="Text" aria-pressed="false" title="Text">
+              <i class="fa-solid fa-font"></i><span class="wb-tool-tip">Text</span>
+            </button>
+
+            <div class="wb-shapes-wrap">
+              <button class="wb-tool" type="button" data-tool="Shapes" id="shapesToolBtn" aria-pressed="false" title="Shapes">
+                <i class="fa-solid fa-shapes"></i><span class="wb-tool-tip">Shapes</span>
+              </button>
+              <div class="wb-shapes-flyout" id="shapesFlyout" role="menu" aria-label="Shape type">
+                <button class="wb-shape-opt active" type="button" data-shape="rectangle" title="Rectangle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12"/></svg>
+                </button>
+                <button class="wb-shape-opt" type="button" data-shape="rounded-rectangle" title="Rounded rectangle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="4"/></svg>
+                </button>
+                <button class="wb-shape-opt" type="button" data-shape="ellipse" title="Oval">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="9" ry="6"/></svg>
+                </button>
+                <button class="wb-shape-opt" type="button" data-shape="circle" title="Circle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/></svg>
+                </button>
+                <button class="wb-shape-opt" type="button" data-shape="triangle" title="Triangle">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 L20 19 L4 19 Z"/></svg>
+                </button>
+                <button class="wb-shape-opt" type="button" data-shape="diamond" title="Diamond">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L21 12 L12 21 L3 12 Z"/></svg>
+                </button>
+                <button class="wb-shape-opt" type="button" data-shape="line" title="Line">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="20" x2="20" y2="4"/></svg>
+                </button>
+                <button class="wb-shape-opt" type="button" data-shape="arrow" title="Arrow">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="20" y2="4"/><path d="M20 4 L13.5 5.5 M20 4 L18.5 10.5"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="wb-dock-divider"></div>
+
+          <div class="wb-color-group" role="group" aria-label="Color">
+            <button class="color-swatch active" type="button" data-color="#111827" style="background:#111827" title="Ink"></button>
+            <button class="color-swatch" type="button" data-color="#2563eb" style="background:#2563eb" title="Blue"></button>
+            <button class="color-swatch" type="button" data-color="#16a34a" style="background:#16a34a" title="Green"></button>
+            <button class="color-swatch" type="button" data-color="#dc2626" style="background:#dc2626" title="Red"></button>
+            <button class="color-swatch" type="button" data-color="#f59e0b" style="background:#f59e0b" title="Amber"></button>
+            <label class="wb-color-custom" title="Custom color">
+              <i class="fa-solid fa-eye-dropper"></i>
+              <input type="color" id="customColor" value="#7c3aed" aria-label="Pick a custom color">
+            </label>
+          </div>
+
+          <div class="wb-dock-divider"></div>
+
+          <div class="wb-stroke-group" role="group" aria-label="Stroke width">
+            <i class="fa-solid fa-pencil wb-stroke-icon" aria-hidden="true"></i>
+            <input type="range" id="strokeRange" class="wb-stroke-range" min="1" max="24" value="3" aria-label="Stroke width">
+            <span class="wb-stroke-value" id="strokeValue">3 px</span>
+          </div>
+        </div>
+
+        <!-- Zoom controls — floating glass panel, bottom-right of the stage -->
+        <div class="wb-zoom-controls" role="group" aria-label="Zoom controls">
+          <button class="wb-zoom-btn" type="button" id="zoomOutBtn" title="Zoom out" aria-label="Zoom out">
+            <i class="fa-solid fa-minus"></i>
+          </button>
+          <button class="wb-zoom-level" type="button" id="zoomResetBtn" title="Reset view" aria-label="Reset zoom to 100%">100%</button>
+          <button class="wb-zoom-btn" type="button" id="zoomInBtn" title="Zoom in" aria-label="Zoom in">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+      </main>
+
+      <!-- People + tips — floating panel toggled from the topbar button -->
+      <aside class="whiteboard-side" id="participantsPanel" aria-hidden="true">
+        <h4>
+          <i class="fa-solid fa-users"></i> Participants
+          <span class="participant-count-pill" id="participantCountPanel">1</span>
+        </h4>
+        <ul class="collaborators" id="participantList">
+          <!-- Populated live via Socket.IO -->
+        </ul>
+      </aside>
+
+      <!-- Invite — floating glass panel toggled from the topbar button,
+           styled to match the Participants panel. -->
+      <aside class="whiteboard-side" id="inviteModal" role="dialog" aria-modal="false"
+             aria-labelledby="inviteModalTitle" aria-hidden="true">
+        <h4 id="inviteModalTitle">
+          <i class="fa-solid fa-user-plus"></i> Invite collaborators
+        </h4>
+        <p class="invite-modal-copy">Share this board link or code <strong>#{{ code }}</strong> with your study group.</p>
+        <div class="invite-link-group">
+          <input id="inviteLinkInput" type="text" readonly value="{{ request.url }}">
+          <button type="button" class="wb-btn wb-btn-secondary" id="copyInviteLink">
+            <i class="fa-solid fa-copy"></i> Copy
+          </button>
+        </div>
+        <div class="invite-modal-actions">
+          <button type="button" class="wb-btn wb-btn-secondary" id="closeInviteModal">Close</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    // Point pdf.js at its matching worker (required for rasterizing PDF pages).
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+  <script>
+    window.WHITEBOARD = {
+      code: "{{ code }}",
+      username: "{{ current_user.username if current_user else '' }}",
+      userId: "{{ current_user.id if current_user else '' }}"
+    };
+  </script>
+  <script src="{{ url_for('static', filename='js/whiteboard.js') }}"></script>
+{% endblock %}

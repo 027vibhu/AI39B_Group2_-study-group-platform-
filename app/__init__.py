@@ -5,7 +5,11 @@ from app.routes.roomroutes import room_bp
 
 # Use a compatible async mode for the current environment.
 # threading is the safest fallback when eventlet/gevent are unavailable or unsupported.
-socketio = SocketIO(async_mode='threading')
+# max_http_buffer_size is raised from the 1 MB default so large persisted-board
+# saves (many objects in one whiteboard_save_state JSON) aren't truncated.
+# Image bytes never travel over the socket — only their URLs — but object-heavy
+# boards still grow the state payload.
+socketio = SocketIO(async_mode='threading', max_http_buffer_size=10_000_000)
 
 def create_app():
 
@@ -18,7 +22,10 @@ def create_app():
     from app.routes.status import status_bp
     from app.routes.message_vote_routes import message_vote_bp
     from app.routes.join_leave_notification_routes import join_leave_notification_bp
+    from app.routes.quotes import quote_bp
     from app.routes import admin as admin_bp
+    from app.routes.whiteboard_routes import whiteboard_bp
+    from app.routes import exam_countdown_routes as exam_countdown
 
     app.register_blueprint(home_bp.bp)
     app.register_blueprint(auth_bp.bp)
@@ -26,7 +33,10 @@ def create_app():
     app.register_blueprint(status_bp)
     app.register_blueprint(message_vote_bp)
     app.register_blueprint(join_leave_notification_bp)
+    app.register_blueprint(quote_bp)
     app.register_blueprint(admin_bp.bp)
+    app.register_blueprint(whiteboard_bp)
+    app.register_blueprint(exam_countdown.exam_bp)
 
     from app import sockets, models
     # Import the database module as a module object so tests can monkeypatch
