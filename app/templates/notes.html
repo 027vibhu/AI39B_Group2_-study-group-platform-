@@ -1,13 +1,14 @@
 {% extends 'base_dash.html' %}
-
+ 
 {% block title %}My Notes - LOREVIA{% endblock %}
-
+ 
 {% block head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/notes.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/flashcards.css') }}">
 {% endblock %}
-
+ 
 {% block topbar_title %}My Notes{% endblock %}
-
+ 
 {% block content %}
   <section class="notes-page">
     <div class="notes-bar">
@@ -20,13 +21,17 @@
           <i class="fa-solid fa-file-pdf"></i>
           {{ notes|length if notes else 0 }} notes
         </span>
+        <button type="button" class="generate-flashcards-btn" id="openFlashcards">
+          <i class="fa-solid fa-bolt"></i>
+          Generate Flashcards
+        </button>
         <button type="button" class="toggle-upload-btn" id="toggleUpload" aria-expanded="false" aria-controls="uploadPanel">
           <i class="fa-solid fa-plus"></i>
           Add Note
         </button>
       </div>
     </div>
-
+ 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -34,7 +39,7 @@
         {% endfor %}
       {% endif %}
     {% endwith %}
-
+ 
     <div class="upload-panel" id="uploadPanel">
       <div class="upload-panel-inner">
         <form class="note-upload-form" method="POST" action="{{ url_for('home.upload_note') }}" enctype="multipart/form-data">
@@ -43,12 +48,12 @@
               <label for="title">Title</label>
               <input type="text" name="title" id="title" placeholder="Add a title for the note">
             </div>
-
+ 
             <div class="input-group">
               <label for="description">Description</label>
               <textarea name="description" id="description" placeholder="Optional description"></textarea>
             </div>
-
+ 
             <div class="input-group dropzone-group">
               <label for="pdf">PDF File</label>
               <div class="dropzone" id="dropzone">
@@ -59,7 +64,7 @@
                 <span class="dz-filename" id="dzFilename"></span>
               </div>
             </div>
-
+ 
             <div class="upload-actions">
               <button type="submit" class="save-btn">
                 <i class="fa-solid fa-arrow-up-from-bracket"></i>
@@ -70,7 +75,7 @@
         </form>
       </div>
     </div>
-
+ 
     {% if notes %}
       <div class="search-row">
         <div class="search-box">
@@ -78,7 +83,7 @@
           <input type="text" id="noteSearch" placeholder="Search notes...">
         </div>
       </div>
-
+ 
       <div class="note-list" id="noteList">
         {% for note in notes %}
           <article class="note-row" data-title="{{ note.title|lower }}" data-desc="{{ (note.description or '')|lower }}">
@@ -125,7 +130,7 @@
         <span>Click “Add Note” above to upload your first PDF.</span>
       </div>
     {% endif %}
-
+ 
     {% if shared_notes %}
       <div class="shared-section">
         <h3 class="shared-heading">
@@ -160,7 +165,7 @@
         </div>
       </div>
     {% endif %}
-
+ 
     <div class="share-modal" id="shareModal" aria-hidden="true">
       <div class="share-modal-backdrop" data-close-share></div>
       <div class="share-modal-box" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
@@ -181,15 +186,93 @@
         </form>
       </div>
     </div>
+ 
+    <div class="flashcards-modal" id="flashcardsModal" aria-hidden="true">
+      <div class="share-modal-backdrop" data-close-flashcards></div>
+      <div class="flashcards-modal-box" role="dialog" aria-modal="true" aria-labelledby="flashcardsModalTitle">
+        <button type="button" class="fc-close-x" data-close-flashcards aria-label="Close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+ 
+        <!-- Step 1: pick a note -->
+        <div class="fc-step" id="fcStepSelect">
+          <h3 id="flashcardsModalTitle">Generate flashcards</h3>
+          <p class="fc-sub">Pick a note and the AI will turn it into a set of study flashcards.</p>
+          {% if notes %}
+            <div class="fc-note-pick-list">
+              {% for note in notes %}
+                <button type="button" class="fc-note-pick"
+                        data-note-title="{{ note.title }}"
+                        data-flashcards-url="{{ url_for('home.generate_flashcards', note_id=note.id) }}">
+                  <i class="fa-solid fa-file-pdf"></i>
+                  <span>{{ note.title }}</span>
+                  <i class="fa-solid fa-chevron-right fc-pick-arrow"></i>
+                </button>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="fc-empty">You don't have any notes yet. Upload a PDF first, then come back here.</p>
+          {% endif %}
+        </div>
+ 
+        <!-- Step 2: generating -->
+        <div class="fc-step hidden" id="fcStepLoading">
+          <div class="fc-spinner" aria-hidden="true"></div>
+          <p id="fcLoadingText">Reading your PDF and generating flashcards...</p>
+        </div>
+ 
+        <!-- Step 3: error -->
+        <div class="fc-step hidden" id="fcStepError">
+          <i class="fa-solid fa-triangle-exclamation fc-error-icon"></i>
+          <p id="fcErrorText">Something went wrong generating flashcards.</p>
+          <button type="button" class="cancel-btn" id="fcBackBtn">Back</button>
+        </div>
+ 
+        <!-- Step 4: study -->
+        <div class="fc-step hidden" id="fcStepStudy">
+          <div class="fc-study-header">
+            <h3 id="fcStudyTitle">Flashcards</h3>
+            <span class="fc-counter" id="fcCounter">1 / 1</span>
+          </div>
+ 
+          <div class="fc-card" id="fcCard">
+            <div class="fc-card-inner" id="fcCardInner">
+              <div class="fc-card-face fc-card-front">
+                <span class="fc-card-label">Question</span>
+                <p id="fcQuestionText"></p>
+              </div>
+              <div class="fc-card-face fc-card-back">
+                <span class="fc-card-label">Answer</span>
+                <p id="fcAnswerText"></p>
+              </div>
+            </div>
+          </div>
+          <p class="fc-flip-hint">Click the card to flip</p>
+ 
+          <div class="fc-study-controls">
+            <button type="button" class="fc-nav-btn" id="fcPrevBtn" aria-label="Previous card">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button type="button" class="fc-regen-btn" id="fcRegenBtn">
+              <i class="fa-solid fa-rotate"></i>
+              Regenerate
+            </button>
+            <button type="button" class="fc-nav-btn" id="fcNextBtn" aria-label="Next card">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 {% endblock %}
-
+ 
 {% block scripts %}
   <script>
     (function () {
       const toggle = document.getElementById('toggleUpload');
       const panel = document.getElementById('uploadPanel');
-
+ 
       if (toggle && panel) {
         toggle.addEventListener('click', () => {
           const open = panel.classList.toggle('open');
@@ -200,11 +283,11 @@
           }
         });
       }
-
+ 
       const dropzone = document.getElementById('dropzone');
       const fileInput = document.getElementById('pdf');
       const filename = document.getElementById('dzFilename');
-
+ 
       if (dropzone && fileInput) {
         const showFile = () => {
           if (fileInput.files.length) {
@@ -214,23 +297,23 @@
             dropzone.classList.remove('has-file');
           }
         };
-
+ 
         fileInput.addEventListener('change', showFile);
-
+ 
         ['dragenter', 'dragover'].forEach((evt) =>
           dropzone.addEventListener(evt, (e) => {
             e.preventDefault();
             dropzone.classList.add('dragover');
           })
         );
-
+ 
         ['dragleave', 'drop'].forEach((evt) =>
           dropzone.addEventListener(evt, (e) => {
             e.preventDefault();
             dropzone.classList.remove('dragover');
           })
         );
-
+ 
         dropzone.addEventListener('drop', (e) => {
           if (e.dataTransfer.files.length) {
             fileInput.files = e.dataTransfer.files;
@@ -238,12 +321,12 @@
           }
         });
       }
-
+ 
       const shareModal = document.getElementById('shareModal');
       const shareForm = document.getElementById('shareForm');
       const shareUsername = document.getElementById('shareUsername');
       const shareSub = document.getElementById('shareModalSub');
-
+ 
       if (shareModal && shareForm) {
         const openShare = (url, title) => {
           shareForm.action = url;
@@ -253,27 +336,149 @@
           shareModal.setAttribute('aria-hidden', 'false');
           shareUsername.focus();
         };
-
+ 
         const closeShare = () => {
           shareModal.classList.remove('open');
           shareModal.setAttribute('aria-hidden', 'true');
         };
-
+ 
         document.querySelectorAll('.share-btn').forEach((btn) => {
           btn.addEventListener('click', () => {
             openShare(btn.dataset.shareUrl, btn.dataset.noteTitle || 'this note');
           });
         });
-
+ 
         shareModal.querySelectorAll('[data-close-share]').forEach((el) => {
           el.addEventListener('click', closeShare);
         });
-
+ 
         document.addEventListener('keydown', (e) => {
           if (e.key === 'Escape' && shareModal.classList.contains('open')) closeShare();
         });
       }
-
+ 
+      // --- Generate Flashcards ---
+      const fcModal = document.getElementById('flashcardsModal');
+      const openFlashcardsBtn = document.getElementById('openFlashcards');
+ 
+      if (fcModal && openFlashcardsBtn) {
+        const stepSelect = document.getElementById('fcStepSelect');
+        const stepLoading = document.getElementById('fcStepLoading');
+        const stepError = document.getElementById('fcStepError');
+        const stepStudy = document.getElementById('fcStepStudy');
+        const loadingText = document.getElementById('fcLoadingText');
+        const errorText = document.getElementById('fcErrorText');
+        const studyTitle = document.getElementById('fcStudyTitle');
+        const counter = document.getElementById('fcCounter');
+        const cardEl = document.getElementById('fcCard');
+        const cardInner = document.getElementById('fcCardInner');
+        const questionText = document.getElementById('fcQuestionText');
+        const answerText = document.getElementById('fcAnswerText');
+        const prevBtn = document.getElementById('fcPrevBtn');
+        const nextBtn = document.getElementById('fcNextBtn');
+        const regenBtn = document.getElementById('fcRegenBtn');
+        const backBtn = document.getElementById('fcBackBtn');
+ 
+        let cards = [];
+        let currentIndex = 0;
+        let currentUrl = null;
+        let currentTitle = '';
+ 
+        const steps = [stepSelect, stepLoading, stepError, stepStudy];
+        const showStep = (step) => {
+          steps.forEach((el) => el.classList.add('hidden'));
+          step.classList.remove('hidden');
+        };
+ 
+        const openModal = () => {
+          fcModal.classList.add('open');
+          fcModal.setAttribute('aria-hidden', 'false');
+          showStep(stepSelect);
+        };
+ 
+        const closeModal = () => {
+          fcModal.classList.remove('open');
+          fcModal.setAttribute('aria-hidden', 'true');
+          cardInner.classList.remove('flipped');
+        };
+ 
+        const renderCard = () => {
+          if (!cards.length) return;
+          const c = cards[currentIndex];
+          questionText.textContent = c.question;
+          answerText.textContent = c.answer;
+          counter.textContent = (currentIndex + 1) + ' / ' + cards.length;
+          cardInner.classList.remove('flipped');
+        };
+ 
+        const generate = (url, title) => {
+          currentUrl = url;
+          currentTitle = title;
+          loadingText.textContent = 'Reading "' + title + '" and generating flashcards...';
+          showStep(stepLoading);
+ 
+          fetch(url, { method: 'POST', headers: { 'Accept': 'application/json' } })
+            .then((res) => {
+              if (!res.ok) throw new Error('Request failed');
+              return res.json();
+            })
+            .then((data) => {
+              if (!data.flashcards || !data.flashcards.length) {
+                throw new Error('No flashcards returned');
+              }
+              cards = data.flashcards;
+              currentIndex = 0;
+              studyTitle.textContent = title;
+              renderCard();
+              showStep(stepStudy);
+            })
+            .catch(() => {
+              errorText.textContent = 'Could not generate flashcards for "' + title + '". Please try again.';
+              showStep(stepError);
+            });
+        };
+ 
+        openFlashcardsBtn.addEventListener('click', openModal);
+ 
+        document.querySelectorAll('.fc-note-pick').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            generate(btn.dataset.flashcardsUrl, btn.dataset.noteTitle);
+          });
+        });
+ 
+        cardEl.addEventListener('click', () => {
+          cardInner.classList.toggle('flipped');
+        });
+ 
+        prevBtn.addEventListener('click', () => {
+          if (!cards.length) return;
+          currentIndex = (currentIndex - 1 + cards.length) % cards.length;
+          renderCard();
+        });
+ 
+        nextBtn.addEventListener('click', () => {
+          if (!cards.length) return;
+          currentIndex = (currentIndex + 1) % cards.length;
+          renderCard();
+        });
+ 
+        regenBtn.addEventListener('click', () => {
+          if (currentUrl) generate(currentUrl, currentTitle);
+        });
+ 
+        backBtn.addEventListener('click', () => {
+          showStep(stepSelect);
+        });
+ 
+        fcModal.querySelectorAll('[data-close-flashcards]').forEach((el) => {
+          el.addEventListener('click', closeModal);
+        });
+ 
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && fcModal.classList.contains('open')) closeModal();
+        });
+      }
+ 
       document.querySelectorAll('.delete-note-form').forEach((form) => {
         form.addEventListener('submit', (e) => {
           const title = form.dataset.noteTitle || 'this note';
@@ -282,11 +487,11 @@
           }
         });
       });
-
+ 
       const search = document.getElementById('noteSearch');
       const rows = Array.from(document.querySelectorAll('#noteList .note-row'));
       const noResults = document.getElementById('noSearchResults');
-
+ 
       if (search) {
         search.addEventListener('input', () => {
           const q = search.value.trim().toLowerCase();
