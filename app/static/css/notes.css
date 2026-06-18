@@ -586,3 +586,371 @@
   }
   .notes-bar-text h2{ font-size:26px; }
 }
+
+/* ==========================================================================
+   Generate Flashcards — button, modal, and flip-card study UI
+   Color choices match the existing LOREVIA notes page (cream bg, navy
+   accents, white cards). Adjust the values below if your real variables
+   in notes.css differ.
+   ========================================================================== */
+ 
+:root {
+  --fc-navy: #3d3a5c;
+  --fc-navy-dark: #2f2c49;
+  --fc-cream: #f3efe6;
+  --fc-card-white: #ffffff;
+  --fc-border: #e3ddd0;
+  --fc-ink: #2b2a3d;
+  --fc-muted: #8b8775;
+  --fc-front: #fdfbf6;
+  --fc-back: #eceaf7;
+  --fc-danger: #c2452f;
+}
+ 
+/* --- Trigger button, sits next to "Add Note" --- */
+.generate-flashcards-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--fc-navy);
+  background: transparent;
+  color: var(--fc-navy);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+ 
+.generate-flashcards-btn i {
+  font-size: 0.9rem;
+}
+ 
+.generate-flashcards-btn:hover {
+  background: var(--fc-navy);
+  color: #fff;
+}
+ 
+.generate-flashcards-btn:active {
+  transform: scale(0.98);
+}
+ 
+/* --- Modal shell (reuses .share-modal-backdrop from notes.css) --- */
+.flashcards-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+ 
+.flashcards-modal.open {
+  display: flex;
+}
+ 
+.flashcards-modal-box {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--fc-card-white);
+  border-radius: 16px;
+  padding: 32px 28px 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+ 
+.fc-close-x {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--fc-muted);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+ 
+.fc-close-x:hover {
+  background: var(--fc-cream);
+  color: var(--fc-ink);
+}
+ 
+.fc-step h3 {
+  margin: 0 0 6px;
+  color: var(--fc-ink);
+  font-size: 1.25rem;
+}
+ 
+.fc-sub {
+  margin: 0 0 18px;
+  color: var(--fc-muted);
+  font-size: 0.9rem;
+}
+ 
+.fc-step.hidden {
+  display: none;
+}
+ 
+.fc-empty {
+  color: var(--fc-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 24px 0;
+}
+ 
+/* --- Step 1: pick a note --- */
+.fc-note-pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+ 
+.fc-note-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--fc-border);
+  border-radius: 10px;
+  background: var(--fc-cream);
+  color: var(--fc-ink);
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+ 
+.fc-note-pick i.fa-file-pdf {
+  color: var(--fc-danger);
+}
+ 
+.fc-note-pick span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+ 
+.fc-pick-arrow {
+  color: var(--fc-muted);
+  font-size: 0.8rem;
+}
+ 
+.fc-note-pick:hover {
+  border-color: var(--fc-navy);
+  background: #fff;
+}
+ 
+/* --- Step 2: loading --- */
+#fcStepLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 36px 0;
+  text-align: center;
+}
+ 
+.fc-spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid var(--fc-border);
+  border-top-color: var(--fc-navy);
+  border-radius: 50%;
+  animation: fc-spin 0.8s linear infinite;
+}
+ 
+@keyframes fc-spin {
+  to { transform: rotate(360deg); }
+}
+ 
+#fcStepLoading p {
+  color: var(--fc-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+ 
+/* --- Step 3: error --- */
+#fcStepError {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 0;
+  text-align: center;
+}
+ 
+.fc-error-icon {
+  font-size: 1.8rem;
+  color: var(--fc-danger);
+}
+ 
+#fcStepError p {
+  color: var(--fc-ink);
+  font-size: 0.92rem;
+  margin: 0;
+}
+ 
+/* --- Step 4: study --- */
+.fc-study-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+ 
+.fc-study-header h3 {
+  margin: 0;
+}
+ 
+.fc-counter {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--fc-navy);
+  background: var(--fc-cream);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+ 
+.fc-card {
+  perspective: 1200px;
+  height: 220px;
+  cursor: pointer;
+}
+ 
+.fc-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.45s ease;
+  transform-style: preserve-3d;
+}
+ 
+.fc-card-inner.flipped {
+  transform: rotateY(180deg);
+}
+ 
+.fc-card-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 22px;
+  border-radius: 14px;
+  border: 1px solid var(--fc-border);
+  backface-visibility: hidden;
+  text-align: center;
+}
+ 
+.fc-card-front {
+  background: var(--fc-front);
+}
+ 
+.fc-card-back {
+  background: var(--fc-back);
+  transform: rotateY(180deg);
+}
+ 
+.fc-card-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fc-muted);
+}
+ 
+.fc-card-face p {
+  margin: 0;
+  color: var(--fc-ink);
+  font-size: 1.02rem;
+  line-height: 1.45;
+  overflow-y: auto;
+  max-height: 130px;
+}
+ 
+.fc-flip-hint {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--fc-muted);
+  margin: 10px 0 20px;
+}
+ 
+.fc-study-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+ 
+.fc-nav-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--fc-border);
+  background: #fff;
+  color: var(--fc-navy);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+ 
+.fc-nav-btn:hover {
+  background: var(--fc-cream);
+}
+ 
+.fc-regen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--fc-navy);
+  background: transparent;
+  color: var(--fc-navy);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+ 
+.fc-regen-btn:hover {
+  background: var(--fc-navy);
+  color: #fff;
+}
+ 
+@media (prefers-reduced-motion: reduce) {
+  .fc-card-inner,
+  .generate-flashcards-btn,
+  .fc-note-pick {
+    transition: none !important;
+  }
+  .fc-spinner {
+    animation-duration: 1.4s;
+  }
+}
+ 
+@media (max-width: 560px) {
+  .flashcards-modal-box {
+    max-width: 92vw;
+    padding: 26px 18px 22px;
+  }
+  .fc-card {
+    height: 260px;
+  }
+}

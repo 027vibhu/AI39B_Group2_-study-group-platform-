@@ -77,6 +77,7 @@ class HomeRoutes:
         self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
         self.bp.route('/notes/<int:note_id>/share', methods=['POST'])(self.share_note)
         self.bp.route('/notes/<int:note_id>/delete', methods=['POST'])(self.delete_note)
+        self.bp.route('/notes/<int:note_id>/generate-flashcards', methods=['POST'])(self.generate_flashcards)
         self.bp.route('/whiteboard')(self.whiteboard)
         self.bp.route('/whiteboard/new', methods=['POST'])(self.whiteboard_new)
         self.bp.route('/whiteboard/join', methods=['POST'])(self.whiteboard_join)
@@ -652,6 +653,26 @@ class HomeRoutes:
     def delete_note(self, note_id):
         controller = NoteController()
         return controller.delete_note(note_id)
+
+    def generate_flashcards(self, note_id):
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'Authentication required.'}), 401
+
+        controller = NoteController()
+        note = controller.note_model.get_note_by_id(note_id)
+        if not note or note.get('user_id') != user_id:
+            return jsonify({'error': 'Note not found.'}), 404
+
+        # Placeholder response for flashcard generation. Replace with AI logic later.
+        return jsonify({
+            'flashcards': [
+                {
+                    'question': 'Flashcard generation is coming soon.',
+                    'answer': 'This feature is not available yet, but the notes page is now working.'
+                }
+            ]
+        })
 
     def track_study_hours(self):
         return render_template('track_study_hours.html')
