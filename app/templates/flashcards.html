@@ -1,0 +1,237 @@
+{% extends 'base_dash.html' %}
+
+{% block title %}Flashcards - {{ note.title }} - LOREVIA{% endblock %}
+
+{% block head %}
+  <style>
+    /* Match the app palette: indigo accent on warm off-white */
+    :root {
+      --ivory-whisper: #f6f4ef;
+      --vanilla-cream: #ffffff;
+      --almond-cream: #eef0f8;
+      --almond-deep: #d9ddee;
+      --midnight-indigo: #2b2f3a;
+      --indigo-soft: #4b4f78;
+      --caramel: #4b4f78;
+      --caramel-bright: #3f456a;
+    }
+
+    /* Let the study view fill the dashboard main area */
+    .main { padding: 0 !important; overflow: hidden !important; }
+    .main .topbar { display: none; }
+
+    .fc-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 26px 34px 30px;
+      color: var(--midnight-indigo);
+      background:#ffffff;
+      border-radius:28px;
+      border:1px solid rgba(125,134,199,0.16);
+      box-shadow:0 22px 45px rgba(125,134,199,0.14);
+    }
+
+    /* Header */
+    .fc-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .fc-head-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .fc-back {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+      background: var(--vanilla-cream); color: var(--midnight-indigo); text-decoration: none;
+      border: 1px solid var(--almond-cream);
+      box-shadow: 0 4px 14px rgba(43,50,63,.1); transition: .2s;
+    }
+    .fc-back:hover { background: var(--caramel); color: #fff; border-color: var(--caramel); }
+    .fc-titles { min-width: 0; }
+    .fc-titles h2 { margin: 0; font-size: 1.5rem; line-height: 1.2; color: var(--midnight-indigo); }
+    .fc-titles p {
+      margin: 2px 0 0; opacity: .65; font-size: .92rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46ch;
+    }
+    .fc-gen-btn {
+      display: inline-flex; align-items: center; gap: 9px; border: none; cursor: pointer;
+      padding: 12px 20px; border-radius: 12px; font-size: .95rem; font-weight: 600;
+      color: #fff; background: linear-gradient(135deg, var(--caramel), var(--caramel-bright));
+      box-shadow: 0 8px 22px rgba(75,79,120,.35); transition: .2s;
+    }
+    .fc-gen-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(75,79,120,.45); }
+    .fc-gen-btn:disabled { opacity: .7; cursor: default; transform: none; }
+
+    /* Progress */
+    .fc-progress-wrap { margin: 22px 0 6px; }
+    .fc-progress-meta { display: flex; justify-content: space-between; font-size: .82rem; opacity: .7; margin-bottom: 8px; }
+    .fc-progress-track { height: 8px; border-radius: 99px; background: var(--almond-cream); overflow: hidden; }
+    .fc-progress-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--caramel), var(--caramel-bright)); transition: width .35s ease; }
+
+    /* Card stage fills remaining height */
+    .fc-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 18px 0; perspective: 1800px; }
+    .fc-card {
+      position: relative; width: min(880px, 100%); height: 100%; max-height: 460px;
+      cursor: pointer; transform-style: preserve-3d; transition: transform .55s cubic-bezier(.2,.7,.2,1);
+    }
+    .fc-card.flipped { transform: rotateY(180deg); }
+    .fc-face {
+      position: absolute; inset: 0; backface-visibility: hidden; border-radius: 24px;
+      padding: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; box-shadow: 0 26px 60px rgba(44,42,74,.18);
+    }
+    .fc-face .fc-tag { position: absolute; top: 22px; left: 26px; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; opacity: .55; }
+    .fc-face .fc-flip-hint { position: absolute; bottom: 20px; font-size: .78rem; opacity: .5; }
+    .fc-face .fc-text { font-size: clamp(1.25rem, 2.4vw, 1.9rem); line-height: 1.5; font-weight: 500; overflow-y: auto; max-height: 100%; }
+    .fc-front { background: var(--vanilla-cream); color: var(--midnight-indigo); border: 1px solid var(--almond-cream); border-top: 4px solid var(--caramel); }
+    .fc-back-face { background: linear-gradient(150deg, var(--midnight-indigo), var(--indigo-soft)); color: #fff; transform: rotateY(180deg); border-top: 4px solid var(--caramel); }
+    .fc-back-face .fc-tag { opacity: 1; color: var(--caramel); }
+
+    /* Controls */
+    .fc-controls { display: flex; align-items: center; justify-content: center; gap: 26px; margin-top: 14px; }
+    .fc-arrow {
+      width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer;
+      background: var(--vanilla-cream); color: var(--midnight-indigo); font-size: 1.05rem;
+      border: 1px solid var(--almond-cream);
+      box-shadow: 0 8px 20px rgba(43,50,63,.12); transition: .2s;
+    }
+    .fc-arrow:hover:not(:disabled) { background: var(--caramel); color: #fff; border-color: var(--caramel); transform: scale(1.06); }
+    .fc-arrow:disabled { opacity: .35; cursor: default; }
+    .fc-counter { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.05rem; min-width: 92px; text-align: center; color: var(--midnight-indigo); }
+    .fc-kbd-hint { text-align: center; margin-top: 14px; font-size: .8rem; opacity: .55; }
+    .fc-kbd-hint kbd { background: var(--almond-cream); border-radius: 6px; padding: 2px 7px; font-family: inherit; font-size: .78rem; }
+
+    /* Empty state */
+    .fc-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .fc-empty-icon {
+      width: 92px; height: 92px; border-radius: 26px; display: flex; align-items: center; justify-content: center;
+      font-size: 2.4rem; color: var(--caramel); background: var(--almond-cream); margin-bottom: 22px;
+    }
+    .fc-empty h3 { margin: 0 0 8px; font-size: 1.4rem; }
+    .fc-empty p { margin: 0 0 26px; opacity: .68; max-width: 42ch; }
+
+    .fc-alert { margin-bottom: 4px; }
+
+    @media (max-width: 640px) {
+      .fc-screen { padding: 18px 16px 22px; }
+      .fc-face { padding: 30px; }
+      .fc-card { max-height: none; }
+    }
+  </style>
+{% endblock %}
+
+{% block topbar_title %}{% endblock %}
+
+{% block content %}
+  <section class="fc-screen">
+    <div class="fc-head">
+      <div class="fc-head-left">
+        <a href="{{ url_for('home.study_flashcards', note_id=note.id) }}" class="fc-back" title="Back to sets" aria-label="Back to sets">
+          <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div class="fc-titles">
+          <h2>{{ card_set.title if card_set else 'Flashcards' }}</h2>
+          <p>{{ note.title }}</p>
+        </div>
+      </div>
+      <a href="{{ url_for('home.study_flashcards', note_id=note.id) }}" class="fc-gen-btn">
+        <i class="fa-solid fa-layer-group"></i>
+        <span>All sets</span>
+      </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} fc-alert">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if flashcards %}
+      <div class="fc-progress-wrap">
+        <div class="fc-progress-meta">
+          <span>Progress</span>
+          <span id="fcProgressLabel"></span>
+        </div>
+        <div class="fc-progress-track"><div class="fc-progress-fill" id="fcProgressFill"></div></div>
+      </div>
+
+      <div class="fc-stage">
+        <div class="fc-card" id="fcCard">
+          <div class="fc-face fc-front">
+            <span class="fc-tag">Question</span>
+            <span class="fc-text" id="fcQuestion"></span>
+            <span class="fc-flip-hint"><i class="fa-solid fa-rotate"></i> Click to reveal answer</span>
+          </div>
+          <div class="fc-face fc-back-face">
+            <span class="fc-tag">Answer</span>
+            <span class="fc-text" id="fcAnswer"></span>
+            <span class="fc-flip-hint"><i class="fa-solid fa-rotate"></i> Click to flip back</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fc-controls">
+        <button type="button" class="fc-arrow" id="fcPrev" aria-label="Previous"><i class="fa-solid fa-chevron-left"></i></button>
+        <span class="fc-counter" id="fcCounter"></span>
+        <button type="button" class="fc-arrow" id="fcNext" aria-label="Next"><i class="fa-solid fa-chevron-right"></i></button>
+      </div>
+      <p class="fc-kbd-hint"><kbd>←</kbd> <kbd>→</kbd> navigate &nbsp;·&nbsp; <kbd>Space</kbd> flip</p>
+
+      <script id="fcData" type="application/json">{{ flashcards | map(attribute='question') | list | tojson }}</script>
+      <script id="fcAnswers" type="application/json">{{ flashcards | map(attribute='answer') | list | tojson }}</script>
+    {% else %}
+      <div class="fc-empty">
+        <div class="fc-empty-icon"><i class="fa-solid fa-layer-group"></i></div>
+        <h3>This set has no cards</h3>
+        <p>Head back to your flashcard sets to generate a new one.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  {% if flashcards %}
+  <script>
+    (function () {
+      const questions = JSON.parse(document.getElementById('fcData').textContent);
+      const answers = JSON.parse(document.getElementById('fcAnswers').textContent);
+      const card = document.getElementById('fcCard');
+      const qEl = document.getElementById('fcQuestion');
+      const aEl = document.getElementById('fcAnswer');
+      const counter = document.getElementById('fcCounter');
+      const prev = document.getElementById('fcPrev');
+      const next = document.getElementById('fcNext');
+      const fill = document.getElementById('fcProgressFill');
+      const progressLabel = document.getElementById('fcProgressLabel');
+      const total = questions.length;
+
+      let i = 0;
+
+      function render() {
+        card.classList.remove('flipped');
+        qEl.textContent = questions[i];
+        aEl.textContent = answers[i];
+        counter.textContent = (i + 1) + ' / ' + total;
+        prev.disabled = i === 0;
+        next.disabled = i === total - 1;
+        const pct = Math.round(((i + 1) / total) * 100);
+        fill.style.width = pct + '%';
+        progressLabel.textContent = pct + '%';
+      }
+
+      function go(n) { if (n >= 0 && n < total) { i = n; render(); } }
+
+      card.addEventListener('click', () => card.classList.toggle('flipped'));
+      prev.addEventListener('click', () => go(i - 1));
+      next.addEventListener('click', () => go(i + 1));
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') go(i - 1);
+        else if (e.key === 'ArrowRight') go(i + 1);
+        else if (e.key === ' ') { e.preventDefault(); card.classList.toggle('flipped'); }
+      });
+
+      render();
+    })();
+  </script>
+  {% endif %}
+{% endblock %}

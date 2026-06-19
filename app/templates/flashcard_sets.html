@@ -1,0 +1,163 @@
+{% extends 'base_dash.html' %}
+
+{% block title %}Flashcards - {{ note.title }} - LOREVIA{% endblock %}
+
+{% block head %}
+  <style>
+    /* Match the app palette: indigo accent on warm off-white */
+    :root {
+      --ivory-whisper: #f6f4ef;
+      --vanilla-cream: #ffffff;
+      --almond-cream: #eef0f8;
+      --almond-deep: #d9ddee;
+      --midnight-indigo: #2b2f3a;
+      --indigo-soft: #4b4f78;
+      --caramel: #4b4f78;
+      --caramel-bright: #3f456a;
+    }
+
+    /* Hide the empty global topbar so there's no gap above the content */
+    .main .topbar { display: none; }
+
+    .fcs-screen {
+      flex: 1; display: flex; flex-direction: column; min-height: 0;
+      padding: 26px 34px 30px;
+      color: var(--midnight-indigo);
+      background:#ffffff;
+      border-radius:28px;
+      border:1px solid rgba(125,134,199,0.16);
+      box-shadow:0 22px 45px rgba(125,134,199,0.14);
+    }
+
+    .fcs-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .fcs-head-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .fcs-back {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+      background: var(--vanilla-cream); color: var(--midnight-indigo); text-decoration: none;
+      border: 1px solid var(--almond-cream);
+      box-shadow: 0 4px 14px rgba(43,50,63,.1); transition: .2s;
+    }
+    .fcs-back:hover { background: var(--caramel); color: #fff; border-color: var(--caramel); }
+    .fcs-titles { min-width: 0; }
+    .fcs-titles h2 { margin: 0; font-size: 1.5rem; line-height: 1.2; color: var(--midnight-indigo); }
+    .fcs-titles p {
+      margin: 2px 0 0; opacity: .65; font-size: .92rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46ch;
+    }
+    .fcs-gen-btn {
+      display: inline-flex; align-items: center; gap: 9px; border: none; cursor: pointer;
+      padding: 12px 20px; border-radius: 12px; font-size: .95rem; font-weight: 600;
+      color: #fff; background: linear-gradient(135deg, var(--caramel), var(--caramel-bright));
+      box-shadow: 0 8px 22px rgba(75,79,120,.35); transition: .2s;
+    }
+    .fcs-gen-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(75,79,120,.45); }
+    .fcs-gen-btn:disabled { opacity: .7; cursor: default; transform: none; }
+
+    .fcs-alert { margin: 18px 0 4px; }
+
+    .fcs-list { margin-top: 24px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+    .fcs-card {
+      display: flex; align-items: center; gap: 18px; text-decoration: none;
+      padding: 18px 22px; border-radius: 18px; background: var(--vanilla-cream);
+      border: 1px solid var(--almond-cream); border-left: 4px solid var(--caramel);
+      box-shadow: 0 10px 28px rgba(43,50,63,.08); transition: .2s; color: var(--midnight-indigo);
+    }
+    .fcs-card:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(75,79,120,.18); border-color: var(--almond-deep); border-left-color: var(--caramel); }
+    .fcs-icon {
+      width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; color: var(--caramel); background: var(--almond-cream);
+    }
+    .fcs-card-main { flex: 1; min-width: 0; }
+    .fcs-card-main h4 { margin: 0; font-size: 1.05rem; }
+    .fcs-card-main p { margin: 3px 0 0; font-size: .85rem; opacity: .6; }
+    .fcs-count-pill {
+      flex-shrink: 0; font-size: .82rem; font-weight: 700; color: #fff;
+      background: var(--caramel); border-radius: 99px; padding: 6px 14px;
+    }
+    .fcs-chevron { color: var(--almond-deep); font-size: 1rem; flex-shrink: 0; }
+
+    .fcs-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .fcs-empty-icon {
+      width: 92px; height: 92px; border-radius: 26px; display: flex; align-items: center; justify-content: center;
+      font-size: 2.4rem; color: var(--caramel); background: var(--almond-cream); margin-bottom: 22px;
+    }
+    .fcs-empty h3 { margin: 0 0 8px; font-size: 1.4rem; }
+    .fcs-empty p { margin: 0 0 26px; opacity: .68; max-width: 42ch; }
+
+    @media (max-width: 640px) {
+      .fcs-screen { padding: 18px 16px 22px; }
+    }
+  </style>
+{% endblock %}
+
+{% block topbar_title %}{% endblock %}
+
+{% block content %}
+  <section class="fcs-screen">
+    <div class="fcs-head">
+      <div class="fcs-head-left">
+        <a href="{{ url_for('home.notes') }}" class="fcs-back" title="Back to Notes" aria-label="Back to Notes">
+          <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div class="fcs-titles">
+          <h2>Flashcard sets</h2>
+          <p>{{ note.title }}</p>
+        </div>
+      </div>
+      <form method="POST" action="{{ url_for('home.generate_flashcards', note_id=note.id) }}" id="fcsGenerateForm">
+        <button type="submit" class="fcs-gen-btn" id="fcsGenerateBtn">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Generate new set</span>
+        </button>
+      </form>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} fcs-alert">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if sets %}
+      <div class="fcs-list">
+        {% for card_set in sets %}
+          <a class="fcs-card" href="{{ url_for('home.study_flashcards', note_id=note.id, set_id=card_set.id) }}">
+            <div class="fcs-icon"><i class="fa-solid fa-layer-group"></i></div>
+            <div class="fcs-card-main">
+              <h4>{{ card_set.title }}</h4>
+              <p>Created {{ card_set.created_at.strftime('%b %d, %Y · %I:%M %p') }}</p>
+            </div>
+            <span class="fcs-count-pill">{{ card_set.card_count }} cards</span>
+            <i class="fa-solid fa-chevron-right fcs-chevron"></i>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="fcs-empty">
+        <div class="fcs-empty-icon"><i class="fa-solid fa-layer-group"></i></div>
+        <h3>No flashcard sets yet</h3>
+        <p>Generate a set of AI study cards from this note — including handwritten and scanned PDFs. Each set you generate is saved here.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    (function () {
+      const form = document.getElementById('fcsGenerateForm');
+      const btn = document.getElementById('fcsGenerateBtn');
+      if (form && btn) {
+        form.addEventListener('submit', () => {
+          btn.disabled = true;
+          btn.querySelector('span').textContent = 'Generating…';
+          btn.querySelector('i').className = 'fa-solid fa-spinner fa-spin';
+        });
+      }
+    })();
+  </script>
+{% endblock %}
