@@ -34,17 +34,24 @@ class RoomModel(BaseModel):
 
     def create_user_rooms_table(self):
         ensure_database_exists()
-        return self.execute(
+        result = self.execute(
             "CREATE TABLE IF NOT EXISTS user_room ("
             "id INT AUTO_INCREMENT PRIMARY KEY,"
             "user_id INT NOT NULL,"
             "room_id INT NOT NULL,"
+            "role VARCHAR(20) NOT NULL DEFAULT 'member',"
             "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
             "UNIQUE KEY uq_user_room (user_id, room_id),"
             "INDEX idx_user_room_user (user_id),"
             "INDEX idx_user_room_room (room_id)"
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
         )
+        # Best-effort: add the role column on pre-existing tables
+        try:
+            self.execute("ALTER TABLE user_room ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'member' AFTER room_id")
+        except Exception:
+            pass
+        return result
 
     def create_moderation_log_table(self):
         ensure_database_exists()
@@ -84,18 +91,48 @@ class RoomModel(BaseModel):
             "INSERT INTO room (code, name, is_private, subject_tags, owner_id) VALUES (%s, %s, %s, %s, %s)",
             (code, name, int(is_private), subject_tags, owner_id),
         )
+        # Record the creator as the room owner in the membership table
+        if owner_id:
+            self.create_user_room(owner_id, rid, role='owner')
         # execute returns lastrowid for inserts
         return self.get_room_by_id(rid)
 
-    def create_user_room(self, user_id, room_id):
+    def create_user_room(self, user_id, room_id, role='member'):
         self.create_user_rooms_table()
+        # Insert membership; keep the existing role if the row already exists
         return self.execute(
-            "INSERT INTO user_room (user_id, room_id) VALUES (%s, %s) ON DUPLICATE KEY UPDATE id = id",
-            (user_id, room_id),
+            "INSERT INTO user_room (user_id, room_id, role) VALUES (%s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE role = role",
+            (user_id, room_id, role),
         )
 
     def is_user_in_room(self, user_id, room_id):
         return bool(self.fetch_one("SELECT 1 FROM user_room WHERE user_id = %s AND room_id = %s LIMIT 1", (user_id, room_id)))
+
+    def set_user_room_role(self, user_id, room_id, role):
+        self.create_user_rooms_table()
+        # Ensure a membership row exists, then set the role
+        self.create_user_room(user_id, room_id)
+        return self.execute(
+            "UPDATE user_room SET role = %s WHERE user_id = %s AND room_id = %s",
+            (role, user_id, room_id),
+        )
+
+    def get_user_room_role(self, user_id, room_id):
+        row = self.fetch_one(
+            "SELECT role FROM user_room WHERE user_id = %s AND room_id = %s LIMIT 1",
+            (user_id, room_id),
+        )
+        return row['role'] if row else None
+
+    def get_room_members_with_roles(self, room_id):
+        return self.fetch_all(
+            "SELECT ur.user_id, u.username, ur.role "
+            "FROM user_room ur JOIN users u ON u.id = ur.user_id "
+            "WHERE ur.room_id = %s "
+            "ORDER BY FIELD(ur.role, 'owner', 'moderator', 'member'), u.username ASC",
+            (room_id,),
+        )
 
     def get_joined_rooms_for_user(self, user_id, limit=8):
         return self.fetch_all(
@@ -123,6 +160,12 @@ class RoomModel(BaseModel):
             "u.username AS owner_username "
             "FROM room r LEFT JOIN users u ON u.id = r.owner_id "
             "ORDER BY r.created_at DESC"
+        )
+
+    def update_room_name(self, room_id, new_name):
+        return self.execute(
+            "UPDATE room SET name = %s WHERE id = %s",
+            (new_name, room_id),
         )
 
     def delete_room_by_id(self, room_id):
@@ -198,12 +241,24 @@ def create_room(code, name, is_private, subject_tags, owner_id=None):
     return _room_model.create_room(code, name, is_private, subject_tags, owner_id)
 
 
-def create_user_room(user_id, room_id):
-    return _room_model.create_user_room(user_id, room_id)
+def create_user_room(user_id, room_id, role='member'):
+    return _room_model.create_user_room(user_id, room_id, role)
 
 
 def is_user_in_room(user_id, room_id):
     return _room_model.is_user_in_room(user_id, room_id)
+
+
+def set_user_room_role(user_id, room_id, role):
+    return _room_model.set_user_room_role(user_id, room_id, role)
+
+
+def get_user_room_role(user_id, room_id):
+    return _room_model.get_user_room_role(user_id, room_id)
+
+
+def get_room_members_with_roles(room_id):
+    return _room_model.get_room_members_with_roles(room_id)
 
 
 def get_joined_rooms_for_user(user_id, limit=8):
@@ -220,6 +275,10 @@ def get_all_public_rooms():
 
 def get_all_rooms():
     return _room_model.get_all_rooms()
+
+
+def update_room_name(room_id, new_name):
+    return _room_model.update_room_name(room_id, new_name)
 
 
 def delete_room_by_id(room_id):

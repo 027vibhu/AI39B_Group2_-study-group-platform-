@@ -81,6 +81,28 @@ class StudyHourController(BaseController):
         week_minutes = sum(m for d, m in per_day.items() if week_start <= d <= week_end)
         weekly_hours = round(week_minutes / 60, 1) if week_minutes else 0
 
+        # Hours studied during the current calendar month.
+        month_minutes = sum(
+            m for d, m in per_day.items()
+            if d.year == today.year and d.month == today.month
+        )
+        monthly_hours = round(month_minutes / 60, 1) if month_minutes else 0
+
+        # Hours studied over the trailing 30 days, and a daily average across the
+        # days actually studied (so a few big days don't read as "every day").
+        days_logged = len(per_day)
+        avg_hours = round(total_hours / days_logged, 1) if days_logged else 0
+
+        # Best single day (most minutes) — a fun headline stat for the page.
+        if per_day:
+            best_day_date, best_day_minutes = max(per_day.items(), key=lambda kv: kv[1])
+            best_day = {
+                'date': best_day_date.isoformat(),
+                'hours': round(best_day_minutes / 60, 1),
+            }
+        else:
+            best_day = {'date': None, 'hours': 0}
+
         # Current streak: consecutive days with a session ending today or yesterday.
         streak = 0
         if per_day:
@@ -92,6 +114,10 @@ class StudyHourController(BaseController):
         return {
             'total_hours': total_hours,
             'weekly_hours': weekly_hours,
+            'monthly_hours': monthly_hours,
+            'avg_hours': avg_hours,
+            'days_logged': days_logged,
+            'best_day': best_day,
             'streak': streak,
             'study_days': study_days,
             'recent_sessions': sessions[:10] if sessions else []

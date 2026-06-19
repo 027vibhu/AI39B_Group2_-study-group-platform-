@@ -1,80 +1,55 @@
 // ===== LOREVIA — Focus Music Player =====
 
-// Track library (uses free, royalty-free YouTube audio IDs via embed OR direct mp3 CDN URLs)
-// Using free lo-fi / ambient samples from Pixabay CDN (no API key needed, direct mp3 links)
+// Track library — royalty-free sources that allow direct hotlinking:
+//  • Google Sound Library (actions.google.com/sounds, CC-BY 4.0) for ambient/nature
+//  • SoundHelix (royalty-free instrumental) for the focus beats
+// These return 200 and play directly in an <audio> element. The previous
+// Pixabay CDN links 403'd because Pixabay blocks hotlinking.
 const TRACKS = [
-  // Lo-Fi
+  // Rain & Storm
   {
-    id: 1, cat: 'lofi', emoji: '☕', name: 'Coffee Shop Rain',
-    url: 'https://cdn.pixabay.com/audio/2022/10/25/audio_946b5a0e9f.mp3',
+    id: 1, cat: 'rain', emoji: '🌧️', name: 'Rain on the Roof',
+    url: 'https://actions.google.com/sounds/v1/weather/rain_on_roof.ogg',
   },
   {
-    id: 2, cat: 'lofi', emoji: '🌙', name: 'Midnight Chill',
-    url: 'https://cdn.pixabay.com/audio/2023/05/03/audio_20ec97c16e.mp3',
+    id: 2, cat: 'rain', emoji: '⛈️', name: 'Heavy Rain',
+    url: 'https://actions.google.com/sounds/v1/weather/rain_heavy_loud.ogg',
   },
   {
-    id: 3, cat: 'lofi', emoji: '📚', name: 'Study Session',
-    url: 'https://cdn.pixabay.com/audio/2022/11/22/audio_febc508520.mp3',
-  },
-  {
-    id: 4, cat: 'lofi', emoji: '🌆', name: 'City Dusk',
-    url: 'https://cdn.pixabay.com/audio/2023/03/13/audio_5c2b9a2d2f.mp3',
+    id: 3, cat: 'rain', emoji: '🌩️', name: 'Thunderstorm',
+    url: 'https://actions.google.com/sounds/v1/weather/thunderstorm.ogg',
   },
   // Nature
   {
-    id: 5, cat: 'nature', emoji: '🌧️', name: 'Gentle Rain',
-    url: 'https://cdn.pixabay.com/audio/2022/03/10/audio_0625a79a6a.mp3',
+    id: 4, cat: 'nature', emoji: '🌊', name: 'Ocean Waves',
+    url: 'https://actions.google.com/sounds/v1/water/waves_crashing_on_rock_beach.ogg',
   },
   {
-    id: 6, cat: 'nature', emoji: '🌊', name: 'Ocean Waves',
-    url: 'https://cdn.pixabay.com/audio/2021/09/06/audio_6735aed4c0.mp3',
-  },
-  {
-    id: 7, cat: 'nature', emoji: '🌿', name: 'Forest Breeze',
-    url: 'https://cdn.pixabay.com/audio/2022/01/18/audio_d0c6ff1bcc.mp3',
-  },
-  {
-    id: 8, cat: 'nature', emoji: '🔥', name: 'Fireplace',
-    url: 'https://cdn.pixabay.com/audio/2022/03/09/audio_c6ccf94451.mp3',
+    id: 5, cat: 'nature', emoji: '🍃', name: 'Wind & Breeze',
+    url: 'https://actions.google.com/sounds/v1/weather/wind.ogg',
   },
   // Ambient
   {
-    id: 9, cat: 'ambient', emoji: '🌌', name: 'Deep Space',
-    url: 'https://cdn.pixabay.com/audio/2023/04/08/audio_e3fdb8e7ae.mp3',
+    id: 6, cat: 'ambient', emoji: '☕', name: 'Coffee Shop',
+    url: 'https://actions.google.com/sounds/v1/ambiences/coffee_shop.ogg',
+  },
+  // Lo-Fi / Focus beats
+  {
+    id: 7, cat: 'lofi', emoji: '🎧', name: 'Focus Beat I',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
   },
   {
-    id: 10, cat: 'ambient', emoji: '🧘', name: 'Zen Garden',
-    url: 'https://cdn.pixabay.com/audio/2022/10/30/audio_c8a1071bbd.mp3',
+    id: 8, cat: 'lofi', emoji: '🎵', name: 'Focus Beat II',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
   },
   {
-    id: 11, cat: 'ambient', emoji: '🏔️', name: 'Mountain Air',
-    url: 'https://cdn.pixabay.com/audio/2022/09/13/audio_5ef95e9898.mp3',
-  },
-  {
-    id: 12, cat: 'ambient', emoji: '🌅', name: 'Dawn Chorus',
-    url: 'https://cdn.pixabay.com/audio/2023/01/09/audio_95dd3a7e68.mp3',
-  },
-  // Classical
-  {
-    id: 13, cat: 'classical', emoji: '🎹', name: 'Piano Nocturne',
-    url: 'https://cdn.pixabay.com/audio/2021/11/13/audio_cb31a2ab87.mp3',
-  },
-  {
-    id: 14, cat: 'classical', emoji: '🎻', name: 'String Quartet',
-    url: 'https://cdn.pixabay.com/audio/2022/08/02/audio_884fe92c21.mp3',
-  },
-  {
-    id: 15, cat: 'classical', emoji: '🎵', name: 'Soft Sonata',
-    url: 'https://cdn.pixabay.com/audio/2023/02/08/audio_2c5e9bf2a9.mp3',
-  },
-  {
-    id: 16, cat: 'classical', emoji: '🎼', name: 'Baroque Study',
-    url: 'https://cdn.pixabay.com/audio/2022/12/11/audio_5daef6a64a.mp3',
+    id: 9, cat: 'lofi', emoji: '🎹', name: 'Focus Beat III',
+    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
   },
 ];
 
 // ===== STATE =====
-let currentCat  = 'lofi';
+let currentCat  = 'rain';
 let currentIdx  = null;   // index in TRACKS
 let isPlaying   = false;
 
@@ -89,6 +64,7 @@ const timeLabel = document.getElementById('timeLabel');
 const playerTitle = document.getElementById('playerTitle');
 const playerCat   = document.getElementById('playerCat');
 const playerCover = document.getElementById('playerCover');
+const playerBar   = document.getElementById('playerBar');
 
 audio.volume = 0.7;
 audio.loop   = true;
@@ -106,7 +82,7 @@ function renderTracks() {
       <span class="track-emoji">${track.emoji}</span>
       <div class="track-name">${track.name}</div>
       <div class="track-duration">${track.cat.charAt(0).toUpperCase() + track.cat.slice(1)}</div>
-      <button class="track-play-btn">${globalIdx === currentIdx && isPlaying ? '⏸' : '▶'}</button>
+      <button class="track-play-btn"><span class="material-symbols-rounded">${globalIdx === currentIdx && isPlaying ? 'pause' : 'play_arrow'}</span></button>
     `;
     card.addEventListener('click', () => selectTrack(globalIdx));
     grid.appendChild(card);
@@ -169,7 +145,9 @@ function updateUI() {
   playerTitle.textContent = track ? track.name : 'No track selected';
   playerCat.textContent   = track ? track.cat.charAt(0).toUpperCase() + track.cat.slice(1) : '—';
   playerCover.textContent = track ? track.emoji : '♪';
-  btnPlay.textContent     = isPlaying ? '⏸' : '▶';
+  const playIcon = btnPlay.querySelector('.material-symbols-rounded');
+  if (playIcon) playIcon.textContent = isPlaying ? 'pause' : 'play_arrow';
+  if (playerBar) playerBar.classList.toggle('playing', isPlaying);
   // Re-render grid to update active states
   renderTracks();
 }

@@ -14,6 +14,10 @@ class AuthRoutes:
         self.bp.route('/reset_password/send_code', methods=['POST'])(self.controller.send_reset_code)
         self.bp.route('/reset_password/verify', methods=['POST'])(self.controller.verify_reset_code)
         self.bp.route('/reset_password/set', methods=['POST'])(self.controller.set_new_password)
+        self.bp.route('/account/deactivate', methods=['POST'])(self.controller.deactivate_account)
+        self.bp.route('/reactivate')(self.controller.reactivate_page)
+        self.bp.route('/reactivate/verify', methods=['POST'])(self.controller.reactivate_verify)
+        self.bp.route('/reactivate/resend', methods=['POST'])(self.controller.reactivate_resend)
         self.bp.route('/logout')(self.controller.logout)
         return self.bp
 

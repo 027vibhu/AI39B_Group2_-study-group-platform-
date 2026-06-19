@@ -9,7 +9,11 @@ from app.models.room import (
     is_user_banned_from_room,
     is_user_in_room,
     log_room_action,
-    log_moderation_action
+    log_moderation_action,
+    set_user_room_role,
+    get_user_room_role,
+    get_room_members_with_roles,
+    update_room_name,
 )
 from app.models.message import get_messages_for_room
 from app.models.presence_model import get_online_users, get_offline_users
@@ -20,8 +24,11 @@ from app.models.shared_file import create_shared_file, get_shared_file_by_id, ge
 from app.controllers.moderation_controller import ModerationController
 from app.controllers.browse_rooms_controller import BrowseRoomsController
 from app.controllers.note_controller import NoteController
+from app.controllers.flashcard_controller import FlashcardController
 from app.controllers.study_hour_controller import StudyHourController
+from app.controllers.task_controller import TaskController
 from app.controllers.whiteboard_controller import WhiteboardController
+from app.services.quotes import get_random_quote
 from app import socketio
 import random
 import os
@@ -60,6 +67,8 @@ class HomeRoutes:
         self.bp.route('/files/<int:file_id>/view')(self.view_shared_file)
         self.bp.route('/message/<int:message_id>/vote', methods=['POST'])(self.vote_message)
         self.bp.route('/chat/<room_code>/delete', methods=['POST'])(self.delete_chat)
+        self.bp.route('/chat/<room_code>/rename', methods=['POST'])(self.rename_room)
+        self.bp.route('/chat/<room_code>/roles', methods=['POST'])(self.update_member_role)
         self.bp.context_processor(self.inject_joined_rooms)
         self.bp.route('/profile')(self.profile)
         self.bp.route('/moderation')(self.moderation)
@@ -67,15 +76,28 @@ class HomeRoutes:
         self.bp.route('/profile/update', methods=['POST'])(self.update_profile)
         self.bp.route('/profile/avatar', methods=['POST'])(self.update_avatar)
         self.bp.route('/notes')(self.notes)
+        self.bp.route('/notes/<int:note_id>/view')(self.view_note)
+        self.bp.route('/notes/<int:note_id>/summary', methods=['POST'])(self.summarize_note)
+        self.bp.route('/notes/<int:note_id>/chat', methods=['POST'])(self.chat_note)
         self.bp.route('/notes/upload', methods=['POST'])(self.upload_note)
         self.bp.route('/notes/<int:note_id>/share', methods=['POST'])(self.share_note)
         self.bp.route('/notes/<int:note_id>/delete', methods=['POST'])(self.delete_note)
+        self.bp.route('/notes/<int:note_id>/flashcards/generate', methods=['POST'])(self.generate_flashcards)
+        self.bp.route('/notes/<int:note_id>/flashcards')(self.study_flashcards)
         self.bp.route('/whiteboard')(self.whiteboard)
         self.bp.route('/whiteboard/new', methods=['POST'])(self.whiteboard_new)
         self.bp.route('/whiteboard/join', methods=['POST'])(self.whiteboard_join)
         self.bp.route('/whiteboard/<code>')(self.whiteboard_board)
         # Study hours tracking (logged via the dashboard widget)
         self.bp.route('/study-hours/create', methods=['POST'])(self.study_hours_create)
+        self.bp.route('/study-hours')(self.study_hours_page)
+        self.bp.route('/study-streak')(self.study_streak_page)
+        # Schedule board (Kanban to-do list)
+        self.bp.route('/schedule')(self.schedule_page)
+        self.bp.route('/tasks/create', methods=['POST'])(self.tasks_create)
+        self.bp.route('/tasks/<int:task_id>/update', methods=['POST'])(self.tasks_update)
+        self.bp.route('/tasks/<int:task_id>/toggle', methods=['POST'])(self.tasks_toggle)
+        self.bp.route('/tasks/<int:task_id>/delete', methods=['POST'])(self.tasks_delete)
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
         self.bp.route('/music')(self.music)
         
@@ -99,6 +121,9 @@ class HomeRoutes:
             'auth.send_reset_code',
             'auth.verify_reset_code',
             'auth.set_new_password',
+            'auth.reactivate_page',
+            'auth.reactivate_verify',
+            'auth.reactivate_resend',
             'auth.logout',
         }
 
@@ -123,15 +148,19 @@ class HomeRoutes:
         # Exam date drives the countdown square. Swap this for real data later.
         user_id = session.get('user_id')
         stats = {'total_hours': 0, 'streak': 0, 'recent_sessions': []}
+        tasks = []
         if user_id:
             controller = StudyHourController()
             stats = controller.get_widget_stats(user_id)
-            
+            tasks = TaskController().list_for_user(user_id)
+
         return render_template(
             'dashboard.html',
             exam_date='2026-07-01T09:00:00',
             exam_name='Final Exams',
-            study_stats=stats
+            study_stats=stats,
+            tasks=tasks,
+            quote=get_random_quote()
         )
 
     def join_room(self):
@@ -201,6 +230,40 @@ class HomeRoutes:
         controller = StudyHourController()
         return controller.create_session()
 
+    def study_hours_page(self):
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+        stats = StudyHourController().get_widget_stats(user_id)
+        return render_template('study_hours.html', study_stats=stats)
+
+    def study_streak_page(self):
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+        stats = StudyHourController().get_widget_stats(user_id)
+        return render_template('study_streak.html', study_stats=stats)
+
+    # --- Schedule board handlers ---
+    def schedule_page(self):
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+        tasks = TaskController().list_for_user(user_id)
+        return render_template('schedule.html', tasks=tasks)
+
+    def tasks_create(self):
+        return TaskController().create_task()
+
+    def tasks_update(self, task_id):
+        return TaskController().update_task(task_id)
+
+    def tasks_toggle(self, task_id):
+        return TaskController().toggle_task(task_id)
+
+    def tasks_delete(self, task_id):
+        return TaskController().delete_task(task_id)
+
     def _generate_unique_room_code(self):
         while True:
             code = str(random.randint(100000, 999999))
@@ -246,6 +309,10 @@ class HomeRoutes:
         online_members = get_online_users(room['id'])
         offline_members = get_offline_users(room['id'])
 
+        member_roles = {m['username']: m['role'] for m in (get_room_members_with_roles(room['id']) or [])}
+        current_role = get_user_room_role(user_id, room['id'])
+        can_manage_roles = (room.get('owner_id') == user_id) or session.get('role') == 'admin'
+
         return render_template(
             'chat.html',
             room=room,
@@ -253,6 +320,9 @@ class HomeRoutes:
             messages=messages,
             online_members=online_members,
             offline_members=offline_members,
+            member_roles=member_roles,
+            current_role=current_role,
+            can_manage_roles=can_manage_roles,
         )
 
     def _get_shared_file_upload_dir(self):
@@ -363,7 +433,13 @@ class HomeRoutes:
         }, room=room_code)
 
         if is_ajax:
-            return jsonify({'status': 'success', 'message': 'File shared successfully.'}), 200
+            return jsonify({
+                'status': 'success', 'message': 'File shared successfully.',
+                'id': file_id, 'original_filename': original_filename,
+                'file_size': file_size, 'mime_type': mime_type,
+                'download_url': url_for('home.download_shared_file', file_id=file_id),
+                'view_url': url_for('home.view_shared_file', file_id=file_id),
+            }), 200
 
         flash('File shared successfully.', 'success')
         return redirect(url_for('home.chat', room_code=room_code))
@@ -461,9 +537,67 @@ class HomeRoutes:
         result = controller.handle(message_id, user_id, vote_type)
         return jsonify(result)
 
+    def rename_room(self, room_code):
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'status': 'error', 'message': 'Authentication required.'}), 401
+
+        current_user = get_user_by_id(user_id)
+        if not current_user:
+            return jsonify({'status': 'error', 'message': 'Invalid session.'}), 401
+
+        room = get_room_by_code(room_code)
+        if not room:
+            return jsonify({'status': 'error', 'message': 'Room not found.'}), 404
+
+        # Only the room owner or a platform admin may rename the room
+        if room.get('owner_id') != current_user['id'] and session.get('role') != 'admin':
+            return jsonify({'status': 'error', 'message': 'Only the room owner can rename this room.'}), 403
+
+        payload = request.get_json(silent=True) or request.form
+        new_name = (payload.get('name') or '').strip()
+
+        if not new_name:
+            return jsonify({'status': 'error', 'message': 'Room name cannot be empty.'}), 400
+        if len(new_name) > 120:
+            return jsonify({'status': 'error', 'message': 'Room name must be 120 characters or fewer.'}), 400
+
+        update_room_name(room['id'], new_name)
+
+        socketio.emit(
+            'room_renamed',
+            {
+                'room_code': room['code'],
+                'name': new_name,
+            },
+            room=room['code'],
+        )
+
+        return jsonify({'status': 'success', 'name': new_name})
+
     def delete_chat(self, room_code):
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'status': 'error', 'message': 'Authentication required.'}), 401
+
+        current_user = get_user_by_id(user_id)
+        if not current_user:
+            return jsonify({'status': 'error', 'message': 'Invalid session.'}), 401
+
+        room = get_room_by_code(room_code)
+        if not room:
+            return jsonify({'status': 'error', 'message': 'Room not found.'}), 404
+
+        # Only the room owner or a platform admin may delete the room
+        if room.get('owner_id') != current_user['id'] and session.get('role') != 'admin':
+            return jsonify({'status': 'error', 'message': 'Only the room owner can delete this room.'}), 403
+
+        # Notify connected clients before the room is gone so the broadcast lands
+        socketio.emit('room_deleted', {'room_code': room['code']}, room=room['code'])
+
         delete_room_by_code(room_code)
-        return redirect(url_for('home.profile'))
+
+        return jsonify({'status': 'success', 'redirect': url_for('home.dashboard')})
 
     def inject_joined_rooms(self):
         user_id = session.get('user_id')
@@ -499,6 +633,17 @@ class HomeRoutes:
         controller = ModerationController()
         return controller.show_moderation()
 
+    def _can_moderate(self, room, user):
+        """True if the user may kick/ban in this room.
+
+        Platform admins/moderators, the room owner, or a room-level moderator.
+        """
+        if session.get('role') in ('admin', 'moderator'):
+            return True
+        if room.get('owner_id') == user['id']:
+            return True
+        return get_user_room_role(user['id'], room['id']) == 'moderator'
+
     def moderation_action(self):
         user_id = session.get('user_id')
         if not user_id:
@@ -527,9 +672,8 @@ class HomeRoutes:
         if not room:
             return jsonify({'status': 'error', 'message': 'Room not found.'}), 404
 
-        # Check permissions: admin/moderator or owner of the room
-        role = session.get('role')
-        if role not in ('admin', 'moderator') and room.get('owner_id') != current_user['id']:
+        # Check permissions: platform admin/moderator, room owner, or room-level moderator
+        if not self._can_moderate(room, current_user):
             if request.is_json:
                 return jsonify({'status': 'error', 'message': 'Moderator privileges required.'}), 403
             flash('Moderator privileges required.', 'danger')
@@ -578,6 +722,61 @@ class HomeRoutes:
         flash(message, 'success')
         return redirect(url_for('home.moderation'))
 
+    def update_member_role(self, room_code):
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'status': 'error', 'message': 'Authentication required.'}), 401
+
+        current_user = get_user_by_id(user_id)
+        if not current_user:
+            return jsonify({'status': 'error', 'message': 'Invalid session.'}), 401
+
+        room = get_room_by_code(room_code)
+        if not room:
+            return jsonify({'status': 'error', 'message': 'Room not found.'}), 404
+
+        # Only the room owner or a platform admin may change roles
+        if room.get('owner_id') != current_user['id'] and session.get('role') != 'admin':
+            return jsonify({'status': 'error', 'message': 'Only the room owner can manage roles.'}), 403
+
+        payload = request.get_json(silent=True) or request.form
+        target_username = (payload.get('username') or '').strip()
+        new_role = (payload.get('role') or '').strip().lower()
+
+        if new_role not in {'moderator', 'member'}:
+            return jsonify({'status': 'error', 'message': 'Role must be moderator or member.'}), 400
+        if not target_username:
+            return jsonify({'status': 'error', 'message': 'Username is required.'}), 400
+
+        target_user = get_user_by_username(target_username)
+        if not target_user:
+            return jsonify({'status': 'error', 'message': 'Target user not found.'}), 404
+
+        if target_user['id'] == room.get('owner_id'):
+            return jsonify({'status': 'error', 'message': "The room owner's role cannot be changed."}), 400
+
+        if not is_user_in_room(target_user['id'], room['id']):
+            return jsonify({'status': 'error', 'message': 'User is not a member of this room.'}), 404
+
+        set_user_room_role(target_user['id'], room['id'], new_role)
+
+        socketio.emit(
+            'role_updated',
+            {
+                'room_code': room['code'],
+                'username': target_username,
+                'role': new_role,
+            },
+            room=room['code'],
+        )
+
+        return jsonify({
+            'status': 'success',
+            'message': f'{target_username} is now a {new_role}.',
+            'username': target_username,
+            'role': new_role,
+        })
+
     def update_profile(self):
         user_id = session.get('user_id')
         if not user_id:
@@ -621,6 +820,18 @@ class HomeRoutes:
     def notes(self):
         controller = NoteController()
         return controller.list_notes()
+
+    def view_note(self, note_id):
+        controller = NoteController()
+        return controller.view_note(note_id)
+
+    def summarize_note(self, note_id):
+        controller = NoteController()
+        return controller.summarize_note(note_id)
+
+    def chat_note(self, note_id):
+        controller = NoteController()
+        return controller.chat_note(note_id)
     
     def music(self):
         return render_template('backgroundmusic.html')
@@ -636,6 +847,14 @@ class HomeRoutes:
     def delete_note(self, note_id):
         controller = NoteController()
         return controller.delete_note(note_id)
+
+    def generate_flashcards(self, note_id):
+        controller = FlashcardController()
+        return controller.generate_flashcards(note_id)
+
+    def study_flashcards(self, note_id):
+        controller = FlashcardController()
+        return controller.study_flashcards(note_id)
 
     def create_room(self):
         if request.method == 'POST':

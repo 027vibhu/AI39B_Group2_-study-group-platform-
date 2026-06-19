@@ -29,6 +29,34 @@ class Note(BaseModel):
             db.close()
 
     @staticmethod
+    def ensure_content_column():
+        """Add the cached-content columns if they are missing.
+
+        `content_text` stores the PDF's extracted text and `content_images`
+        stores rendered page images (JSON list of base64 JPEGs, used only for
+        scanned PDFs with no embedded text), so a document is processed exactly
+        once and reused for every chat turn. Idempotent: safe to call on every
+        startup, including on pre-existing notes tables.
+        """
+        ensure_database_exists()
+        db = Database()
+        try:
+            for column in ('content_text', 'content_images'):
+                exists = db.fetch_one(
+                    """
+                    SELECT COUNT(*) AS c FROM information_schema.columns
+                    WHERE table_schema = DATABASE()
+                      AND table_name = 'notes'
+                      AND column_name = %s
+                    """,
+                    (column,),
+                )
+                if not exists or not exists['c']:
+                    db.execute(f"ALTER TABLE notes ADD COLUMN {column} LONGTEXT NULL")
+        finally:
+            db.close()
+
+    @staticmethod
     def create_note_shares_table():
         ensure_database_exists()
         db = Database()
@@ -70,6 +98,20 @@ class Note(BaseModel):
 
     def get_note_by_id(self, note_id):
         return self.find_by_id(note_id)
+
+    def set_content_text(self, note_id, content_text):
+        """Cache the extracted PDF text on the note so it is parsed only once."""
+        return self.execute(
+            "UPDATE notes SET content_text = %s WHERE id = %s",
+            (content_text, note_id),
+        )
+
+    def set_content_images(self, note_id, content_images_json):
+        """Cache rendered page images (JSON) for scanned PDFs with no text."""
+        return self.execute(
+            "UPDATE notes SET content_images = %s WHERE id = %s",
+            (content_images_json, note_id),
+        )
 
     def share_note(self, note_id, shared_with_user_id, shared_by_user_id):
         return self.execute(

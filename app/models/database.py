@@ -64,6 +64,19 @@ def create_users_table():
                 )
             except Exception:
                 pass
+            # Best-effort: account-state columns for the deactivate feature.
+            try:
+                cursor.execute(
+                    "ALTER TABLE users ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1"
+                )
+            except Exception:
+                pass
+            try:
+                cursor.execute(
+                    "ALTER TABLE users ADD COLUMN deactivated_at DATETIME NULL"
+                )
+            except Exception:
+                pass
     finally:
         connection.close()
 
@@ -74,7 +87,8 @@ def get_user_by_identifier(identifier):
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT id, username, email, password_hash, avatar_url, "
-                "first_name, last_name, school, address, bio, role, created_at "
+                "first_name, last_name, school, address, bio, role, "
+                "is_active, deactivated_at, created_at "
                 "FROM users WHERE username = %s OR email = %s LIMIT 1",
                 (identifier, identifier),
             )
@@ -89,7 +103,8 @@ def get_user_by_email(email):
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT id, username, email, password_hash, avatar_url, "
-                "first_name, last_name, school, address, bio, role, created_at "
+                "first_name, last_name, school, address, bio, role, "
+                "is_active, deactivated_at, created_at "
                 "FROM users WHERE email = %s LIMIT 1",
                 (email,),
             )
@@ -104,7 +119,8 @@ def get_user_by_username(username):
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT id, username, email, password_hash, avatar_url, "
-                "first_name, last_name, school, address, bio, role, created_at "
+                "first_name, last_name, school, address, bio, role, "
+                "is_active, deactivated_at, created_at "
                 "FROM users WHERE username = %s LIMIT 1",
                 (username,),
             )
@@ -119,7 +135,8 @@ def get_user_by_id(user_id):
         with connection.cursor() as cursor:
             cursor.execute(
                 "SELECT id, username, email, password_hash, avatar_url, "
-                "first_name, last_name, school, address, bio, role, created_at "
+                "first_name, last_name, school, address, bio, role, "
+                "is_active, deactivated_at, created_at "
                 "FROM users WHERE id = %s LIMIT 1",
                 (user_id,),
             )
@@ -139,6 +156,32 @@ def create_user(username, email, password_hash):
                 (username, email, password_hash),
             )
             return cursor.lastrowid
+    finally:
+        connection.close()
+
+
+def deactivate_user(user_id):
+    """Flag an account as deactivated. Login is blocked until reactivation."""
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE users SET is_active = 0, deactivated_at = NOW() WHERE id = %s",
+                (user_id,),
+            )
+    finally:
+        connection.close()
+
+
+def reactivate_user(user_id):
+    """Re-enable a previously deactivated account."""
+    connection = get_database_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE users SET is_active = 1, deactivated_at = NULL WHERE id = %s",
+                (user_id,),
+            )
     finally:
         connection.close()
 
@@ -168,7 +211,8 @@ def ensure_admin_user():
             if row:
                 # Keep the owner account in sync with the configured password/role.
                 cursor.execute(
-                    "UPDATE users SET email = %s, password_hash = %s, role = 'admin' WHERE id = %s",
+                    "UPDATE users SET email = %s, password_hash = %s, role = 'admin', "
+                    "is_active = 1, deactivated_at = NULL WHERE id = %s",
                     (email, password_hash, row['id']),
                 )
             else:
