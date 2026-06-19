@@ -97,9 +97,13 @@
               <i class="fa-regular fa-calendar"></i>
               {{ note.created_at.strftime('%b %d, %Y') }}
             </span>
-            <a href="{{ url_for('static', filename=note.pdf_url) }}" target="_blank" rel="noopener noreferrer" class="view-link">
+            <a href="{{ url_for('home.view_note', note_id=note.id) }}" class="view-link">
               <i class="fa-solid fa-eye"></i>
               View
+            </a>
+            <a href="{{ url_for('home.study_flashcards', note_id=note.id) }}" class="flashcards-link">
+              <i class="fa-solid fa-layer-group"></i>
+              Flashcards
             </a>
             <button type="button" class="share-btn"
                     data-share-url="{{ url_for('home.share_note', note_id=note.id) }}"
@@ -151,7 +155,7 @@
                 <i class="fa-regular fa-calendar"></i>
                 {{ note.created_at.strftime('%b %d, %Y') }}
               </span>
-              <a href="{{ url_for('static', filename=note.pdf_url) }}" target="_blank" rel="noopener noreferrer" class="view-link">
+              <a href="{{ url_for('home.view_note', note_id=note.id) }}" class="view-link">
                 <i class="fa-solid fa-eye"></i>
                 View
               </a>

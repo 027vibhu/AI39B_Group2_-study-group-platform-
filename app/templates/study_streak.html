@@ -1,0 +1,244 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Study Streak — LOREVIA{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/study_streak.css') }}">
+{% endblock %}
+
+{% block topbar_title %}Study Streak{% endblock %}
+
+{% block content %}
+<section class="ss-page">
+  <a class="ss-back" href="{{ url_for('home.dashboard') }}">
+    <i class="fa-solid fa-arrow-left"></i> Back to dashboard
+  </a>
+
+  <header class="ss-hero">
+    <div class="ss-hero-flame"><i class="fa-solid fa-fire"></i></div>
+    <div class="ss-hero-text">
+      <span class="ss-hero-badge"><i class="fa-solid fa-fire"></i> Study Streak</span>
+      <h1 class="ss-hero-title">Keep the fire going</h1>
+      <p class="ss-hero-sub">Study any amount each day to grow your streak.</p>
+    </div>
+  </header>
+
+  <!-- Stat tiles -->
+  <div class="ss-stats">
+    <div class="ss-stat">
+      <strong id="statCurrentStreak">0</strong>
+      <span>Current streak</span>
+    </div>
+    <div class="ss-stat">
+      <strong id="statLongestStreak">0</strong>
+      <span>Longest streak</span>
+    </div>
+    <div class="ss-stat">
+      <strong id="statTotalDays">0</strong>
+      <span>Days studied</span>
+    </div>
+  </div>
+
+  <!-- This week flame track -->
+  <article class="ss-card">
+    <span class="ss-card-title"><i class="fa-solid fa-calendar-week"></i> This week</span>
+    <div class="ss-week-track" id="streakWeekTrack"></div>
+  </article>
+
+  <div class="ss-lower">
+    <!-- 12-week heatmap -->
+    <article class="ss-card">
+      <span class="ss-card-title"><i class="fa-solid fa-table-cells"></i> Last 12 weeks</span>
+      <div class="ss-heatmap-wrapper">
+        <div class="ss-heatmap-grid" id="streakHeatmapGrid"></div>
+      </div>
+      <div class="ss-legend">
+        <span>Less</span>
+        <i class="ss-legend-cell lvl-0"></i>
+        <i class="ss-legend-cell lvl-1"></i>
+        <i class="ss-legend-cell lvl-2"></i>
+        <i class="ss-legend-cell lvl-3"></i>
+        <i class="ss-legend-cell lvl-4"></i>
+        <span>More</span>
+      </div>
+    </article>
+
+    <!-- Per-month bar chart -->
+    <article class="ss-card">
+      <span class="ss-card-title"><i class="fa-solid fa-chart-column"></i> Days studied per month</span>
+      <div class="ss-chart-box"><canvas id="monthlyChart"></canvas></div>
+    </article>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script id="studyDaysData" type="application/json">{{ (study_stats.study_days if study_stats else [])|tojson }}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    function getLocalDateString(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function loadStudyHistory() {
+      try {
+        const raw = document.getElementById('studyDaysData');
+        const parsed = raw ? JSON.parse(raw.textContent || '[]') : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) { return []; }
+    }
+
+    function calculateStreakStats(history) {
+      const uniqueDates = [...new Set(history.map(i => i.date))].sort();
+      if (uniqueDates.length === 0) return { currentStreak: 0, longestStreak: 0, totalDays: 0 };
+
+      const dates = uniqueDates.map(s => { const p = s.split('-'); return new Date(p[0], p[1] - 1, p[2]); });
+      let longest = 0, run = 0, prev = null;
+      for (let i = 0; i < dates.length; i++) {
+        if (prev === null) { run = 1; }
+        else {
+          const diffDays = Math.round((dates[i] - prev) / 86400000);
+          if (diffDays === 1) run++;
+          else if (diffDays > 1) { if (run > longest) longest = run; run = 1; }
+        }
+        prev = dates[i];
+      }
+      if (run > longest) longest = run;
+
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+      const todayStr = getLocalDateString(today);
+      const yesterdayStr = getLocalDateString(yesterday);
+
+      let current = 0;
+      const studiedToday = uniqueDates.includes(todayStr);
+      const studiedYesterday = uniqueDates.includes(yesterdayStr);
+      if (studiedToday || studiedYesterday) {
+        let check = studiedToday ? today : yesterday;
+        while (uniqueDates.includes(getLocalDateString(check))) {
+          current++; check.setDate(check.getDate() - 1);
+        }
+      }
+      return { currentStreak: current, longestStreak: Math.max(longest, current), totalDays: uniqueDates.length };
+    }
+
+    function getWeekDays() {
+      const now = new Date();
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(now); monday.setDate(diff); monday.setHours(0, 0, 0, 0);
+      const days = [];
+      for (let i = 0; i < 7; i++) { const d = new Date(monday); d.setDate(monday.getDate() + i); days.push(d); }
+      return days;
+    }
+
+    const history = loadStudyHistory();
+    const minutesByDate = {};
+    history.forEach((item) => {
+      minutesByDate[item.date] = (minutesByDate[item.date] || 0) + (item.minutes || 0);
+    });
+    const uniqueDates = [...new Set(history.map(i => i.date))];
+    const stats = calculateStreakStats(history);
+
+    document.getElementById('statCurrentStreak').textContent = stats.currentStreak;
+    document.getElementById('statLongestStreak').textContent = stats.longestStreak;
+    document.getElementById('statTotalDays').textContent = stats.totalDays;
+
+    // Weekly flame track
+    const track = document.getElementById('streakWeekTrack');
+    if (track) {
+      const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      let html = '';
+      getWeekDays().forEach((d, idx) => {
+        const isActive = uniqueDates.includes(getLocalDateString(d));
+        const isFuture = d > new Date();
+        const cls = isActive ? 'active' : (isFuture ? 'future' : '');
+        const icon = isActive ? '<i class="fa-solid fa-fire"></i>' : labels[idx][0];
+        html += `<div class="ss-day-cell"><div class="ss-day-circle ${cls}">${icon}</div>
+                 <span class="ss-day-label">${labels[idx]}</span></div>`;
+      });
+      track.innerHTML = html;
+    }
+
+    // 12-week heatmap (84 days, columns = weeks)
+    const grid = document.getElementById('streakHeatmapGrid');
+    if (grid) {
+      const WEEKS = 12;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      // Align the last column to end on this week's Sunday.
+      const dayOfWeek = (today.getDay() + 6) % 7; // 0 = Mon
+      const lastSunday = new Date(today); lastSunday.setDate(today.getDate() + (6 - dayOfWeek));
+      const start = new Date(lastSunday); start.setDate(lastSunday.getDate() - (WEEKS * 7 - 1));
+
+      let html = '';
+      for (let w = 0; w < WEEKS; w++) {
+        html += '<div class="ss-heatmap-week">';
+        for (let d = 0; d < 7; d++) {
+          const cell = new Date(start); cell.setDate(start.getDate() + w * 7 + d);
+          const dateStr = getLocalDateString(cell);
+          const mins = minutesByDate[dateStr] || 0;
+          let lvl = 0;
+          if (mins > 0 && mins < 30) lvl = 1;
+          else if (mins >= 30 && mins < 60) lvl = 2;
+          else if (mins >= 60 && mins < 120) lvl = 3;
+          else if (mins >= 120) lvl = 4;
+          const isFuture = cell > today;
+          const fmt = cell.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          const tip = isFuture ? '' : (mins > 0 ? `${fmt}: ${mins}m studied` : `${fmt}: No study logged`);
+          html += `<div class="ss-heatmap-day lvl-${lvl}${isFuture ? ' future' : ''}" ${tip ? `data-tooltip="${tip}"` : ''}></div>`;
+        }
+        html += '</div>';
+      }
+      grid.innerHTML = html;
+    }
+
+    // Days-studied-per-month bar chart (last 6 months)
+    if (typeof Chart !== 'undefined') {
+      Chart.defaults.font.family = "'Poppins', sans-serif";
+      Chart.defaults.color = '#9aa0b8';
+
+      const monthLabels = [];
+      const monthKeys = [];
+      const base = new Date(); base.setDate(1);
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
+        monthLabels.push(d.toLocaleDateString(undefined, { month: 'short' }));
+        monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+      }
+      const counts = monthKeys.map(key =>
+        uniqueDates.filter(ds => ds.startsWith(key)).length
+      );
+
+      const ctx = document.getElementById('monthlyChart');
+      if (ctx) {
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: monthLabels,
+            datasets: [{
+              label: 'Days studied',
+              data: counts,
+              backgroundColor: '#5b63b3',
+              borderRadius: 8,
+              maxBarThickness: 46,
+            }],
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false },
+              tooltip: { callbacks: { label: (c) => `${c.parsed.y} days` } } },
+            scales: {
+              y: { beginAtZero: true, grid: { color: 'rgba(125,134,199,0.14)' }, ticks: { precision: 0 } },
+              x: { grid: { display: false } },
+            },
+          },
+        });
+      }
+    }
+  })();
+</script>
+{% endblock %}
