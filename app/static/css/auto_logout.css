@@ -1,0 +1,73 @@
+/* Core styles for Auto Logout / Token Expiry UI */
+:root{
+  --bg:#f7fafc;
+  --panel:#ffffff;
+  --accent:#2563eb;
+  --muted:#6b7280;
+  --danger:#dc2626;
+}
+html,body{height:100%;}
+body{
+  margin:0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background:var(--bg);
+  color:#111827;
+}
+.auto-logout-page{
+  display:flex;
+  min-height:100vh;
+  align-items:center;
+  justify-content:center;
+  padding:32px;
+}
+.status{
+  text-align:center;
+}
+.status h1{margin:0 0 8px;font-size:1.5rem}
+.status p{margin:0;color:var(--muted)}
+
+/* Idle warning modal */
+.idle-warning{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(15,23,42,0.45);
+  z-index:1000;
+}
+.idle-warning.hidden{display:none}
+.idle-content{
+  width:min(560px, 92%);
+  background:var(--panel);
+  border-radius:10px;
+  padding:24px;
+  box-shadow:0 8px 30px rgba(2,6,23,0.15);
+  text-align:center;
+}
+.idle-content h2{margin:0 0 8px;font-size:1.25rem}
+.idle-content p{margin:0 0 16px;color:var(--muted)}
+.idle-content #idle-count{font-weight:700;color:var(--accent)}
+
+.idle-actions{display:flex;gap:12px;justify-content:center}
+.btn{background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer}
+.btn:focus{outline:2px solid rgba(37,99,235,0.25);outline-offset:2px}
+.btn-secondary{background:transparent;color:var(--danger);border:1px solid rgba(220,38,38,0.12)}
+
+.session-indicator{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  background:#fff;
+  padding:8px 12px;
+  border-radius:999px;
+  box-shadow:0 6px 18px rgba(2,6,23,0.06);
+  font-size:0.875rem;
+  color:var(--muted);
+}
+
+/* Small responsive tweaks */
+@media (max-width:480px){
+  .idle-content{padding:16px}
+  .idle-actions{flex-direction:column}
+}
