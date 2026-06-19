@@ -15,6 +15,7 @@ class AuthRoutes:
         self.bp.route('/reset_password/verify', methods=['POST'])(self.controller.verify_reset_code)
         self.bp.route('/reset_password/set', methods=['POST'])(self.controller.set_new_password)
         self.bp.route('/logout')(self.controller.logout)
+        self.bp.route('/keepalive', methods=['POST'])(self.controller.keepalive)
         return self.bp
 
 

@@ -142,3 +142,12 @@ class AuthController(BaseController):
     def logout(self):
         session.clear()
         return redirect(url_for('auth.login'))
+
+    def keepalive(self):
+        """Called by the frontend to extend the user's session.
+        Returns JSON ok:true. Optionally update a timestamp in session.
+        """
+        if not session.get('user_id'):
+            return jsonify(ok=False, error='Not signed in'), 401
+        session['last_keepalive'] = time.time()
+        return jsonify(ok=True), 200
