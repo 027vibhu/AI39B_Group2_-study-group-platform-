@@ -5,16 +5,21 @@ from app.models.database import (
     get_user_by_identifier,
     get_user_by_email,
     get_user_by_username,
+    get_user_by_id,
     create_user,
     update_user_password_by_email,
+    deactivate_user,
+    reactivate_user,
 )
-from app.utils.email import send_reset_code
+from app.utils.email import send_reset_code, send_reactivation_code
 import re
 import time
 import secrets
 
 # How long a reset code stays valid (seconds)
 RESET_CODE_TTL = 600
+# How long a reactivation code stays valid (seconds)
+REACTIVATE_CODE_TTL = 600
 
 
 class AuthController(BaseController):
@@ -32,6 +37,11 @@ class AuthController(BaseController):
             user = get_user_by_identifier(identifier)
             if not user or not check_password_hash(user['password_hash'], password):
                 return render_template('login.html', active_form='sign-in', login_error='Invalid credentials. Please try again.'), 401
+
+            # Deactivated accounts cannot sign in directly; start the email-code
+            # reactivation flow instead of establishing a session.
+            if not user.get('is_active', 1):
+                return self._begin_reactivation(user)
 
             session['user_id'] = user['id']
             session['username'] = user['username']
@@ -138,6 +148,111 @@ class AuthController(BaseController):
             session.pop(key, None)
 
         return jsonify(ok=True), 200
+
+    # --- Account deactivation & reactivation -------------------------------
+
+    def deactivate_account(self):
+        """Deactivate the logged-in user's account after password confirmation."""
+        user_id = session.get('user_id')
+        if not user_id:
+            return redirect(url_for('auth.login'))
+
+        user = get_user_by_id(user_id)
+        if not user:
+            session.clear()
+            return redirect(url_for('auth.login'))
+
+        # The single admin/owner account must never be deactivated.
+        if user.get('role') == 'admin':
+            flash('The owner account cannot be deactivated.', 'error')
+            return redirect(url_for('home.profile'))
+
+        password = request.form.get('password', '')
+        if not password or not check_password_hash(user['password_hash'], password):
+            flash('Incorrect password. Account was not deactivated.', 'error')
+            return redirect(url_for('home.profile'))
+
+        deactivate_user(user_id)
+        session.clear()
+        return render_template(
+            'login.html', active_form='sign-in',
+            login_notice='Your account has been deactivated. Sign in anytime to reactivate it.',
+        )
+
+    def _begin_reactivation(self, user):
+        """Email a reactivation code and stash pending state in the session."""
+        code = f"{secrets.randbelow(1000000):06d}"
+        session['reactivate_user_id'] = user['id']
+        session['reactivate_email'] = user['email']
+        session['reactivate_code'] = code
+        session['reactivate_expires'] = time.time() + REACTIVATE_CODE_TTL
+
+        ok, _err = send_reactivation_code(user['email'], code)
+        if not ok:
+            for key in ('reactivate_user_id', 'reactivate_email', 'reactivate_code', 'reactivate_expires'):
+                session.pop(key, None)
+            return render_template(
+                'login.html', active_form='sign-in',
+                login_error='Your account is deactivated, but we could not send the reactivation email. Please try again later.',
+            ), 502
+
+        return redirect(url_for('auth.reactivate_page'))
+
+    def reactivate_page(self):
+        """Show the reactivation code form (only with a pending reactivation)."""
+        if not session.get('reactivate_user_id'):
+            return redirect(url_for('auth.login'))
+        email = session.get('reactivate_email', '')
+        return render_template('reactivate.html', email=email)
+
+    def reactivate_resend(self):
+        """Regenerate and re-send the reactivation code."""
+        user_id = session.get('reactivate_user_id')
+        if not user_id:
+            return jsonify(ok=False, error='Your session has expired. Please sign in again.'), 400
+
+        user = get_user_by_id(user_id)
+        if not user:
+            return jsonify(ok=False, error='Account not found.'), 404
+
+        code = f"{secrets.randbelow(1000000):06d}"
+        session['reactivate_code'] = code
+        session['reactivate_expires'] = time.time() + REACTIVATE_CODE_TTL
+
+        ok, err = send_reactivation_code(user['email'], code)
+        if not ok:
+            return jsonify(ok=False, error=err or 'Could not send the email.'), 502
+        return jsonify(ok=True), 200
+
+    def reactivate_verify(self):
+        """Verify the code, reactivate the account, and sign the user in."""
+        user_id = session.get('reactivate_user_id')
+        if not user_id:
+            return jsonify(ok=False, error='Your session has expired. Please sign in again.'), 400
+
+        code = (request.form.get('code') or '').strip()
+        stored = session.get('reactivate_code')
+        expires = session.get('reactivate_expires', 0)
+
+        if not stored or time.time() > expires:
+            return jsonify(ok=False, error='Your code has expired. Please request a new one.'), 400
+        if not code or code != stored:
+            return jsonify(ok=False, error='Incorrect code. Please try again.'), 400
+
+        reactivate_user(user_id)
+        user = get_user_by_id(user_id)
+        if not user:
+            return jsonify(ok=False, error='Account not found.'), 404
+
+        # Clear reactivation state, then establish the session (sign in).
+        for key in ('reactivate_user_id', 'reactivate_email', 'reactivate_code', 'reactivate_expires'):
+            session.pop(key, None)
+        session['user_id'] = user['id']
+        session['username'] = user['username']
+        session['email'] = user['email']
+        session['role'] = user.get('role', 'user')
+
+        return jsonify(ok=True, redirect=url_for('home.dashboard')), 200
 
     def logout(self):
         session.clear()
