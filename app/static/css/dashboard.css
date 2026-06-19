@@ -20,7 +20,6 @@ body{
   width:84px;
   background:#ffffff;
   padding:18px 14px;
-  margin:16px 0 16px 16px;
   border-radius:24px;
   border:1px solid rgba(76,83,114,0.06);
   box-shadow:0 18px 40px rgba(76,83,114,0.10);
@@ -29,7 +28,14 @@ body{
   align-items:stretch;
   overflow:hidden;
   flex-shrink:0;
-  position:relative;
+  /* Fixed + overlaid on hover: expanding the width must not reflow/repaint .main
+     (which carries an expensive multi-gradient + blurred-shadow panel). */
+  position:fixed;
+  left:16px;
+  top:16px;
+  bottom:16px;
+  z-index:50;
+  contain:layout style paint;
   transition:width 0.3s cubic-bezier(0.22,0.61,0.36,1),
              padding 0.3s cubic-bezier(0.22,0.61,0.36,1);
 }
@@ -37,7 +43,6 @@ body{
 .sidebar:hover{
   width:248px;
   padding:22px 18px;
-  overflow-y:auto;
 }
 
 /* Logo: compact mark when collapsed, full when expanded */
@@ -71,6 +76,7 @@ body{
   opacity:0;
   transform:translateX(-6px);
   pointer-events:none;
+  will-change:opacity, transform;
   transition:opacity 0.2s ease, transform 0.25s ease;
 }
 
@@ -474,6 +480,15 @@ body{
   background:#4b527b;
 }
 
+.nav-item-signout{
+  color:#b03a3a;
+}
+
+.nav-item-signout:hover{
+  background:rgba(176,58,58,0.1);
+  color:#8f2d2d;
+}
+
 /* ROOMS */
 
 .rooms{
@@ -483,13 +498,16 @@ body{
   display:flex;
   flex-direction:column;
   gap:10px;
+  flex:1;
+  min-height:0;
 }
 
 .rooms-list{
   display:flex;
   flex-direction:column;
   gap:10px;
-  max-height:300px;
+  flex:1;
+  min-height:0;
   overflow-y:auto;
   padding-right:4px;
 }
@@ -565,24 +583,42 @@ body{
 
 .main{
   flex:1;
+  /* Clears the collapsed sidebar (16px left + 84px). On sidebar hover this grows
+     in sync (see the rule below) so the dashboard shrinks instead of being covered. */
+  margin-left:100px;
   padding:28px;
   display:flex;
   flex-direction:column;
   overflow-y: auto;
+  transition:margin-left 0.3s cubic-bezier(0.22,0.61,0.36,1);
+}
+
+/* Push the content over as the fixed sidebar expands (84+16 -> 248+16). */
+@media(min-width:951px){
+  .sidebar:hover ~ .main{
+    margin-left:264px;
+  }
 }
 
 /* TOPBAR */
 
 .topbar{
-  height:90px;
+  min-height:64px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  margin-bottom:10px;
+  margin-bottom:6px;
 }
 
+/* Collapse the topbar entirely when a page has no title (create/join/browse room) */
+.topbar-no-title{
+  min-height:0;
+  margin-bottom:0;
+}
+
+/* User icon hidden — keep the dropdown markup out of the layout entirely */
 .topbar .profile-menu{
-  margin-left:auto;
+  display:none;
 }
 
 .topbar h1{
@@ -688,11 +724,18 @@ body{
     overflow:auto;
   }
   .sidebar{
+    /* Back to in-flow top bar on mobile: undo the desktop fixed overlay. */
+    position:relative;
+    inset:auto;
+    z-index:auto;
     width:auto;
     margin:12px;
     padding:18px 16px;
     align-items:stretch;
     overflow-y:auto;
+  }
+  .main{
+    margin-left:0;
   }
   .sidebar .logo{
     padding:8px 8px 24px 8px;
