@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
 {% endblock %}
 
-{% block topbar_title %}Profile{% endblock %}
+{% block topbar_title %}{% endblock %}
 
 {% block content %}
   <section class="profile-wrapper">
@@ -14,15 +14,23 @@
     <div class="profile-card">
       <div class="left-panel">
         <form class="avatar-form" id="avatarForm" action="{{ url_for('home.update_avatar') }}" method="POST" enctype="multipart/form-data">
-          <div class="avatar-box">
+          <div class="avatar-box" onclick="document.getElementById('avatarInput').click()" title="Change photo">
             {% set avatar_path = user.get('avatar_url') if user and user.get('avatar_url') else 'images/default_user_icon.jpg' %}
             <img id="profilePreview" src="{{ url_for('static', filename=avatar_path) }}" alt="avatar">
+            <span class="avatar-overlay">
+              <i class="fa-solid fa-camera"></i>
+              <span>Change</span>
+            </span>
           </div>
+
+          {% if user.first_name or user.last_name %}
+            <h2 class="profile-name">{{ (user.first_name ~ ' ' ~ (user.last_name or '')).strip() }}</h2>
+          {% endif %}
 
           <input type="file" id="avatarInput" name="avatar" hidden accept="image/*">
 
           <button type="button" class="upload-btn" onclick="document.getElementById('avatarInput').click()">
-            Upload Avatar
+            <i class="fa-solid fa-arrow-up-from-bracket"></i> Upload Avatar
           </button>
         </form>
 
@@ -40,15 +48,33 @@
             <span class="detail-value">{{ user.created_at.strftime('%b %d, %Y') }}</span>
           </div>
         </div>
+
+        {% if user.role != 'admin' %}
+        <button type="button" id="deactivateBtn"
+                style="margin-top:auto;width:100%;cursor:pointer;
+                       background:#fdecec;color:#b3261e;border:1px solid #f0c2c2;
+                       border-radius:12px;padding:12px 16px;
+                       display:flex;align-items:center;justify-content:center;gap:8px;
+                       font-size:.9rem;font-weight:700;transition:.18s;
+                       box-shadow:0 2px 8px rgba(179,38,30,.08);"
+                onmouseover="this.style.background='#b3261e';this.style.color='#fff';this.style.borderColor='#b3261e';"
+                onmouseout="this.style.background='#fdecec';this.style.color='#b3261e';this.style.borderColor='#f0c2c2';">
+          <i class="fa-solid fa-triangle-exclamation"></i> Deactivate account
+        </button>
+        {% endif %}
       </div>
 
       <div class="right-panel">
         <h1>Manage Profile</h1>
+        <p class="right-subtitle">Update your personal information and keep your profile fresh.</p>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
             {% for category, message in messages %}
-              <div class="alert alert-{{ category }}">{{ message }}</div>
+              <div class="alert alert-{{ category }}">
+                <i class="fa-solid {{ 'fa-circle-check' if category == 'success' else 'fa-circle-exclamation' }}"></i>
+                <span>{{ message }}</span>
+              </div>
             {% endfor %}
           {% endif %}
         {% endwith %}
@@ -82,6 +108,39 @@
 
           <button type="submit" class="save-btn">Save Changes</button>
         </form>
+
+        {% if user.role != 'admin' %}
+        <div class="modal-overlay" id="deactivateModal" aria-hidden="true"
+             style="display:none;position:fixed;inset:0;background:rgba(20,20,30,.55);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+          <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="deactivateTitle"
+               style="background:#fff;max-width:420px;width:100%;border-radius:16px;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.25);">
+            <h3 id="deactivateTitle" style="margin:0 0 6px;color:#b3261e;font-size:1.15rem;">
+              <i class="fa-solid fa-triangle-exclamation"></i> Deactivate account
+            </h3>
+            <p style="margin:0 0 16px;color:#6b6b73;font-size:.9rem;line-height:1.5;">
+              This signs you out and disables sign-in. Your data is kept — you can
+              reactivate anytime with a code emailed to you. Confirm your password to continue.
+            </p>
+            <form method="POST" action="{{ url_for('auth.deactivate_account') }}">
+              <div class="input-group" style="margin-bottom:18px;">
+                <label>Password</label>
+                <input type="password" name="password" id="deactivatePassword" required
+                       placeholder="Enter your password" autocomplete="current-password">
+              </div>
+              <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button type="button" id="deactivateCancel" class="save-btn"
+                        style="background:#eef0f8;color:#2b2f3a;border-color:#d9ddee;">
+                  Cancel
+                </button>
+                <button type="submit" class="save-btn"
+                        style="background:#b3261e;border-color:#b3261e;">
+                  Deactivate
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        {% endif %}
       </div>
 
     </div>
@@ -110,5 +169,38 @@ avatarInput.addEventListener('change', function () {
     avatarForm.submit();
   }
 });
+
+// --- Deactivate account modal ---
+const deactivateBtn = document.getElementById('deactivateBtn');
+const deactivateModal = document.getElementById('deactivateModal');
+const deactivateCancel = document.getElementById('deactivateCancel');
+const deactivatePassword = document.getElementById('deactivatePassword');
+
+function openDeactivateModal() {
+  deactivateModal.style.display = 'flex';
+  deactivateModal.setAttribute('aria-hidden', 'false');
+  if (deactivatePassword) deactivatePassword.focus();
+}
+
+function closeDeactivateModal() {
+  deactivateModal.style.display = 'none';
+  deactivateModal.setAttribute('aria-hidden', 'true');
+  if (deactivatePassword) deactivatePassword.value = '';
+}
+
+if (deactivateBtn && deactivateModal) {
+  deactivateBtn.addEventListener('click', openDeactivateModal);
+  deactivateCancel.addEventListener('click', closeDeactivateModal);
+  // Click outside the card closes the modal.
+  deactivateModal.addEventListener('click', (e) => {
+    if (e.target === deactivateModal) closeDeactivateModal();
+  });
+  // Escape closes the modal.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && deactivateModal.style.display === 'flex') {
+      closeDeactivateModal();
+    }
+  });
+}
 </script>
 {% endblock %}

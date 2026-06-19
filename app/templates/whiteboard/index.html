@@ -2,16 +2,21 @@
 
 {% block title %}Whiteboards{% endblock %}
 
-{% block topbar_title %}My Whiteboards{% endblock %}
+{% block topbar_title %}{% endblock %}
 
 {% block head %}
   <style>
     /* Whiteboards hub — styled to match the Notes page design language. */
+    .topbar{ display:none; }
     .wb-hub{
       width:100%;
-      max-width:1100px;
       margin:0;
-      padding:8px 24px 60px;
+      flex:1;
+      padding:32px 34px 40px;
+      background:#ffffff;
+      border-radius:28px;
+      border:1px solid rgba(125,134,199,0.16);
+      box-shadow:0 22px 45px rgba(125,134,199,0.14);
     }
 
     /* HEADER BAR (notes-bar style) */
@@ -250,6 +255,7 @@
   <section class="wb-hub">
     <div class="wb-bar">
       <div class="wb-bar-text">
+        <h2>My Whiteboards</h2>
         <p>Create a new board, reopen one of yours, or join a friend's board with a code to sketch together in real time.</p>
       </div>
       <span class="wb-count-pill">

@@ -21,6 +21,10 @@
     <i class="fa-solid fa-file-pdf"></i>
     <span class="nav-label">Notes</span>
   </a>
+  <a href="{{ url_for('home.schedule_page') }}" class="nav-item {% if request.endpoint == 'home.schedule_page' %}active{% endif %}" title="Schedule">
+    <i class="fa-solid fa-calendar-check"></i>
+    <span class="nav-label">Schedule</span>
+  </a>
   {% if session.get('role') == 'admin' %}
     <a href="{{ url_for('admin.dashboard') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('admin.') %}active{% endif %}" title="Admin Panel">
       <i class="fa-solid fa-shield-halved"></i>
@@ -30,6 +34,14 @@
   <a href="{{ url_for('home.whiteboard') }}" class="nav-item {% if request.endpoint and request.endpoint.startswith('home.whiteboard') %}active{% endif %}" title="Whiteboard">
     <i class="fa-solid fa-chalkboard"></i>
     <span class="nav-label">Whiteboard</span>
+  </a>
+  <a href="{{ url_for('home.profile') }}" class="nav-item {% if request.endpoint == 'home.profile' %}active{% endif %}" title="Profile">
+    <i class="fa-solid fa-user"></i>
+    <span class="nav-label">Profile</span>
+  </a>
+  <a href="{{ url_for('auth.logout') }}" class="nav-item nav-item-signout" title="Sign out">
+    <i class="fa-solid fa-right-from-bracket"></i>
+    <span class="nav-label">Sign out</span>
   </a>
 {% endblock %}
 

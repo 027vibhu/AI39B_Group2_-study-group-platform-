@@ -54,6 +54,10 @@
           <div class="auth-error">{{ login_error }}</div>
           {% endif %}
 
+          {% if login_notice %}
+          <div class="auth-notice" style="background:#e7f6ec;color:#1c6b3a;border:1px solid #b7e0c4;padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:.9rem;">{{ login_notice }}</div>
+          {% endif %}
+
           <div class="input-field">
             <span>📧</span>
             <input type="text" name="identifier" placeholder="Email or Username" required>

@@ -53,10 +53,52 @@
         <a href="{{ url_for('home.moderation', room_code=room_code) }}" class="moderation-btn" title="Moderation Panel">
           <i class="fa-solid fa-shield-halved"></i>
         </a>
+        {% if can_manage_roles %}
+        <div class="room-settings-wrap">
+          <button id="roomSettingsBtn" class="action-btn" type="button" title="Room settings" aria-haspopup="true" aria-expanded="false">
+            <i class="fa-solid fa-gear"></i>
+          </button>
+          <div class="room-settings-menu" role="menu" aria-hidden="true">
+            <button type="button" id="renameRoomBtn" role="menuitem">
+              <i class="fa-solid fa-pen"></i> Rename room
+            </button>
+            <button type="button" id="deleteRoomBtn" class="danger" role="menuitem">
+              <i class="fa-solid fa-trash"></i> Delete room
+            </button>
+          </div>
+        </div>
+        {% endif %}
       </div>
     </div>
 
     <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    {% if can_manage_roles %}
+    <!-- Owner-only room settings modals -->
+    <div class="room-modal-overlay" id="renameRoomModal" aria-hidden="true">
+      <div class="room-modal" role="dialog" aria-modal="true" aria-labelledby="renameRoomTitle">
+        <h3 id="renameRoomTitle">Rename room</h3>
+        <input type="text" id="renameRoomInput" class="room-modal-input" maxlength="120"
+          placeholder="Enter a new room name" value="{{ room.name if room.name else '' }}">
+        <div class="room-modal-actions">
+          <button type="button" class="room-modal-btn cancel" data-close-modal="renameRoomModal">Cancel</button>
+          <button type="button" class="room-modal-btn primary" id="renameRoomSave">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="room-modal-overlay" id="deleteRoomModal" aria-hidden="true">
+      <div class="room-modal" role="dialog" aria-modal="true" aria-labelledby="deleteRoomTitle">
+        <h3 id="deleteRoomTitle">Delete room</h3>
+        <p class="room-modal-text">This permanently deletes the room and all its messages for
+          everyone. This cannot be undone.</p>
+        <div class="room-modal-actions">
+          <button type="button" class="room-modal-btn cancel" data-close-modal="deleteRoomModal">Cancel</button>
+          <button type="button" class="room-modal-btn danger" id="deleteRoomConfirm">Delete</button>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
     <div class="chat-body" id="chatBody">
       {% for msg in messages %}
@@ -90,9 +132,9 @@
       <button class="icon-btn" id="emojiBtn" type="button" aria-label="Insert emoji" title="Insert emoji">
         <i class="fa-solid fa-face-smile" aria-hidden="true"></i>
       </button>
-      <label class="icon-btn" id="fileLabel" title="Upload image(s)">
-        <i class="fa-solid fa-image" aria-hidden="true"></i>
-        <input type="file" hidden id="fileInput" accept="image/*" multiple>
+      <label class="icon-btn" id="fileLabel" title="Upload a file">
+        <i class="fa-solid fa-paperclip" aria-hidden="true"></i>
+        <input type="file" hidden id="fileInput" multiple>
       </label>
       <textarea class="input-box" id="messageInput" placeholder="Type a message..." rows="1"></textarea>
       <button class="send-btn" id="sendBtn" type="button" aria-label="Send message" title="Send message">
@@ -167,7 +209,12 @@
             <div class="member-avatar">{{ member.username[:1] | upper }}</div>
             <div class="member-name">{{ member.username }}</div>
           </div>
-          <div class="green-dot"></div>
+          <div class="member-meta">
+            {% set mrole = member_roles.get(member.username) if member_roles else None %}
+            {% if mrole == 'owner' %}<span class="role-badge role-owner">Owner</span>
+            {% elif mrole == 'moderator' %}<span class="role-badge role-moderator">Mod</span>{% endif %}
+            <div class="green-dot"></div>
+          </div>
         </div>
         {% endfor %}
         {% else %}
@@ -189,7 +236,12 @@
             <div class="member-avatar">{{ member.username[:1] | upper }}</div>
             <div class="member-name">{{ member.username }}</div>
           </div>
-          <div class="offline-dot"></div>
+          <div class="member-meta">
+            {% set mrole = member_roles.get(member.username) if member_roles else None %}
+            {% if mrole == 'owner' %}<span class="role-badge role-owner">Owner</span>
+            {% elif mrole == 'moderator' %}<span class="role-badge role-moderator">Mod</span>{% endif %}
+            <div class="offline-dot"></div>
+          </div>
         </div>
         {% endfor %}
         {% endif %}
@@ -205,10 +257,6 @@
         <button id="refreshFilesBtn" type="button" title="Refresh Files">
           <i class="fa-solid fa-rotate-right"></i>
         </button>
-        <label class="file-upload-btn" title="Upload File">
-          <i class="fa-solid fa-cloud-arrow-up"></i>
-          <input type="file" id="sharedFileInput" style="display: none;">
-        </label>
         <button class="drawer-close" type="button" data-drawer="filesPanel" aria-label="Close files">
           <i class="fa-solid fa-xmark"></i>
         </button>
@@ -278,6 +326,46 @@
   const initialOnlineMembers = JSON.parse('{{ (online_members or []) | tojson | safe }}');
   const initialOfflineMembers = JSON.parse('{{ (offline_members or []) | tojson | safe }}');
 
+  /* ROLES: username(lowercase) -> role string ('owner'|'moderator'|'member') */
+  const memberRoles = JSON.parse('{{ (member_roles or {}) | tojson | safe }}');
+  const canManageRoles = JSON.parse('{{ (can_manage_roles or false) | tojson | safe }}');
+  // Remember the last rendered presence lists so we can re-render when a role changes
+  let lastOnlineMembers = initialOnlineMembers;
+  let lastOfflineMembers = initialOfflineMembers;
+
+  function roleFor(username) {
+    return memberRoles[username] || memberRoles[username.toLowerCase()] || 'member';
+  }
+
+  // Build the badge + (optional) owner management menu for a member row.
+  function memberMetaHtml(username, dotClass) {
+    const role = roleFor(username);
+    let badge = '';
+    if (role === 'owner') {
+      badge = '<span class="role-badge role-owner">Owner</span>';
+    } else if (role === 'moderator') {
+      badge = '<span class="role-badge role-moderator">Mod</span>';
+    }
+
+    let menu = '';
+    const isSelfOwnerTarget = role === 'owner';
+    if (canManageRoles && !isSelfOwnerTarget) {
+      const nextRole = role === 'moderator' ? 'member' : 'moderator';
+      const label = role === 'moderator' ? 'Demote to Member' : 'Promote to Moderator';
+      menu = `
+        <div class="role-menu-wrap">
+          <button type="button" class="role-menu-btn" data-username="${username}" aria-label="Manage role">
+            <i class="fa-solid fa-ellipsis-vertical"></i>
+          </button>
+          <div class="role-menu" role="menu" aria-hidden="true">
+            <button type="button" class="role-action" data-username="${username}" data-role="${nextRole}">${label}</button>
+          </div>
+        </div>`;
+    }
+
+    return `<div class="member-meta">${badge}<div class="${dotClass}"></div>${menu}</div>`;
+  }
+
   // Set to track users who are already members of this room (online or offline) when we load/update
   const knownMembers = new Set([
     ...initialOnlineMembers.map(m => m.username.toLowerCase()),
@@ -305,6 +393,63 @@
       data.online.forEach(u => knownMembers.add(u.username.toLowerCase()));
       data.offline.forEach(u => knownMembers.add(u.username.toLowerCase()));
     }
+  });
+
+  // A member's room role changed — update our local map and re-render the lists
+  socket.on('role_updated', (data) => {
+    if (!data || data.room_code !== roomCode || !data.username) return;
+    memberRoles[data.username] = data.role;
+    memberRoles[data.username.toLowerCase()] = data.role;
+    renderPresenceLists(lastOnlineMembers, lastOfflineMembers);
+    if (data.username.toLowerCase() !== displayName.toLowerCase()) {
+      showToast(`${data.username} is now a ${data.role}.`, 'join');
+    }
+  });
+
+  // Owner-only: open the per-member menu and promote/demote via the roles endpoint
+  const membersPanel = document.getElementById('membersPanel');
+  if (membersPanel) {
+    membersPanel.addEventListener('click', async (event) => {
+      const toggle = event.target.closest('.role-menu-btn');
+      if (toggle) {
+        event.stopPropagation();
+        const menu = toggle.parentElement.querySelector('.role-menu');
+        const isOpen = menu.getAttribute('aria-hidden') === 'false';
+        // close any other open menus first
+        membersPanel.querySelectorAll('.role-menu[aria-hidden="false"]').forEach(m => m.setAttribute('aria-hidden', 'true'));
+        menu.setAttribute('aria-hidden', String(isOpen));
+        return;
+      }
+
+      const action = event.target.closest('.role-action');
+      if (action) {
+        event.stopPropagation();
+        const username = action.getAttribute('data-username');
+        const role = action.getAttribute('data-role');
+        action.disabled = true;
+        try {
+          const resp = await fetch(`/chat/${roomCode}/roles`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, role }),
+          });
+          const result = await resp.json();
+          if (!resp.ok || result.status !== 'success') {
+            showToast(result.message || 'Could not update role.', 'leave');
+            action.disabled = false;
+          }
+          // success arrives via the 'role_updated' socket event for everyone
+        } catch (err) {
+          showToast('Network error updating role.', 'leave');
+          action.disabled = false;
+        }
+      }
+    });
+  }
+
+  // Click anywhere else closes open role menus
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.role-menu[aria-hidden="false"]').forEach(m => m.setAttribute('aria-hidden', 'true'));
   });
 
   socket.on('notification_update', (data) => {
@@ -425,13 +570,36 @@
     messageInput.value = '';
   }
 
-  // Convert an image marker "[[img:/static/uploads/chat_images/...]]" into a safe
-  // <img> tag. Only our own chat-image static path is allowed; anything else is
-  // returned untouched so it renders as plain text.
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // Convert our chat markers into safe HTML. Markers are stored inert in the DB
+  // (Jinja-escaped on load) and only expanded here:
+  //   [[img:/static/uploads/chat_images/...]]   legacy inline image (old messages)
+  //   [[file:<id>|<name>|<size>|<img 0|1>]]      shared-file upload (image inline,
+  //                                              everything else a download card)
+  // Anything else is returned untouched so it renders as plain text.
   function renderMessageContent(text) {
-    const match = /^\[\[img:(\/static\/uploads\/chat_images\/[A-Za-z0-9._\-\/]+)\]\]$/.exec(text || '');
-    if (match) {
-      return `<img src="${match[1]}" class="message-image" alt="shared image">`;
+    const t = (text || '').trim();
+    const img = /^\[\[img:(\/static\/uploads\/chat_images\/[A-Za-z0-9._\-\/]+)\]\]$/.exec(t);
+    if (img) {
+      return `<img src="${img[1]}" class="message-image" alt="shared image">`;
+    }
+    const f = /^\[\[file:(\d+)\|([^|]*)\|(\d+)\|([01])\]\]$/.exec(t);
+    if (f) {
+      const id = f[1], name = escapeHtml(f[2]), size = formatFileSize(parseInt(f[3], 10) || 0), isImg = f[4] === '1';
+      if (isImg) {
+        return `<a href="/files/${id}/view" target="_blank" rel="noopener"><img src="/files/${id}/view" class="message-image" alt="${name}"></a>`;
+      }
+      const ext = escapeHtml((f[2].split('.').pop() || '').toUpperCase());
+      return `<div class="message-file">
+        <div class="message-file-icon"><i class="fa-solid fa-file"></i></div>
+        <div class="message-file-meta"><span class="message-file-name" title="${name}">${name}</span><span class="message-file-sub">${ext} • ${size}</span></div>
+        <div class="message-file-actions">
+          <a href="/files/${id}/download" class="message-file-btn" title="Download"><i class="fa-solid fa-download"></i></a>
+          <a href="/files/${id}/view" target="_blank" rel="noopener" class="message-file-btn" title="View"><i class="fa-solid fa-eye"></i></a>
+        </div></div>`;
     }
     return text;
   }
@@ -478,6 +646,8 @@
   });
 
   function renderPresenceLists(onlineUsers, offlineUsers) {
+    lastOnlineMembers = onlineUsers || [];
+    lastOfflineMembers = offlineUsers || [];
     if (memberCount) {
       const total = (onlineUsers?.length || 0) + (offlineUsers?.length || 0);
       memberCount.innerText = `Members (${total})`;
@@ -498,7 +668,7 @@
                   <div class="member-avatar">${user.username.charAt(0).toUpperCase()}</div>
                   <div class="member-name">${user.username}</div>
                 </div>
-                <div class="green-dot"></div>
+                ${memberMetaHtml(user.username, 'green-dot')}
               `;
           onlineMembersContainer.appendChild(member);
         });
@@ -525,7 +695,7 @@
                   <div class="member-avatar">${user.username.charAt(0).toUpperCase()}</div>
                   <div class="member-name">${user.username}</div>
                 </div>
-                <div class="offline-dot"></div>
+                ${memberMetaHtml(user.username, 'offline-dot')}
               `;
           offlineMembersContainer.appendChild(member);
         });
@@ -557,12 +727,9 @@
   });
 
   function handleFileUpload(file) {
-    // Only allow images for chat uploads
+    // Any file type is allowed; images get an inline preview, everything else
+    // shows a generic file glyph while staged.
     const isImage = file.type && file.type.startsWith('image/');
-    if (!isImage) {
-      showToast('Only images are allowed in chat uploads.', 'leave');
-      return;
-    }
 
     const id = 'upload-' + Math.random().toString(36).slice(2, 9);
     const item = document.createElement('div');
@@ -571,8 +738,12 @@
 
     const thumb = document.createElement('div');
     thumb.className = 'upload-thumb';
-    const url = URL.createObjectURL(file);
-    thumb.innerHTML = `<img src="${url}" alt="${file.name}">`;
+    if (isImage) {
+      const url = URL.createObjectURL(file);
+      thumb.innerHTML = `<img src="${url}" alt="${file.name}">`;
+    } else {
+      thumb.innerHTML = `<i class="fa-solid fa-file" aria-hidden="true"></i>`;
+    }
 
     const meta = document.createElement('div');
     meta.className = 'upload-meta';
@@ -590,8 +761,10 @@
 
     sendBtn.addEventListener('click', () => {
       sendBtn.disabled = true;
-      // Upload the image to the server so it persists, then send a chat message
-      // referencing its URL (small marker fits the DB and survives a refresh).
+      // Upload the file to the room's shared files so it persists and shows up in
+      // the Files panel, then post a chat message marker referencing it (small
+      // marker fits the DB and survives a refresh). Chat messages support voting,
+      // so uploaded files become upvotable "resources".
       let progress = 0;
       const intv = setInterval(() => {
         progress = Math.min(90, progress + Math.floor(Math.random() * 20) + 10);
@@ -599,9 +772,9 @@
       }, 200);
 
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('shared_file', file);
 
-      fetch(`/chat/${roomCode}/chat-image`, {
+      fetch(`/chat/${roomCode}/shared-files`, {
         method: 'POST',
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         body: formData,
@@ -609,22 +782,23 @@
         .then(res => res.json())
         .then(data => {
           clearInterval(intv);
-          if (data.status === 'success' && data.url) {
+          if (data.status === 'success' && data.id) {
             progressBar.style.width = '100%';
-            const marker = `[[img:${data.url}]]`;
+            const isImg = (data.mime_type || '').startsWith('image/') ? 1 : 0;
+            const marker = `[[file:${data.id}|${data.original_filename}|${data.file_size}|${isImg}]]`;
             // The server broadcasts this back via 'receive_message', which renders
             // it for us too — so don't add it locally or it shows up twice.
             socket.emit('send_message', { room: roomCode, message: marker, username: displayName });
             item.remove();
           } else {
-            showToast(data.error || 'Failed to upload image.', 'leave');
+            showToast(data.error || 'Failed to upload file.', 'leave');
             sendBtn.disabled = false;
             progressBar.style.width = '0%';
           }
         })
         .catch(() => {
           clearInterval(intv);
-          showToast('Failed to upload image.', 'leave');
+          showToast('Failed to upload file.', 'leave');
           sendBtn.disabled = false;
           progressBar.style.width = '0%';
         });
@@ -855,51 +1029,134 @@
     });
   }
 
-  // Socket notification
+  // Socket notification — keep the read-only Files panel in sync as members
+  // upload files from the chat input bar.
   socket.on('file_uploaded', (data) => {
     if (data && data.room_code === roomCode) {
-      console.log('File uploaded in room:', roomCode);
       fetchSharedFiles();
     }
   });
 
-  // Direct Sidebar File Upload
-  const sharedFileInput = document.getElementById('sharedFileInput');
-  if (sharedFileInput) {
-    sharedFileInput.addEventListener('change', async function() {
-      const file = this.files[0];
-      if (!file) return;
+  /* ROOM SETTINGS (owner-only): rename & delete */
+  // Live updates broadcast to everyone in the room.
+  socket.on('room_renamed', (data) => {
+    if (!data || data.room_code !== roomCode) return;
+    const titleEl = document.querySelector('.room-title-text');
+    if (titleEl) titleEl.textContent = data.name;
+    document.title = `${data.name} • LOREVIA Chat`;
+    showToast(`Room renamed to ${data.name}`, 'join');
+  });
 
-      const formData = new FormData();
-      formData.append('shared_file', file);
+  socket.on('room_deleted', (data) => {
+    if (!data || data.room_code !== roomCode) return;
+    alert('This room has been deleted by the owner.');
+    socket.disconnect();
+    window.location.href = "{{ url_for('home.dashboard') }}";
+  });
 
-      showToast(`Uploading ${file.name}...`, 'join');
+  (function () {
+    const settingsBtn = document.getElementById('roomSettingsBtn');
+    const settingsMenu = document.querySelector('.room-settings-menu');
+    if (!settingsBtn || !settingsMenu) return; // not the owner
 
-      try {
-        const res = await fetch(`/chat/${roomCode}/shared-files`, {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-          }
-        });
+    const renameModal = document.getElementById('renameRoomModal');
+    const deleteModal = document.getElementById('deleteRoomModal');
+    const renameInput = document.getElementById('renameRoomInput');
+    const renameSave = document.getElementById('renameRoomSave');
+    const deleteConfirm = document.getElementById('deleteRoomConfirm');
 
-        const data = await res.json();
-        if (res.ok && data.status === 'success') {
-          showToast('File uploaded successfully!', 'join');
-          // Refresh files immediately after successful upload
-          setTimeout(() => fetchSharedFiles(), 500);
-        } else {
-          showToast(data.error || 'Upload failed.', 'leave');
-        }
-      } catch (err) {
-        console.error('Error uploading file:', err);
-        showToast('Error uploading file.', 'leave');
-      }
+    const closeMenu = () => {
+      settingsMenu.setAttribute('aria-hidden', 'true');
+      settingsBtn.setAttribute('aria-expanded', 'false');
+    };
+    const openModal = (modal) => { if (modal) modal.setAttribute('aria-hidden', 'false'); };
+    const closeModal = (modal) => { if (modal) modal.setAttribute('aria-hidden', 'true'); };
 
-      this.value = '';
+    settingsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = settingsMenu.getAttribute('aria-hidden') === 'false';
+      settingsMenu.setAttribute('aria-hidden', String(isOpen));
+      settingsBtn.setAttribute('aria-expanded', String(!isOpen));
     });
-  }
+    document.addEventListener('click', closeMenu);
+    settingsMenu.addEventListener('click', (e) => e.stopPropagation());
+
+    document.getElementById('renameRoomBtn').addEventListener('click', () => {
+      closeMenu();
+      const current = document.querySelector('.room-title-text');
+      if (renameInput && current) renameInput.value = current.textContent.trim();
+      openModal(renameModal);
+      if (renameInput) { renameInput.focus(); renameInput.select(); }
+    });
+
+    document.getElementById('deleteRoomBtn').addEventListener('click', () => {
+      closeMenu();
+      openModal(deleteModal);
+    });
+
+    // Cancel buttons + click-on-overlay close their modal
+    document.querySelectorAll('[data-close-modal]').forEach((btn) => {
+      btn.addEventListener('click', () => closeModal(document.getElementById(btn.getAttribute('data-close-modal'))));
+    });
+    [renameModal, deleteModal].forEach((modal) => {
+      if (modal) modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { closeModal(renameModal); closeModal(deleteModal); }
+    });
+
+    if (renameSave) {
+      renameSave.addEventListener('click', async () => {
+        const name = (renameInput.value || '').trim();
+        if (!name) { showToast('Room name cannot be empty.', 'leave'); return; }
+        renameSave.disabled = true;
+        try {
+          const resp = await fetch(`/chat/${roomCode}/rename`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name }),
+          });
+          const result = await resp.json();
+          if (!resp.ok || result.status !== 'success') {
+            showToast(result.message || 'Could not rename room.', 'leave');
+          } else {
+            closeModal(renameModal); // title update arrives via the socket broadcast
+          }
+        } catch (err) {
+          showToast('Network error renaming room.', 'leave');
+        } finally {
+          renameSave.disabled = false;
+        }
+      });
+      if (renameInput) {
+        renameInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') { e.preventDefault(); renameSave.click(); }
+        });
+      }
+    }
+
+    if (deleteConfirm) {
+      deleteConfirm.addEventListener('click', async () => {
+        deleteConfirm.disabled = true;
+        try {
+          const resp = await fetch(`/chat/${roomCode}/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          const result = await resp.json();
+          if (!resp.ok || result.status !== 'success') {
+            showToast(result.message || 'Could not delete room.', 'leave');
+            deleteConfirm.disabled = false;
+          } else {
+            window.location.href = result.redirect || "{{ url_for('home.dashboard') }}";
+          }
+        } catch (err) {
+          showToast('Network error deleting room.', 'leave');
+          deleteConfirm.disabled = false;
+        }
+      });
+    }
+  })();
 
 </script>
 

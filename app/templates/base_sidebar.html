@@ -57,8 +57,9 @@
   </div>
 
   <div class="main">
-    <div class="topbar">
-      <h1>{% block topbar_title %}Dashboard{% endblock %}</h1>
+    {% set topbar_title_content %}{% block topbar_title %}Dashboard{% endblock %}{% endset %}
+    <div class="topbar{% if not topbar_title_content|trim %} topbar-no-title{% endif %}">
+      {% if topbar_title_content|trim %}<h1>{{ topbar_title_content }}</h1>{% endif %}
       <div class="profile-menu" id="profileMenu">
         <button class="profile" id="userProfile" aria-label="Open profile menu" aria-expanded="false" type="button">
           {% block profile_initial %}
