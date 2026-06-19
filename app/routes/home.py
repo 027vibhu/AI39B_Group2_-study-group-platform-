@@ -82,6 +82,7 @@ class HomeRoutes:
         self.bp.route('/create_room', methods=['GET', 'POST'])(self.create_room)
         self.bp.route('/chat/<room_code>/upload', methods=['POST'])(self.upload_chat_image)
         self.bp.route('/music')(self.music)
+        self.bp.route('/auto_logout_demo')(self.auto_logout_demo)
         
         return self.bp
 
@@ -692,6 +693,9 @@ class HomeRoutes:
     
     def music(self):
         return render_template('backgroundmusic.html')
+
+    def auto_logout_demo(self):
+        return render_template('auto_logout.html')
 
     def upload_note(self):
         controller = NoteController()
