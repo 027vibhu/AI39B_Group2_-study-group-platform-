@@ -1,0 +1,202 @@
+{% extends 'base_dash.html' %}
+
+{% block title %}Admin Panel - LOREVIA{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block topbar_title %}Admin Panel{% endblock %}
+
+{% block content %}
+  <section class="admin-page">
+    <div class="admin-bar">
+      <div class="admin-bar-text">
+        <h2><i class="fa-solid fa-shield-halved"></i> Admin Control Center</h2>
+        <p>Manage and delete rooms, notes, users, and messages across the whole platform.</p>
+      </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="admin-tabs">
+      <button type="button" class="admin-tab active" data-tab="rooms">
+        <i class="fa-solid fa-comments"></i> Rooms <span class="pill">{{ rooms|length }}</span>
+      </button>
+      <button type="button" class="admin-tab" data-tab="notes">
+        <i class="fa-solid fa-file-pdf"></i> Notes <span class="pill">{{ notes|length }}</span>
+      </button>
+      <button type="button" class="admin-tab" data-tab="users">
+        <i class="fa-solid fa-users"></i> Users <span class="pill">{{ users|length }}</span>
+      </button>
+      <button type="button" class="admin-tab" data-tab="messages">
+        <i class="fa-solid fa-message"></i> Messages
+      </button>
+    </div>
+
+    {# ----- ROOMS ----- #}
+    <div class="admin-panel active" data-panel="rooms">
+      {% if rooms %}
+        <table class="admin-table">
+          <thead>
+            <tr><th>Code</th><th>Name</th><th>Owner</th><th>Privacy</th><th>Created</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for room in rooms %}
+              <tr>
+                <td><code>{{ room.code }}</code></td>
+                <td>{{ room.name or 'Room ' ~ room.code }}</td>
+                <td>{{ room.owner_username or '—' }}</td>
+                <td>{% if room.is_private %}<span class="tag tag-private">Private</span>{% else %}<span class="tag tag-public">Public</span>{% endif %}</td>
+                <td>{{ room.created_at.strftime('%b %d, %Y') if room.created_at else '' }}</td>
+                <td class="action-cell">
+                  <a href="{{ url_for('home.chat', room_code=room.code) }}" class="link-btn"><i class="fa-solid fa-up-right-from-square"></i></a>
+                  <form method="POST" action="{{ url_for('admin.delete_room', room_id=room.id) }}"
+                        class="confirm-form" data-confirm="Delete room {{ room.code }} and all its messages?">
+                    <button type="submit" class="del-btn"><i class="fa-solid fa-trash"></i></button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state"><i class="fa-solid fa-comments"></i><strong>No rooms</strong></div>
+      {% endif %}
+    </div>
+
+    {# ----- NOTES ----- #}
+    <div class="admin-panel" data-panel="notes">
+      {% if notes %}
+        <table class="admin-table">
+          <thead>
+            <tr><th>Title</th><th>Owner</th><th>Created</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for note in notes %}
+              <tr>
+                <td>{{ note.title }}</td>
+                <td>{{ note.owner_username or '—' }}</td>
+                <td>{{ note.created_at.strftime('%b %d, %Y') if note.created_at else '' }}</td>
+                <td class="action-cell">
+                  {% if note.pdf_url %}
+                    <a href="{{ url_for('static', filename=note.pdf_url) }}" target="_blank" rel="noopener noreferrer" class="link-btn"><i class="fa-solid fa-eye"></i></a>
+                  {% endif %}
+                  <form method="POST" action="{{ url_for('admin.delete_note', note_id=note.id) }}"
+                        class="confirm-form" data-confirm="Delete note &quot;{{ note.title }}&quot;?">
+                    <button type="submit" class="del-btn"><i class="fa-solid fa-trash"></i></button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state"><i class="fa-solid fa-file-pdf"></i><strong>No notes</strong></div>
+      {% endif %}
+    </div>
+
+    {# ----- USERS ----- #}
+    <div class="admin-panel" data-panel="users">
+      {% if users %}
+        <table class="admin-table">
+          <thead>
+            <tr><th>Username</th><th>Email</th><th>Role</th><th>Joined</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+              <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                  {% if user.role == 'admin' %}<span class="tag tag-admin">Admin</span>{% else %}<span class="tag">{{ user.role }}</span>{% endif %}
+                </td>
+                <td>{{ user.created_at.strftime('%b %d, %Y') if user.created_at else '' }}</td>
+                <td class="action-cell">
+                  {% if user.id == session.get('user_id') %}
+                    <span class="self-tag">You</span>
+                  {% else %}
+                    <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}"
+                          class="confirm-form" data-confirm="Delete user {{ user.username }} and all their rooms &amp; notes?">
+                      <button type="submit" class="del-btn"><i class="fa-solid fa-trash"></i></button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state"><i class="fa-solid fa-users"></i><strong>No users</strong></div>
+      {% endif %}
+    </div>
+
+    {# ----- MESSAGES ----- #}
+    <div class="admin-panel" data-panel="messages">
+      {% set ns = namespace(has_messages=false) %}
+      {% for entry in rooms_with_messages %}
+        {% if entry.messages %}
+          {% set ns.has_messages = true %}
+          <div class="msg-group">
+            <h4 class="msg-group-title">
+              <i class="fa-solid fa-hashtag"></i>{{ entry.room.name or entry.room.code }}
+              <code>{{ entry.room.code }}</code>
+              <span class="pill">{{ entry.messages|length }}</span>
+            </h4>
+            <table class="admin-table">
+              <thead><tr><th>User</th><th>Message</th><th>Time</th><th></th></tr></thead>
+              <tbody>
+                {% for msg in entry.messages %}
+                  <tr>
+                    <td>{{ msg.username }}</td>
+                    <td class="msg-content">{{ msg.content }}</td>
+                    <td>{{ msg.time_label }}</td>
+                    <td class="action-cell">
+                      <form method="POST" action="{{ url_for('admin.delete_message', message_id=msg.id) }}"
+                            class="confirm-form" data-confirm="Delete this message?">
+                        <button type="submit" class="del-btn"><i class="fa-solid fa-trash"></i></button>
+                      </form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      {% endfor %}
+      {% if not ns.has_messages %}
+        <div class="empty-state"><i class="fa-solid fa-message"></i><strong>No messages</strong></div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    (function () {
+      const tabs = document.querySelectorAll('.admin-tab');
+      const panels = document.querySelectorAll('.admin-panel');
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+          const target = tab.dataset.tab;
+          tabs.forEach((t) => t.classList.toggle('active', t === tab));
+          panels.forEach((p) => p.classList.toggle('active', p.dataset.panel === target));
+        });
+      });
+
+      document.querySelectorAll('.confirm-form').forEach((form) => {
+        form.addEventListener('submit', (e) => {
+          if (!window.confirm(form.dataset.confirm || 'Are you sure?')) {
+            e.preventDefault();
+          }
+        });
+      });
+    })();
+  </script>
+{% endblock %}

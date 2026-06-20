@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Features — LOREVIA{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/features.css') }}">
+{% endblock %}
+
+{% block content %}
+  <section class="features">
+    <div class="features-grid-bg"></div>
+
+    <header class="features-hero">
+      <span class="features-eyebrow">EVERYTHING YOU NEED</span>
+      <h1 class="features-title">
+        <span class="solid">Built to Help</span>
+        <span class="outline">You Focus.</span>
+      </h1>
+      <p class="features-lead">
+        From real-time study rooms to AI-powered note tools — LOREVIA brings
+        every part of collaborative learning into a single calm, focused space.
+      </p>
+    </header>
+
+    {% set hero_features = [
+      ['AI PDF Summarizer', 'Turn dense PDFs into clear summaries.'],
+      ['AI Flashcard Generator', 'Auto-create flashcards from your notes.'],
+      ['Real-Time Chat', 'Instant messaging, no threading clutter.'],
+      ['Create Study Room', 'Spin up a dedicated space in seconds.'],
+      ['Pomodoro Timer', 'Focus solo or sync sessions room-wide.'],
+      ['Shared Whiteboard', 'Persistent board you can save and load.']
+    ] %}
+
+    <div class="feature-section">
+      <div class="feature-cards">
+        {% for name, desc in hero_features %}
+          <article class="feature-card">
+            <h3 class="feature-name">{{ name }}</h3>
+            <p class="feature-desc">{{ desc }}</p>
+          </article>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="features-cta">
+      <h2>Ready to stop studying alone?</h2>
+      <p>Create a room, invite your friends, and learn together.</p>
+      <a class="cta-btn" href="{{ url_for('auth.login') }}">Get Started</a>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,337 @@
+/* ===== LOREVIA — Focus Music (Material 3) =====
+   Layout chrome (sidebar, topbar, .main) comes from base_dash.html +
+   dashboard.css. This file styles only the music page's own content:
+   the category chips, track grid, and the fixed player bar.
+   Restyled to a Material 3 (Material You) look using the site's own
+   Poppins + navy/beige palette. Poppins is already loaded globally by
+   base_sidebar.html, so no font import here. */
+
+:root {
+  /* MD3 color roles mapped to the LOREVIA dashboard palette */
+  --md-primary:              hsl(var(--primary));
+  --md-primary-dark:         hsl(var(--primary-hover));
+  --md-on-primary:           hsl(var(--primary-foreground));
+  --md-primary-container:    hsl(var(--accent));
+  --md-primary-container-2:  #f6f7ff;
+  --md-on-primary-container: #3f4670;
+  --md-background:           #f6f4ef;
+  --md-surface:              #ffffff;
+  --md-on-surface:           #2f2f2f;
+  --md-on-surface-var:       #6c728f;
+  --md-on-surface-faint:     #a0a4b8;
+  --md-outline:              #dbe2ff;
+  --md-outline-soft:         #e6e3dd;
+
+  /* MD3 elevation (tonal, soft) */
+  --md-elev-1: 0 1px 2px rgba(59,66,95,0.20), 0 1px 3px 1px rgba(59,66,95,0.10);
+  --md-elev-2: 0 1px 2px rgba(59,66,95,0.20), 0 2px 6px 2px rgba(59,66,95,0.12);
+  --md-elev-3: 0 4px 8px 3px rgba(59,66,95,0.14), 0 1px 3px rgba(59,66,95,0.22);
+
+  --sidebar-w: 100px;   /* matches the collapsed LOREVIA sidebar (.main margin) */
+  --player-h:  92px;
+  --md-radius:    16px;    /* MD3 medium shape */
+}
+
+.music-page *, .music-page *::before, .music-page *::after { box-sizing: border-box; }
+
+/* Material Symbols base — used for all transport/control glyphs. */
+.material-symbols-rounded {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
+}
+
+/* Leave room for the fixed player bar at the bottom of the page. */
+.music-page {
+  font-family: 'Poppins', sans-serif;
+  color: var(--md-on-surface);
+  padding-bottom: calc(var(--player-h) + 32px);
+}
+
+/* ===== TABS → MD3 FILTER CHIPS ===== */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+  margin-bottom: 28px;
+}
+.tab {
+  padding: 8px 18px;
+  border-radius: 8px;                       /* MD3 chip shape */
+  border: 1px solid var(--md-outline);
+  background: var(--md-surface);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--md-on-surface-var);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.tab:hover {
+  background: var(--md-primary-container-2);
+  color: var(--md-on-surface);
+}
+.tab.active {
+  background: var(--md-primary-container);
+  border-color: transparent;
+  color: var(--md-on-primary-container);
+  font-weight: 600;
+  box-shadow: var(--md-elev-1);
+}
+
+/* ===== TRACK GRID ===== */
+.track-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+}
+
+.track-card {
+  background: var(--md-surface);
+  border-radius: var(--md-radius);
+  padding: 20px;
+  cursor: pointer;
+  border: 1px solid var(--md-outline-soft);
+  transition: box-shadow 0.22s, transform 0.22s, border-color 0.22s, background 0.22s;
+  position: relative;
+  overflow: hidden;
+}
+.track-card:hover {
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: var(--md-elev-2);
+}
+.track-card.active {
+  border-color: var(--md-primary);
+  background: var(--md-primary-container);
+}
+
+.track-emoji {
+  font-size: 36px;
+  margin-bottom: 12px;
+  display: block;
+  line-height: 1;
+}
+.track-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--md-on-surface);
+}
+.track-duration {
+  font-size: 12px;
+  color: var(--md-on-surface-var);
+}
+.track-play-btn {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  box-shadow: var(--md-elev-1);
+  transition: opacity 0.2s, background 0.2s, box-shadow 0.2s;
+}
+.track-play-btn .material-symbols-rounded { font-size: 22px; }
+.track-play-btn:hover { background: var(--md-primary-dark); box-shadow: var(--md-elev-2); }
+.track-card:hover .track-play-btn,
+.track-card.active .track-play-btn {
+  opacity: 1;
+}
+
+/* Playing indicator */
+.track-card.active .track-name::after {
+  content: ' ♪';
+  color: var(--md-primary);
+  animation: pulse 1s infinite;
+}
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+/* ===== PLAYER BAR → MD3 BOTTOM BAR ===== */
+.player-bar {
+  position: fixed;
+  bottom: 20px;
+  left: calc(var(--sidebar-w) + 20px);
+  right: 20px;
+  /* Slide in sync with the sidebar expand (see hover rule below). */
+  transition: left 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  height: var(--player-h);
+  background: linear-gradient(135deg, var(--md-primary), var(--md-primary-dark));
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 24px;
+  color: var(--md-on-primary);
+  box-shadow: var(--md-elev-3);
+  z-index: 200;
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 200px;
+}
+.player-cover {
+  width: 46px; height: 46px;
+  border-radius: 14px;                      /* MD3 rounded thumbnail */
+  background: rgba(255,255,255,0.16);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+}
+.player-title { font-size: 14px; font-weight: 600; }
+.player-cat   { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+/* Animated equalizer — mirrors the dashboard Focus Music widget.
+   Bars sit flat until the player is playing (.player-bar.playing). */
+.player-eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 28px;
+  margin-left: 4px;
+}
+.player-eq span {
+  width: 4px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #aeb6e8, #ffffff);
+  transform: scaleY(0.25);
+  transform-origin: bottom;
+  animation: playerEqBar 1.1s ease-in-out infinite;
+  animation-play-state: paused;
+}
+.player-bar.playing .player-eq span { animation-play-state: running; }
+
+.player-eq span:nth-child(1) { height: 40%;  animation-delay: 0s;    }
+.player-eq span:nth-child(2) { height: 70%;  animation-delay: 0.15s; }
+.player-eq span:nth-child(3) { height: 100%; animation-delay: 0.3s;  }
+.player-eq span:nth-child(4) { height: 60%;  animation-delay: 0.45s; }
+.player-eq span:nth-child(5) { height: 45%;  animation-delay: 0.6s;  }
+
+@keyframes playerEqBar {
+  0%, 100% { transform: scaleY(0.3); }
+  50%      { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-eq span { animation: none; }
+}
+
+/* ===== TRANSPORT: MD3 icon buttons + FAB ===== */
+.player-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ctrl-btn {
+  position: relative;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;                  /* MD3 icon button */
+  color: var(--md-on-primary);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+.ctrl-btn .material-symbols-rounded { font-size: 24px; }
+.ctrl-btn:hover { background: rgba(255,255,255,0.14); }   /* MD3 state layer */
+.ctrl-btn:active { background: rgba(255,255,255,0.22); }
+
+.play-btn {
+  width: 52px; height: 52px;
+  border-radius: 16px;                      /* MD3 FAB shape */
+  background: var(--md-on-primary);
+  color: var(--md-primary);
+  box-shadow: var(--md-elev-2);
+}
+.play-btn .material-symbols-rounded {
+  font-size: 28px;
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 28;
+}
+.play-btn:hover { background: #f2f3ff; box-shadow: var(--md-elev-3); }
+.play-btn:active { background: #e8eaff; }
+
+.player-right {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.time-label { font-size: 11px; color: rgba(255,255,255,0.6); }
+
+/* ===== MD3 SLIDERS ===== */
+.seek-wrap { flex: 1; }
+.seek-bar, .vol-bar {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.28);
+  outline: none;
+  cursor: pointer;
+  accent-color: #ffffff;                    /* tints the filled portion where supported */
+}
+.seek-bar::-webkit-slider-thumb,
+.vol-bar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: none;
+  box-shadow: var(--md-elev-1);
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.seek-bar::-moz-range-thumb,
+.vol-bar::-moz-range-thumb {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: none;
+  cursor: pointer;
+}
+.seek-bar:hover::-webkit-slider-thumb,
+.vol-bar:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 8px rgba(255,255,255,0.18);  /* MD3 focus halo */
+}
+
+.vol-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 120px;
+}
+.vol-icon { font-size: 20px; color: rgba(255,255,255,0.85); }
+.vol-bar { width: 80px; }
+
+/* When the sidebar expands on hover, slide the player bar to stay aligned
+   with the content area (matches .main's margin shift in dashboard.css). */
+@media (min-width: 951px) {
+  .sidebar:hover ~ .main .player-bar { left: 284px; }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 700px) {
+  .music-page { padding-bottom: 150px; }
+  .player-bar { left: 16px; flex-wrap: wrap; height: auto; padding: 14px 16px; gap: 12px; }
+  .player-right { width: 100%; }
+  .vol-wrap { display: none; }
+}

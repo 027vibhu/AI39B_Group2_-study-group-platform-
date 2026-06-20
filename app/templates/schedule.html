@@ -1,0 +1,457 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Schedule — LOREVIA{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/schedule.css') }}">
+  <!-- SortableJS for smooth Trello-like drag animations -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+{% endblock %}
+
+{% block topbar_title %}{% endblock %}
+
+{% block content %}
+{% set columns = [
+  {'key': 'todo', 'label': 'To Do'},
+  {'key': 'in_progress', 'label': 'In Progress'},
+  {'key': 'in_review', 'label': 'In Review'},
+  {'key': 'done', 'label': 'Done'}
+] %}
+{% set known = ['todo', 'in_progress', 'in_review', 'done'] %}
+
+<section class="sched-page">
+  <header class="sched-toolbar">
+    <div class="sched-toolbar-left">
+      <h1 class="sched-title">Schedule</h1>
+    </div>
+    <div class="sched-toolbar-count">
+      TOTAL TASKS: <span id="schedTotal">0</span>
+    </div>
+  </header>
+
+  <div class="sched-board" id="schedBoard"
+       data-create-url="{{ url_for('home.tasks_create') }}">
+    {% for col in columns %}
+      <div class="sched-col col-{{ col.key }}" data-status="{{ col.key }}">
+        <div class="sched-col-head">
+          <span class="sched-col-title">
+            <span class="sched-col-dot" aria-hidden="true"></span>{{ col.label }}
+            <span class="sched-col-count">0</span>
+          </span>
+          <div class="sched-col-tools">
+            <button type="button" class="sched-col-add" aria-label="Add task to {{ col.label }}">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <span class="sched-col-menu" aria-hidden="true"><i class="fa-solid fa-ellipsis"></i></span>
+          </div>
+        </div>
+
+        <div class="sched-col-body" data-status="{{ col.key }}">
+          {% for t in tasks %}
+            {% set tstatus = t.status if t.status in known else 'todo' %}
+            {% set tprio = t.priority if t.priority in ['low', 'medium', 'high'] else 'medium' %}
+            {% if tstatus == col.key %}
+              {% set tdue = t.due_date.isoformat() if t.due_date and t.due_date is not string else (t.due_date or '') %}
+              <article class="sched-card prio-{{ tprio }}"
+                       data-id="{{ t.id }}"
+                       data-status="{{ tstatus }}"
+                       data-priority="{{ tprio }}"
+                       data-title="{{ t.title }}"
+                       data-desc="{{ t.description or '' }}"
+                       data-due="{{ tdue }}"
+                       data-update-url="{{ url_for('home.tasks_update', task_id=t.id) }}"
+                       data-delete-url="{{ url_for('home.tasks_delete', task_id=t.id) }}">
+                <div class="sched-card-head">
+                  <h3 class="sched-card-title">{{ t.title }}</h3>
+                  <button type="button" class="sched-card-menu-btn" aria-label="Task menu">
+                    <i class="fa-solid fa-ellipsis"></i>
+                  </button>
+                </div>
+                {% if t.description %}
+                  <p class="sched-card-desc">{{ t.description }}</p>
+                {% endif %}
+                <div class="sched-card-foot">
+                  <div class="sched-card-foot-left">
+                    <span class="sched-card-flag" title="Priority"><i class="fa-solid fa-flag"></i></span>
+                    <span class="sched-card-date">
+                      <i class="fa-regular fa-calendar"></i>
+                      <span class="sched-card-date-text"></span>
+                    </span>
+                  </div>
+                  <div class="sched-card-metrics" aria-hidden="true">
+                    <span class="sched-card-metric"><i class="fa-solid fa-paperclip"></i> 0</span>
+                    <span class="sched-card-metric"><i class="fa-regular fa-comment"></i> 0</span>
+                  </div>
+                </div>
+              </article>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Create / Edit modal -->
+<div class="sched-modal-overlay" id="schedModal" hidden>
+  <div class="sched-modal" role="dialog" aria-modal="true" aria-labelledby="schedModalTitle">
+    <div class="sched-modal-head">
+      <h2 id="schedModalTitle">Create New Task</h2>
+      <button type="button" class="sched-modal-close" id="schedModalClose" aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <form class="sched-modal-body" id="schedForm" autocomplete="off">
+      <input type="hidden" id="schedTaskId">
+
+      <label class="sched-field">
+        <span>Title</span>
+        <input type="text" id="schedTitle" maxlength="255" required placeholder="e.g. Risk Assessment Survey">
+      </label>
+
+      <label class="sched-field">
+        <span>Description (Optional)</span>
+        <textarea id="schedDesc" rows="2" placeholder="Add some details…"></textarea>
+      </label>
+
+      <div class="sched-field-row">
+        <label class="sched-field">
+          <span>Status</span>
+          <select id="schedStatus">
+            <option value="todo">To Do</option>
+            <option value="in_progress">In Progress</option>
+            <option value="in_review">In Review</option>
+            <option value="done">Done</option>
+          </select>
+        </label>
+        <label class="sched-field">
+          <span>Priority</span>
+          <select id="schedPriority">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+      </div>
+
+      <label class="sched-field">
+        <span>Deadline</span>
+        <input type="date" id="schedDeadline">
+      </label>
+
+      <div class="sched-modal-foot">
+        <button type="button" class="sched-btn-ghost" id="schedCancel">Cancel</button>
+        <button type="submit" class="sched-btn-primary">Save Task</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Card context menu -->
+<div class="sched-ctx" id="schedCtx" hidden>
+  <button type="button" data-act="edit"><i class="fa-solid fa-pen"></i> Edit</button>
+  <button type="button" data-act="delete" class="danger"><i class="fa-solid fa-trash"></i> Delete</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    // Schedule Kanban — a white-themed port of the task.html prototype.
+    // Cards carry a title, optional description, a priority flag and a due-date
+    // pill; create/edit happens in a modal and drag-drop moves a card between
+    // columns. Every mutation hits a JSON endpoint so the board updates in place.
+    const board = document.getElementById('schedBoard');
+    if (!board) return;
+
+    const createUrl = board.dataset.createUrl;
+    const jsonHeaders = () => ({ 'X-Requested-With': 'XMLHttpRequest' });
+    const totalEl = document.getElementById('schedTotal');
+
+    // --- date helpers (mirrors task.html) ---
+    function todayStr() {
+      const d = new Date();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${d.getFullYear()}-${m}-${day}`;
+    }
+
+    function formatDate(due) {
+      if (!due) return '';
+      if (due === todayStr()) return 'Today';
+      const d = new Date(due);
+      const corrected = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+      return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(corrected);
+    }
+
+    // Fill the date pill text and flag overdue / due-today state on a card.
+    function decorateCard(card) {
+      const due = card.dataset.due || '';
+      const isDone = card.dataset.status === 'done';
+      const today = todayStr();
+      const pill = card.querySelector('.sched-card-date');
+      const text = card.querySelector('.sched-card-date-text');
+      if (!due) {
+        if (pill) pill.style.display = 'none';
+        card.classList.remove('is-today', 'is-overdue');
+        return;
+      }
+      if (pill) pill.style.display = '';
+      if (text) text.textContent = formatDate(due);
+      const past = due < today && !isDone;
+      const isToday = due === today && !isDone;
+      card.classList.toggle('is-today', isToday);
+      card.classList.toggle('is-overdue', past);
+    }
+
+    function refreshCounts() {
+      board.querySelectorAll('.sched-col').forEach((col) => {
+        const count = col.querySelectorAll('.sched-card').length;
+        const badge = col.querySelector('.sched-col-count');
+        if (badge) badge.textContent = count;
+      });
+      if (totalEl) totalEl.textContent = board.querySelectorAll('.sched-card').length;
+    }
+
+    function refresh() {
+      board.querySelectorAll('.sched-card').forEach(decorateCard);
+      refreshCounts();
+    }
+
+    function colBody(status) {
+      return board.querySelector(`.sched-col-body[data-status="${status}"]`)
+        || board.querySelector('.sched-col-body');
+    }
+
+    // Build a card element from a serialized task (matches the Jinja markup).
+    function buildCard(task) {
+      const prio = ['low', 'medium', 'high'].includes(task.priority) ? task.priority : 'medium';
+      const status = task.status || 'todo';
+      const article = document.createElement('article');
+      article.className = `sched-card prio-${prio}`;
+      article.dataset.id = task.id;
+      article.dataset.status = status;
+      article.dataset.priority = prio;
+      article.dataset.title = task.title || '';
+      article.dataset.desc = task.description || '';
+      article.dataset.due = task.due_date || '';
+      article.dataset.updateUrl = `/tasks/${task.id}/update`;
+      article.dataset.deleteUrl = `/tasks/${task.id}/delete`;
+
+      const head = document.createElement('div');
+      head.className = 'sched-card-head';
+      const h3 = document.createElement('h3');
+      h3.className = 'sched-card-title';
+      h3.textContent = task.title || '';
+      const menuBtn = document.createElement('button');
+      menuBtn.type = 'button';
+      menuBtn.className = 'sched-card-menu-btn';
+      menuBtn.setAttribute('aria-label', 'Task menu');
+      menuBtn.innerHTML = '<i class="fa-solid fa-ellipsis"></i>';
+      head.append(h3, menuBtn);
+      article.appendChild(head);
+
+      if (task.description) {
+        const p = document.createElement('p');
+        p.className = 'sched-card-desc';
+        p.textContent = task.description;
+        article.appendChild(p);
+      }
+
+      const foot = document.createElement('div');
+      foot.className = 'sched-card-foot';
+      foot.innerHTML =
+        '<div class="sched-card-foot-left">' +
+          '<span class="sched-card-flag" title="Priority"><i class="fa-solid fa-flag"></i></span>' +
+          '<span class="sched-card-date"><i class="fa-regular fa-calendar"></i>' +
+          '<span class="sched-card-date-text"></span></span>' +
+        '</div>' +
+        '<div class="sched-card-metrics" aria-hidden="true">' +
+          '<span class="sched-card-metric"><i class="fa-solid fa-paperclip"></i> 0</span>' +
+          '<span class="sched-card-metric"><i class="fa-regular fa-comment"></i> 0</span>' +
+        '</div>';
+      article.appendChild(foot);
+
+      decorateCard(article);
+      return article;
+    }
+
+    // ============================ MODAL ============================
+    const modal = document.getElementById('schedModal');
+    const form = document.getElementById('schedForm');
+    const fId = document.getElementById('schedTaskId');
+    const fTitle = document.getElementById('schedTitle');
+    const fDesc = document.getElementById('schedDesc');
+    const fStatus = document.getElementById('schedStatus');
+    const fPrio = document.getElementById('schedPriority');
+    const fDue = document.getElementById('schedDeadline');
+    const modalTitle = document.getElementById('schedModalTitle');
+    let editingCard = null;
+
+    function openCreate(status) {
+      editingCard = null;
+      form.reset();
+      fId.value = '';
+      fStatus.value = status || 'todo';
+      fPrio.value = 'medium';
+      modalTitle.textContent = 'Create New Task';
+      modal.hidden = false;
+      setTimeout(() => fTitle.focus(), 40);
+    }
+
+    function openEdit(card) {
+      editingCard = card;
+      form.reset();
+      fId.value = card.dataset.id;
+      fTitle.value = card.dataset.title || '';
+      fDesc.value = card.dataset.desc || '';
+      fStatus.value = card.dataset.status || 'todo';
+      fPrio.value = card.dataset.priority || 'medium';
+      fDue.value = card.dataset.due || '';
+      modalTitle.textContent = 'Edit Task';
+      modal.hidden = false;
+      setTimeout(() => fTitle.focus(), 40);
+    }
+
+    function closeModal() { modal.hidden = true; editingCard = null; }
+
+    document.getElementById('schedModalClose').addEventListener('click', closeModal);
+    document.getElementById('schedCancel').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = fTitle.value.trim();
+      if (!title) return;
+      const fields = {
+        title,
+        description: fDesc.value.trim(),
+        status: fStatus.value,
+        priority: fPrio.value,
+        due_date: fDue.value || '',
+      };
+
+      if (editingCard) {
+        const card = editingCard;
+        const body = new URLSearchParams(fields);
+        fetch(card.dataset.updateUrl, { method: 'POST', headers: jsonHeaders(), body })
+          .then((r) => r.ok ? r.json() : Promise.reject())
+          .then((data) => {
+            if (data && data.task) {
+              const fresh = buildCard(data.task);
+              colBody(data.task.status).appendChild(fresh);
+              card.remove();
+              refresh();
+            }
+            closeModal();
+          })
+          .catch(() => {});
+      } else {
+        const body = new URLSearchParams(fields);
+        fetch(createUrl, { method: 'POST', headers: jsonHeaders(), body })
+          .then((r) => r.ok ? r.json() : Promise.reject())
+          .then((data) => {
+            if (data && data.task) {
+              colBody(data.task.status).appendChild(buildCard(data.task));
+              refresh();
+            }
+            closeModal();
+          })
+          .catch(() => {});
+      }
+    });
+
+    // Each column's "+" opens the create modal pre-set to that column.
+    board.querySelectorAll('.sched-col-add').forEach((btn) => {
+      btn.addEventListener('click', () => openCreate(btn.closest('.sched-col').dataset.status));
+    });
+
+    // ======================== CONTEXT MENU ========================
+    const ctx = document.getElementById('schedCtx');
+    let ctxCard = null;
+
+    function showCtx(e, card) {
+      e.stopPropagation();
+      ctxCard = card;
+      ctx.hidden = false;
+      const rect = e.target.closest('button').getBoundingClientRect();
+      const w = ctx.offsetWidth || 150;
+      let left = rect.right - w;
+      if (left < 8) left = 8;
+      // Fixed positioning → viewport coordinates, no scroll offset needed.
+      ctx.style.top = `${rect.bottom + 6}px`;
+      ctx.style.left = `${left}px`;
+    }
+
+    function hideCtx() { ctx.hidden = true; ctxCard = null; }
+
+    ctx.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn || !ctxCard) return;
+      const card = ctxCard;
+      if (btn.dataset.act === 'edit') {
+        hideCtx();
+        openEdit(card);
+      } else if (btn.dataset.act === 'delete') {
+        hideCtx();
+        fetch(card.dataset.deleteUrl, { method: 'POST', headers: jsonHeaders() })
+          .then((r) => r.ok ? r.json() : Promise.reject())
+          .then(() => { card.remove(); refresh(); })
+          .catch(() => {});
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (ctx.hidden) return;
+      if (!e.target.closest('#schedCtx') && !e.target.closest('.sched-card-menu-btn')) hideCtx();
+    });
+    // The menu is viewport-fixed, so close it once the board scrolls away.
+    document.addEventListener('scroll', () => { if (!ctx.hidden) hideCtx(); }, true);
+
+    // Open the menu from any card's ⋯ button (delegated; survives rebuilds).
+    board.addEventListener('click', (e) => {
+      const menuBtn = e.target.closest('.sched-card-menu-btn');
+      if (menuBtn) showCtx(e, menuBtn.closest('.sched-card'));
+    });
+
+    // ====================== DRAG AND DROP ======================
+    board.querySelectorAll('.sched-col-body').forEach((bodyEl) => {
+      new Sortable(bodyEl, {
+        group: 'shared',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        dragClass: 'sortable-drag',
+        easing: 'cubic-bezier(1, 0, 0, 1)',
+        filter: '.sched-card-menu-btn',
+        preventOnFilter: false,
+        onEnd: (evt) => {
+          const card = evt.item;
+          const newStatus = evt.to.dataset.status;
+          const prevStatus = card.dataset.status;
+          if (newStatus === prevStatus) { refresh(); return; }
+
+          const prevParent = evt.from;
+          const prevIndex = evt.oldIndex;
+          card.dataset.status = newStatus;     // optimistic
+          decorateCard(card);                  // done-state can flip overdue/today
+          refreshCounts();
+
+          const body = new URLSearchParams({ status: newStatus });
+          fetch(card.dataset.updateUrl, { method: 'POST', headers: jsonHeaders(), body })
+            .then((r) => r.ok ? r.json() : Promise.reject())
+            .catch(() => {
+              const ref = prevParent.children[prevIndex] || null;
+              prevParent.insertBefore(card, ref);
+              card.dataset.status = prevStatus;
+              decorateCard(card);
+              refreshCounts();
+            });
+        },
+      });
+    });
+
+    refresh();
+  })();
+</script>
+{% endblock %}

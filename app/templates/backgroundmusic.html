@@ -1,0 +1,73 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Focus Music — LOREVIA{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,-25..0&display=block">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/backgroundmusic.css') }}">
+{% endblock %}
+
+{% block topbar_title %}Focus Music{% endblock %}
+
+{% block content %}
+
+<section class="music-page">
+
+  <!-- Category tabs -->
+  <div class="tabs">
+    <button class="tab active" data-cat="rain">Rain &amp; Storm</button>
+    <button class="tab" data-cat="nature">Nature Sounds</button>
+    <button class="tab" data-cat="ambient">Ambient</button>
+    <button class="tab" data-cat="lofi">Lo-Fi Beats</button>
+  </div>
+
+  <!-- Track grid -->
+  <section class="track-grid" id="trackGrid"></section>
+
+  <!-- Player bar -->
+  <div class="player-bar" id="playerBar">
+    <div class="player-info">
+      <div class="player-cover" id="playerCover">♪</div>
+      <div>
+        <div class="player-title" id="playerTitle">No track selected</div>
+        <div class="player-cat" id="playerCat">—</div>
+      </div>
+      <div class="player-eq" id="playerEq" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div class="player-controls">
+      <button class="ctrl-btn" id="btnPrev" aria-label="Previous track">
+        <span class="material-symbols-rounded">skip_previous</span>
+      </button>
+      <button class="ctrl-btn play-btn" id="btnPlay" aria-label="Play / pause">
+        <span class="material-symbols-rounded">play_arrow</span>
+      </button>
+      <button class="ctrl-btn" id="btnNext" aria-label="Next track">
+        <span class="material-symbols-rounded">skip_next</span>
+      </button>
+    </div>
+
+    <div class="player-right">
+      <span class="time-label" id="timeLabel">0:00 / 0:00</span>
+      <div class="seek-wrap">
+        <input type="range" class="seek-bar" id="seekBar" min="0" max="100" value="0"/>
+      </div>
+      <div class="vol-wrap">
+        <span class="vol-icon material-symbols-rounded">volume_up</span>
+        <input type="range" class="vol-bar" id="volBar" min="0" max="1" step="0.01" value="0.7"/>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<audio id="audioEl"></audio>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/backgroundmusic.js') }}"></script>
+{% endblock %}

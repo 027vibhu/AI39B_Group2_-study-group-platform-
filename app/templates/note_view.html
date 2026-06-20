@@ -1,0 +1,322 @@
+{% extends 'base_dash.html' %}
+
+{% block title %}{{ note.title }} - LOREVIA{% endblock %}
+
+{% block head %}
+  <style>
+    /* Match the app palette: indigo accent on warm off-white */
+    :root {
+      --ivory-whisper: #f6f4ef;
+      --vanilla-cream: #ffffff;
+      --almond-cream: #eef0f8;
+      --almond-deep: #d9ddee;
+      --midnight-indigo: #2b2f3a;
+      --indigo-soft: #4b4f78;
+      --caramel: #4b4f78;
+      --caramel-bright: #3f456a;
+    }
+
+    /* Let the viewer fill the dashboard main area */
+    .main { padding: 0 !important; overflow: hidden !important; }
+    .main .topbar { display: none; }
+
+    .nv-screen {
+      flex: 1; display: flex; flex-direction: column; min-height: 0;
+      padding: 18px 22px 20px;
+      color: var(--midnight-indigo);
+    }
+
+    /* Header */
+    .nv-head { display: flex; align-items: center; gap: 14px; min-width: 0; margin-bottom: 16px; }
+    .nv-back {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+      background: var(--vanilla-cream); color: var(--midnight-indigo); text-decoration: none;
+      border: 1px solid var(--almond-cream);
+      box-shadow: 0 4px 14px rgba(43,50,63,.1); transition: .2s;
+    }
+    .nv-back:hover { background: var(--caramel); color: #fff; border-color: var(--caramel); }
+    .nv-titles { min-width: 0; }
+    .nv-titles h2 { margin: 0; font-size: 1.4rem; line-height: 1.2; color: var(--midnight-indigo); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nv-titles p { margin: 2px 0 0; opacity: .65; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60ch; }
+
+    /* Two-column body: sidebar + pdf */
+    .nv-body {
+      flex: 1; min-height: 0; display: grid;
+      grid-template-columns: 360px 1fr; gap: 18px;
+    }
+
+    /* Sidebar */
+    .nv-sidebar {
+      display: flex; flex-direction: column; min-height: 0;
+      background: #ffffff; border-radius: 22px;
+      border: 1px solid rgba(125,134,199,0.16);
+      box-shadow: 0 18px 40px rgba(125,134,199,0.14);
+      overflow: hidden;
+    }
+    .nv-section { padding: 18px 18px 16px; }
+    .nv-section + .nv-section { border-top: 1px solid var(--almond-cream); }
+    .nv-section-head { display: flex; align-items: center; gap: 9px; font-size: .76rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; opacity: .6; margin-bottom: 12px; }
+    .nv-section-head i { color: var(--caramel); }
+
+    /* Summary section */
+    .nv-summary { display: flex; flex-direction: column; flex-shrink: 0; }
+    .nv-gen-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+      width: 100%; border: none; cursor: pointer;
+      padding: 11px 16px; border-radius: 12px; font-size: .92rem; font-weight: 600;
+      color: #fff; background: linear-gradient(135deg, var(--caramel), var(--caramel-bright));
+      box-shadow: 0 8px 22px rgba(75,79,120,.35); transition: .2s;
+    }
+    .nv-gen-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(75,79,120,.45); }
+    .nv-gen-btn:disabled { opacity: .7; cursor: default; }
+    .nv-summary-body { margin-top: 14px; font-size: .9rem; line-height: 1.55; max-height: 38vh; overflow-y: auto; padding-right: 4px; }
+    .nv-summary-empty { opacity: .55; font-size: .88rem; text-align: center; padding: 10px 4px; }
+    .nv-summary-body ul { margin: 0; padding-left: 18px; }
+    .nv-summary-body li { margin-bottom: 8px; }
+    .nv-summary-body .nv-summary-lead { margin: 0 0 10px; font-weight: 600; }
+
+    /* Chat section fills the rest */
+    .nv-chat { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .nv-chat-log { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; }
+    .nv-msg { max-width: 88%; padding: 9px 13px; border-radius: 14px; font-size: .88rem; line-height: 1.5; }
+    .nv-msg-ai { align-self: flex-start; background: var(--almond-cream); color: var(--midnight-indigo); border-bottom-left-radius: 4px; }
+    .nv-msg-user { align-self: flex-end; background: linear-gradient(135deg, var(--caramel), var(--caramel-bright)); color: #fff; border-bottom-right-radius: 4px; }
+    .nv-msg-lead { margin: 0; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+    .nv-msg-lead i { color: var(--caramel); }
+    .nv-msg-overview { margin: 7px 0 0; }
+    .nv-msg ul { margin: 8px 0 0; padding-left: 18px; }
+    .nv-msg li { margin-bottom: 6px; }
+    .nv-chat-form { display: flex; gap: 8px; margin-top: 12px; flex-shrink: 0; }
+    .nv-chat-input {
+      flex: 1; resize: none; border: 1px solid var(--almond-deep); border-radius: 12px;
+      padding: 10px 12px; font: inherit; font-size: .9rem; color: var(--midnight-indigo);
+      background: var(--ivory-whisper); max-height: 96px; min-height: 42px;
+    }
+    .nv-chat-input:focus { outline: none; border-color: var(--caramel); background: #fff; }
+    .nv-send-btn {
+      flex-shrink: 0; width: 42px; height: 42px; border-radius: 12px; border: none; cursor: pointer;
+      background: linear-gradient(135deg, var(--caramel), var(--caramel-bright)); color: #fff; font-size: .95rem;
+      box-shadow: 0 8px 20px rgba(75,79,120,.3); transition: .2s; align-self: flex-end;
+    }
+    .nv-send-btn:hover { transform: translateY(-1px); }
+
+    /* PDF pane */
+    .nv-pdf {
+      min-height: 0; background: #525659; border-radius: 22px; overflow: hidden;
+      border: 1px solid rgba(125,134,199,0.16);
+      box-shadow: 0 18px 40px rgba(125,134,199,0.14);
+    }
+    .nv-pdf iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+    @media (max-width: 900px) {
+      .nv-body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+      .nv-sidebar { max-height: 46vh; }
+    }
+  </style>
+{% endblock %}
+
+{% block topbar_title %}{% endblock %}
+
+{% block content %}
+  <section class="nv-screen">
+    <div class="nv-head">
+      <a href="{{ url_for('home.notes') }}" class="nv-back" title="Back to notes" aria-label="Back to notes">
+        <i class="fa-solid fa-arrow-left"></i>
+      </a>
+      <div class="nv-titles">
+        <h2>{{ note.title }}</h2>
+        {% if note.description %}
+          <p>{{ note.description }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="nv-body">
+      <aside class="nv-sidebar">
+        <div class="nv-section nv-summary">
+          <div class="nv-section-head"><i class="fa-solid fa-wand-magic-sparkles"></i> Summary</div>
+          <button type="button" class="nv-gen-btn" id="nvGenerate"
+                  data-summary-url="{{ url_for('home.summarize_note', note_id=note.id) }}">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Generate summary</span>
+          </button>
+        </div>
+
+        <div class="nv-section nv-chat">
+          <div class="nv-section-head"><i class="fa-solid fa-comments"></i> Chat with this PDF</div>
+          <div class="nv-chat-log" id="nvChatLog">
+            <div class="nv-msg nv-msg-ai">Hi! Ask me anything about “{{ note.title }}” and I’ll help you study it.</div>
+          </div>
+          <form class="nv-chat-form" id="nvChatForm"
+                data-chat-url="{{ url_for('home.chat_note', note_id=note.id) }}">
+            <textarea class="nv-chat-input" id="nvChatInput" rows="1" placeholder="Ask a question…" autocomplete="off"></textarea>
+            <button type="submit" class="nv-send-btn" aria-label="Send">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </aside>
+
+      <div class="nv-pdf">
+        <iframe src="{{ url_for('static', filename=note.pdf_url) }}#view=FitH"
+                title="{{ note.title }}" loading="lazy"></iframe>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    (function () {
+      const log = document.getElementById('nvChatLog');
+
+      function addMessage(text, who) {
+        const el = document.createElement('div');
+        el.className = 'nv-msg ' + (who === 'user' ? 'nv-msg-user' : 'nv-msg-ai');
+        el.textContent = text;
+        log.appendChild(el);
+        log.scrollTop = log.scrollHeight;
+        return el;
+      }
+
+      // --- Summary (NVIDIA-powered, rendered as a chat message) ---
+      const genBtn = document.getElementById('nvGenerate');
+
+      function fillSummaryMessage(el, summary) {
+        const hasContent = summary.overview ||
+          (Array.isArray(summary.key_points) && summary.key_points.length);
+        el.innerHTML = '';
+        if (!hasContent) {
+          el.textContent = 'No summary was returned. Please try again.';
+          return;
+        }
+        const heading = document.createElement('p');
+        heading.className = 'nv-msg-lead';
+        heading.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Summary';
+        el.appendChild(heading);
+        if (summary.overview) {
+          const lead = document.createElement('p');
+          lead.className = 'nv-msg-overview';
+          lead.textContent = summary.overview;
+          el.appendChild(lead);
+        }
+        if (Array.isArray(summary.key_points) && summary.key_points.length) {
+          const ul = document.createElement('ul');
+          summary.key_points.forEach((point) => {
+            const li = document.createElement('li');
+            li.textContent = point;
+            ul.appendChild(li);
+          });
+          el.appendChild(ul);
+        }
+        log.scrollTop = log.scrollHeight;
+      }
+
+      if (genBtn && log) {
+        genBtn.addEventListener('click', async () => {
+          genBtn.disabled = true;
+          const label = genBtn.querySelector('span');
+          const original = label.textContent;
+          label.textContent = 'Generating…';
+          const pending = addMessage('Reading the document and writing a summary…', 'ai');
+
+          try {
+            const res = await fetch(genBtn.dataset.summaryUrl, {
+              method: 'POST',
+              headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              pending.textContent = data.error || 'Could not generate a summary.';
+            } else {
+              fillSummaryMessage(pending, data.summary || {});
+            }
+          } catch (err) {
+            pending.textContent = 'Network error — please check your connection and try again.';
+          } finally {
+            label.textContent = original;
+            genBtn.disabled = false;
+          }
+        });
+      }
+
+      // --- Chat (NVIDIA-powered Q&A over the PDF) ---
+      const form = document.getElementById('nvChatForm');
+      const input = document.getElementById('nvChatInput');
+      const sendBtn = form ? form.querySelector('.nv-send-btn') : null;
+
+      // Conversation kept client-side and sent with each request so the
+      // stateless API has context without re-uploading the PDF. The cached
+      // document text lives server-side; we only ship the recent turns.
+      const history = [];
+      const MAX_HISTORY = 16; // last 8 exchanges
+      let busy = false;
+
+      if (form && input && log) {
+        // Auto-grow the textarea up to its max-height.
+        input.addEventListener('input', () => {
+          input.style.height = 'auto';
+          input.style.height = Math.min(input.scrollHeight, 96) + 'px';
+        });
+
+        const send = async () => {
+          if (busy) return;
+          const text = input.value.trim();
+          if (!text) return;
+
+          addMessage(text, 'user');
+          history.push({ role: 'user', content: text });
+          input.value = '';
+          input.style.height = 'auto';
+
+          busy = true;
+          if (sendBtn) sendBtn.disabled = true;
+          const pending = addMessage('Thinking…', 'ai');
+
+          try {
+            const res = await fetch(form.dataset.chatUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+              },
+              body: JSON.stringify({
+                message: text,
+                history: history.slice(0, -1).slice(-MAX_HISTORY),
+              }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              pending.textContent = data.error || 'Could not get an answer.';
+            } else {
+              const reply = data.reply || 'No answer was returned.';
+              pending.textContent = reply;
+              history.push({ role: 'assistant', content: reply });
+            }
+          } catch (err) {
+            pending.textContent = 'Network error — please check your connection and try again.';
+          } finally {
+            busy = false;
+            if (sendBtn) sendBtn.disabled = false;
+            log.scrollTop = log.scrollHeight;
+            input.focus();
+          }
+        };
+
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          send();
+        });
+
+        // Enter to send, Shift+Enter for a newline.
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            send();
+          }
+        });
+      }
+    })();
+  </script>
+{% endblock %}

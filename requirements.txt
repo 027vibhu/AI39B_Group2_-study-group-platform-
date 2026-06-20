@@ -1,1 +1,8 @@
 Flask
+flask-socketio
+eventlet
+pymysql
+python-dotenv
+pdfplumber
+openai
+pymupdf

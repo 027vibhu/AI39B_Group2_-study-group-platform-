@@ -1,0 +1,132 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Browse Rooms{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/browse_rooms.css') }}">
+{% endblock %}
+{% block topbar_title %}{% endblock %}
+
+{% block content %}
+<div class="workspace">
+
+    <!-- Left -->
+    <div class="left">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+
+        <div class="left-content">
+            <h1>Browse<br>Rooms</h1>
+            <p>
+                Join collaborative learning spaces where students
+                discuss problems, solve assignments together,
+                share answers and prepare for exams in real-time.
+            </p>
+
+            <!-- Glass stat card -->
+            <div class="preview-card">
+                <div class="preview-top">
+                    <span class="preview-avatar"><i class="fa-solid fa-compass"></i></span>
+                    <div class="preview-meta">
+                        <span class="preview-name">Public rooms</span>
+                        <span class="preview-code">open to everyone</span>
+                    </div>
+                    <span class="preview-status"><i class="fa-solid fa-door-open"></i> {{ rooms|length }} live</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right -->
+    <div class="right">
+
+        <div class="right-header f-1">
+            <label class="label"><i class="fa-solid fa-compass"></i> Available rooms</label>
+            <div class="search-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" class="search" placeholder="Search rooms..." aria-label="Search rooms">
+            </div>
+        </div>
+
+        <div class="rooms">
+            {% if rooms %}
+                {% for room in rooms %}
+                    <div class="room" style="animation-delay: {{ 100 + loop.index0 * 60 }}ms">
+                        <div class="room-left">
+                            <div class="icon">{{ room.name[:1]|upper }}</div>
+                            <div class="room-info">
+                                <h3>{{ room.name }}</h3>
+                                <span>#{{ room.code }}</span>
+                                {% if room.subject_tags %}
+                                <div class="room-tags">
+                                    {% for tag in room.subject_tags.split(',') %}
+                                        {% set clean_tag = tag.strip() %}
+                                        {% if clean_tag %}
+                                        <span class="room-tag">{{ clean_tag }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <a href="{{ url_for('home.chat', room_code=room.code) }}" class="join-btn" aria-label="Join Room">
+                            <span>Join</span> <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-room f-2">
+                    <i class="fa-regular fa-folder-open"></i>
+                    <h3>No public rooms available</h3>
+                    <p>Try creating a room or check back later.</p>
+                </div>
+            {% endif %}
+
+            <div class="empty-room no-results" hidden>
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <h3>No rooms match your search</h3>
+                <p>Try a different name or room code.</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const search = document.querySelector('.search');
+  const rooms = Array.from(document.querySelectorAll('.workspace .rooms .room'));
+  const noResults = document.querySelector('.no-results');
+
+  if (search) {
+    search.addEventListener('input', function (e) {
+      const q = e.target.value.trim().toLowerCase();
+      let visible = 0;
+      let revealed = 0;
+      rooms.forEach(room => {
+        const title = room.querySelector('.room-info h3')?.textContent.trim().toLowerCase() || '';
+        const id = room.querySelector('.room-info span')?.textContent.trim().toLowerCase() || '';
+        const tags = Array.from(room.querySelectorAll('.room-tag')).map(t => t.textContent.toLowerCase()).join(' ');
+        const match = title.includes(q) || id.includes(q) || tags.includes(q);
+        const wasHidden = room.style.display === 'none';
+        room.style.display = match ? '' : 'none';
+        if (match) {
+          if (wasHidden) {
+            // Replay the entrance animation for rooms coming back into the list
+            room.classList.remove('filter-in');
+            void room.offsetWidth;
+            room.style.animationDelay = (revealed * 40) + 'ms';
+            room.classList.add('filter-in');
+            revealed++;
+          }
+          visible++;
+        }
+      });
+      if (noResults) noResults.hidden = visible > 0 || rooms.length === 0;
+    });
+  }
+});
+</script>
+{% endblock %}

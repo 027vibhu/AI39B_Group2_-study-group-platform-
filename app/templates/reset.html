@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Reset Password - Lorevia{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="auth-box">
+      <div class="left-panel">
+        <div class="left-content">
+          <h1>Reset Password</h1>
+          <p>Secure your learning space. Follow the steps to quickly recover access back to your study group dashboard.</p>
+        </div>
+      </div>
+
+      <div class="right-panel">
+        <div class="form-box">
+          <div class="step-container" id="step-email">
+            <h2 class="title">Forgot Password?</h2>
+            <p class="sub">Enter your email address below to receive a 6-digit verification code.</p>
+
+            <form class="auth-form" id="email-form">
+              <div class="input-box">
+                <span>📧</span>
+                <input type="email" placeholder="Email Address" required>
+              </div>
+              <button type="submit" class="main-btn">Send Code</button>
+            </form>
+          </div>
+
+          <div class="step-container hidden" id="step-verify">
+            <h2 class="title">Verify Identity</h2>
+            <p class="sub">Type your 6-digit verification code below</p>
+
+            <form class="auth-form" id="verify-form">
+              <div class="otp-wrapper">
+                <input type="text" class="otp" maxlength="1" required pattern="[0-9]">
+                <input type="text" class="otp" maxlength="1" required pattern="[0-9]">
+                <input type="text" class="otp" maxlength="1" required pattern="[0-9]">
+                <input type="text" class="otp" maxlength="1" required pattern="[0-9]">
+                <input type="text" class="otp" maxlength="1" required pattern="[0-9]">
+                <input type="text" class="otp" maxlength="1" required pattern="[0-9]">
+              </div>
+              <button type="submit" class="main-btn">Verify Code</button>
+            </form>
+          </div>
+
+          <div class="step-container hidden" id="step-new-password">
+            <h2 class="title">New Password</h2>
+            <p class="sub">Choose a strong, secure new password for your account.</p>
+
+            <form class="auth-form" id="password-form">
+              <div class="input-box">
+                <span>🔒</span>
+                <input type="password" placeholder="New Password" required>
+              </div>
+
+              <div class="input-box">
+                <span>🔒</span>
+                <input type="password" placeholder="Confirm New Password" required>
+              </div>
+
+              <button type="submit" class="main-btn">Reset Password</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    const emailForm = document.getElementById('email-form');
+    const verifyForm = document.getElementById('verify-form');
+    const passwordForm = document.getElementById('password-form');
+
+    const stepEmail = document.getElementById('step-email');
+    const stepVerify = document.getElementById('step-verify');
+    const stepNewPassword = document.getElementById('step-new-password');
+
+    function setBusy(btn, busy, busyText) {
+      if (!btn) return;
+      if (busy) {
+        btn.dataset.label = btn.textContent;
+        btn.textContent = busyText;
+        btn.disabled = true;
+      } else {
+        btn.textContent = btn.dataset.label || btn.textContent;
+        btn.disabled = false;
+      }
+    }
+
+    async function postForm(url, data) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(data),
+      });
+      let body = {};
+      try { body = await res.json(); } catch (_) {}
+      return { ok: res.ok && body.ok !== false, error: body.error };
+    }
+
+    // Step 1 — request the code
+    emailForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = emailForm.querySelector('button[type="submit"]');
+      const email = emailForm.querySelector('input[type="email"]').value.trim();
+      setBusy(btn, true, 'Sending...');
+      const { ok, error } = await postForm("{{ url_for('auth.send_reset_code') }}", { email });
+      setBusy(btn, false);
+      if (!ok) { alert(error || 'Could not send the code. Please try again.'); return; }
+      stepEmail.style.display = 'none';
+      stepVerify.style.display = 'block';
+    });
+
+    // Step 2 — verify the code
+    verifyForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = verifyForm.querySelector('button[type="submit"]');
+      const code = Array.from(document.querySelectorAll('.otp-wrapper .otp'))
+        .map((i) => i.value.trim()).join('');
+      setBusy(btn, true, 'Verifying...');
+      const { ok, error } = await postForm("{{ url_for('auth.verify_reset_code') }}", { code });
+      setBusy(btn, false);
+      if (!ok) { alert(error || 'Incorrect code.'); return; }
+      stepVerify.style.display = 'none';
+      stepNewPassword.style.display = 'block';
+    });
+
+    // Step 3 — set the new password
+    passwordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = passwordForm.querySelector('button[type="submit"]');
+      const inputs = passwordForm.querySelectorAll('input[type="password"]');
+      const password = inputs[0].value;
+      const confirm = inputs[1].value;
+      if (password !== confirm) { alert('Passwords do not match.'); return; }
+      setBusy(btn, true, 'Saving...');
+      const { ok, error } = await postForm("{{ url_for('auth.set_new_password') }}", { password, confirm });
+      setBusy(btn, false);
+      if (!ok) { alert(error || 'Could not reset the password.'); return; }
+      alert('Your password has been reset. Please sign in.');
+      window.location.href = "{{ url_for('auth.login') }}";
+    });
+
+    const inputs = document.querySelectorAll('.otp-wrapper .otp');
+    inputs.forEach((input, index) => {
+      input.addEventListener('input', (e) => {
+        if (e.target.value.length === 1 && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+          inputs[index - 1].focus();
+        }
+      });
+    });
+  </script>
+{% endblock %}

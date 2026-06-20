@@ -1,0 +1,331 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Dashboard — LOREVIA{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_home.css') }}">
+{% endblock %}
+
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block content %}
+<section class="dashboard">
+  <!-- Ambient backdrop: drifting orbs + slow dashed rings, borrowed from the
+       join-room hero. Purely decorative, sits behind every card. -->
+  <div class="dash-ambient" aria-hidden="true">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+    <span class="ring ring-1"></span>
+    <span class="ring ring-2"></span>
+  </div>
+
+  <div class="welcome-row">
+    <div class="welcome-card">
+      <div class="welcome-text">
+        <h1 class="welcome-hi">Hi{% if current_user %}, {{ current_user.first_name or current_user.username }}{% endif %}!</h1>
+        <p class="welcome-sub">What are we doing today?</p>
+
+        <div class="welcome-links">
+          <a class="welcome-link" href="{{ url_for('home.browse_rooms') }}">
+            <i class="fa-solid fa-compass"></i>
+            <span>Browse Rooms</span>
+          </a>
+          <a class="welcome-link" href="{{ url_for('home.notes') }}">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>My Notes</span>
+          </a>
+          <a class="welcome-link" href="{{ url_for('home.create_room') }}">
+            <i class="fa-solid fa-plus"></i>
+            <span>Create Room</span>
+          </a>
+          <a class="welcome-link" href="{{ url_for('home.join_room') }}">
+            <i class="fa-solid fa-comments"></i>
+            <span>Join Room</span>
+          </a>
+        </div>
+      </div>
+
+      <span class="mascot-glow" aria-hidden="true"></span>
+      <img class="welcome-mascot" src="{{ url_for('static', filename='images/bear_icon.jpg') }}" alt="" aria-hidden="true">
+    </div>
+
+    <article class="quote-card" id="quoteCard">
+      <div class="quote-card-top">
+        <span class="quote-badge"><i class="fa-solid fa-quote-left"></i> Daily Motivation</span>
+      </div>
+      <blockquote class="quote-body">
+        <p class="quote-text">{{ quote.text if quote else '' }}</p>
+        {% if quote and quote.author %}<cite class="quote-author">— {{ quote.author }}</cite>{% endif %}
+      </blockquote>
+    </article>
+  </div>
+
+  <div class="dash-grid">
+    <article class="exam-countdown" id="examCountdown" data-exam-date="{{ exam_date }}" data-exam-name="{{ exam_name if exam_name else 'Final Exams' }}">
+      <button type="button" class="exam-edit-btn" id="examEditBtn" aria-label="Edit exam title and date">
+        <i class="fa-solid fa-pen"></i>
+      </button>
+      <div class="exam-countdown-top">
+        <span class="exam-badge"><i class="fa-solid fa-graduation-cap"></i> Exam countdown</span>
+        <span class="exam-name" id="examName">{{ exam_name if exam_name else 'Final Exams' }}</span>
+      </div>
+
+      <div class="exam-number-wrap">
+        <strong class="exam-number" id="examDays">--</strong>
+        <span class="exam-number-label" id="examDaysLabel">days left</span>
+      </div>
+
+      <div class="exam-clock" aria-hidden="true">
+        <div class="exam-clock-cell"><strong id="examHours">--</strong><span>hrs</span></div>
+        <div class="exam-clock-cell"><strong id="examMinutes">--</strong><span>min</span></div>
+        <div class="exam-clock-cell"><strong id="examSeconds">--</strong><span>sec</span></div>
+      </div>
+
+      <div class="exam-date-line"><i class="fa-regular fa-calendar"></i> <span id="examDateText"></span></div>
+    </article>
+
+    <a class="study-card" id="studyCard" href="{{ url_for('home.study_hours_page') }}" aria-label="View and log study hours">
+      <div class="study-card-top">
+        <span class="study-badge"><i class="fa-solid fa-stopwatch"></i> Study Hours</span>
+        <span class="study-title">Time Tracked</span>
+      </div>
+
+      <div class="study-main">
+        <div class="study-stat">
+          <strong class="study-stat-num">{{ study_stats.weekly_hours if study_stats else 0 }}</strong>
+          <span class="study-stat-lbl">hours this week</span>
+        </div>
+      </div>
+
+      <div class="study-footer">
+        <span>Log & review sessions</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </div>
+    </a>
+
+    <a class="streak-card" id="streakCard" href="{{ url_for('home.study_streak_page') }}" aria-label="View study streaks details">
+      <div class="streak-card-top">
+        <span class="streak-badge"><i class="fa-solid fa-fire"></i> Study Streak</span>
+        <span class="streak-title">Daily Progress</span>
+      </div>
+
+      <div class="streak-main">
+        <div class="streak-flame-wrapper">
+          <i class="fa-solid fa-fire"></i>
+        </div>
+        <div class="streak-number-wrap">
+          <strong class="streak-number" id="cardStreakCount">{{ study_stats.streak if study_stats else 0 }}</strong>
+          <div class="streak-label" id="cardStreakLabel">{{ 'day streak' if study_stats and study_stats.streak == 1 else 'days streak' }}</div>
+        </div>
+      </div>
+
+      <div class="streak-footer">
+        <span>View streak details</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </div>
+    </a>
+
+    <a class="music-card" id="musicCard" href="{{ url_for('home.music') }}" aria-label="Open focus music player">
+      <div class="music-card-top">
+        <span class="music-badge"><i class="fa-solid fa-music"></i> Focus Music</span>
+        <span class="music-title">Ambient Sounds</span>
+      </div>
+
+      <div class="music-main">
+        <div class="music-equalizer" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <span class="music-tags">Rain · Storm · Lo-Fi</span>
+      </div>
+
+      <div class="music-footer">
+        <span>Play background sounds</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<div class="exam-modal-overlay" id="examModal" aria-hidden="true">
+  <div class="exam-modal" role="dialog" aria-modal="true" aria-labelledby="examModalTitle">
+    <h3 class="exam-modal-title" id="examModalTitle">Edit exam countdown</h3>
+    <form id="examForm">
+      <label class="exam-field">
+        <span>Exam title</span>
+        <input type="text" id="examNameInput" name="exam_name" maxlength="80" placeholder="Final Exams" required>
+      </label>
+      <label class="exam-field">
+        <span>Exam date &amp; time</span>
+        <input type="datetime-local" id="examDateInput" name="exam_date" required>
+      </label>
+      <div class="exam-modal-actions">
+        <button type="button" class="btn btn-secondary" id="examCancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-default">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    const el = document.getElementById('examCountdown');
+    if (!el) return;
+
+    // Placeholder store: persisted in the browser until a backend is wired up.
+    const STORAGE_KEY = 'loreviaExamCountdown';
+
+    const nameEl = document.getElementById('examName');
+    const daysEl = document.getElementById('examDays');
+    const labelEl = document.getElementById('examDaysLabel');
+    const hoursEl = document.getElementById('examHours');
+    const minutesEl = document.getElementById('examMinutes');
+    const secondsEl = document.getElementById('examSeconds');
+    const dateText = document.getElementById('examDateText');
+
+    const modal = document.getElementById('examModal');
+    const editBtn = document.getElementById('examEditBtn');
+    const cancelBtn = document.getElementById('examCancelBtn');
+    const form = document.getElementById('examForm');
+    const nameInput = document.getElementById('examNameInput');
+    const dateInput = document.getElementById('examDateInput');
+
+    const pad = (n) => String(n).padStart(2, '0');
+
+    // Under this many days the countdown gets a red, pulsating heartbeat
+    // border; at or above it the card looks like every other dashboard card.
+    const CRITICAL_DAYS = 10;
+
+    // All the urgency styling lives in dashboard_home.css; here we just flag
+    // the critical (< 10 days) state with a class.
+    function applyUrgencyColor(days) {
+      el.classList.toggle('is-critical', Math.max(days, 0) < CRITICAL_DAYS);
+    }
+
+    function loadStored() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    let examName = el.dataset.examName || 'Final Exams';
+    let examDateRaw = el.dataset.examDate || '';
+
+    const stored = loadStored();
+    if (stored) {
+      if (stored.name) examName = stored.name;
+      if (stored.date) examDateRaw = stored.date;
+    }
+
+    let target = new Date(examDateRaw);
+
+    function applyName() {
+      if (nameEl) nameEl.textContent = examName;
+    }
+
+    function tick() {
+      if (isNaN(target.getTime())) {
+        if (daysEl) daysEl.textContent = '—';
+        if (dateText) dateText.textContent = 'Set an exam date';
+        if (hoursEl) hoursEl.textContent = '--';
+        if (minutesEl) minutesEl.textContent = '--';
+        if (secondsEl) secondsEl.textContent = '--';
+        return;
+      }
+
+      if (dateText) {
+        dateText.textContent = target.toLocaleDateString(undefined, {
+          weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+        });
+      }
+
+      let diff = Math.floor((target.getTime() - Date.now()) / 1000);
+
+      if (diff <= 0) {
+        if (daysEl) daysEl.textContent = '0';
+        if (labelEl) labelEl.textContent = 'exam day!';
+        if (hoursEl) hoursEl.textContent = '00';
+        if (minutesEl) minutesEl.textContent = '00';
+        if (secondsEl) secondsEl.textContent = '00';
+        applyUrgencyColor(0);
+        return;
+      }
+
+      const days = Math.floor(diff / 86400); diff -= days * 86400;
+      const hours = Math.floor(diff / 3600); diff -= hours * 3600;
+      const minutes = Math.floor(diff / 60);
+      const seconds = diff - minutes * 60;
+
+      applyUrgencyColor(days);
+
+      if (daysEl) daysEl.textContent = days;
+      if (labelEl) labelEl.textContent = days === 1 ? 'day left' : 'days left';
+      if (hoursEl) hoursEl.textContent = pad(hours);
+      if (minutesEl) minutesEl.textContent = pad(minutes);
+      if (secondsEl) secondsEl.textContent = pad(seconds);
+    }
+
+    // Convert a date into the value format datetime-local expects (local time).
+    function toInputValue(date) {
+      if (isNaN(date.getTime())) return '';
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+        `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function openModal() {
+      nameInput.value = examName;
+      dateInput.value = toInputValue(target);
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      nameInput.focus();
+    }
+
+    function closeModal() {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    if (editBtn) editBtn.addEventListener('click', openModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+    if (modal) {
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+      });
+    }
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeModal();
+    });
+
+    if (form) {
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const newName = nameInput.value.trim() || 'Final Exams';
+        const newDate = dateInput.value;
+        if (!newDate) return;
+
+        examName = newName;
+        examDateRaw = newDate;
+        target = new Date(newDate);
+
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ name: examName, date: examDateRaw }));
+        } catch (e) { /* storage unavailable; changes apply for this session only */ }
+
+        applyName();
+        tick();
+        closeModal();
+      });
+    }
+
+    applyName();
+    tick();
+    setInterval(tick, 1000);
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,221 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Create Workspace - Lorevia{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/createroom.css') }}">
+{% endblock %}
+
+{% block topbar_title %}{% endblock %}
+
+{% block content %}
+  <div class="workspace">
+
+    <!-- Left -->
+    <div class="left">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+
+      <div class="left-content">
+        <h1>Create<br>Room</h1>
+        <p>
+          Launch a private or public study workspace instantly,
+          then share the room code with your classmates.
+        </p>
+
+        <!-- Live glass preview -->
+        <div class="preview-card" id="preview-card">
+          <div class="preview-top">
+            <span class="preview-avatar"><i class="fa-solid fa-book-open"></i></span>
+            <div class="preview-meta">
+              <span class="preview-name" id="preview-name">Untitled Room</span>
+              <span class="preview-code">#{{ room_code }}</span>
+            </div>
+            <span class="preview-status" id="preview-status"><i class="fa-solid fa-earth-americas"></i> Public</span>
+          </div>
+          <div class="preview-tags" id="preview-tags"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right -->
+    <div class="right">
+      <div class="form-box">
+
+        <form method="post" action="{{ url_for('home.create_room') }}">
+          <input type="hidden" name="room_code" id="room-code-value" value="{{ room_code }}">
+          <input type="hidden" name="is_private" id="is-private-value" value="0">
+          <input type="hidden" name="selected_tags" id="selected-tags-input" value="">
+
+          <div class="field f-1">
+            <label class="label" for="room-name"><i class="fa-solid fa-pen"></i> Room name</label>
+            <input type="text" id="room-name" class="input" name="room_name" placeholder="e.g. Calculus Crash Course" required autocomplete="off">
+          </div>
+
+          <div class="field f-2">
+            <label class="label"><i class="fa-solid fa-hashtag"></i> Room code</label>
+            <div class="code-row">
+              <div class="room-code">
+                {% for char in room_code %}
+                <div class="code-box" style="animation-delay: {{ loop.index0 * 80 }}ms">{{ char }}</div>
+                {% endfor %}
+              </div>
+              <button type="button" class="copy-btn" id="copy-code-btn" title="Copy code">
+                <i class="fa-regular fa-copy"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="field f-3">
+            <label class="label"><i class="fa-solid fa-tags"></i> Subjects</label>
+            <div class="tags" id="tags-container">
+              {% for subject in ['Math', 'Science', 'English', 'History', 'Programming', 'Languages'] %}
+              <div class="tag" data-subject="{{ subject.lower() }}">{{ subject }}</div>
+              {% endfor %}
+            </div>
+            <div class="custom-tag-section">
+              <input type="text" id="custom-tag-input" placeholder="Add custom subject" maxlength="20">
+              <button type="button" id="add-custom-btn" class="add-custom-btn" title="Add subject"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+
+          <div class="field f-4">
+            <label class="label"><i class="fa-solid fa-eye"></i> Visibility</label>
+            <div class="visibility-options">
+              <span class="visibility-thumb" id="visibility-thumb"></span>
+              <label class="visibility-card">
+                <input type="radio" name="visibility" value="0" checked>
+                <span class="visibility-body"><i class="fa-solid fa-earth-americas"></i> Public</span>
+              </label>
+              <label class="visibility-card">
+                <input type="radio" name="visibility" value="1">
+                <span class="visibility-body"><i class="fa-solid fa-lock"></i> Private</span>
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="main-btn f-5">
+            <span>Create Room</span> <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    const isPrivateValue = document.getElementById('is-private-value');
+    const tagsContainer = document.getElementById('tags-container');
+    const formEl = document.querySelector('form');
+    const customTagInput = document.getElementById('custom-tag-input');
+    const addCustomBtn = document.getElementById('add-custom-btn');
+    const selectedTagsInput = document.getElementById('selected-tags-input');
+    const roomNameInput = document.getElementById('room-name');
+    const visibilityThumb = document.getElementById('visibility-thumb');
+
+    // Live preview elements
+    const previewName = document.getElementById('preview-name');
+    const previewStatus = document.getElementById('preview-status');
+    const previewTags = document.getElementById('preview-tags');
+
+    function updatePreview() {
+      const name = roomNameInput.value.trim();
+      previewName.textContent = name || 'Untitled Room';
+
+      const isPrivate = isPrivateValue.value === '1';
+      previewStatus.innerHTML = isPrivate
+        ? '<i class="fa-solid fa-lock"></i> Private'
+        : '<i class="fa-solid fa-earth-americas"></i> Public';
+      previewStatus.classList.toggle('private', isPrivate);
+
+      const selected = Array.from(document.querySelectorAll('.tag.active'))
+        .map(tag => tag.dataset.subject || tag.textContent.trim());
+      previewTags.innerHTML = selected.slice(0, 4)
+        .map(t => `<span class="preview-tag">${t}</span>`)
+        .join('') + (selected.length > 4 ? `<span class="preview-tag">+${selected.length - 4}</span>` : '');
+    }
+
+    function updateSelectedTags() {
+      const selected = Array.from(document.querySelectorAll('.tag.active'))
+        .map(tag => tag.dataset.subject || tag.textContent.trim());
+      selectedTagsInput.value = selected.join(',');
+      updatePreview();
+    }
+
+    // Room name -> preview
+    roomNameInput.addEventListener('input', updatePreview);
+
+    // Visibility -> hidden is_private value + thumb slide
+    document.querySelectorAll('input[name="visibility"]').forEach((radio, index) => {
+      radio.addEventListener('change', () => {
+        isPrivateValue.value = radio.value;
+        visibilityThumb.classList.toggle('thumb-right', index === 1);
+        updatePreview();
+      });
+    });
+
+    // Copy room code
+    const copyBtn = document.getElementById('copy-code-btn');
+    copyBtn.addEventListener('click', () => {
+      const code = document.getElementById('room-code-value').value;
+      navigator.clipboard.writeText(code).then(() => {
+        copyBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+        copyBtn.classList.add('copied');
+        setTimeout(() => {
+          copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i>';
+          copyBtn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+
+    // Subject tags
+    tagsContainer.addEventListener('click', (e) => {
+      const tag = e.target.closest('.tag');
+      if (!tag) return;
+
+      if (e.target.closest('.remove-tag')) {
+        tag.remove();
+        updateSelectedTags();
+        return;
+      }
+
+      tag.classList.toggle('active');
+      updateSelectedTags();
+    });
+
+    addCustomBtn.addEventListener('click', () => {
+      const tagText = customTagInput.value.trim();
+      if (!tagText) return;
+
+      const tagExists = Array.from(tagsContainer.querySelectorAll('.tag')).some(
+        tag => (tag.dataset.subject || tag.textContent.trim()).toLowerCase() === tagText.toLowerCase()
+      );
+
+      if (!tagExists) {
+        const newTag = document.createElement('div');
+        newTag.classList.add('tag', 'custom', 'active');
+        newTag.dataset.subject = tagText.toLowerCase();
+        newTag.innerHTML = `${tagText} <span class="remove-tag"><i class="fa-solid fa-xmark"></i></span>`;
+        tagsContainer.appendChild(newTag);
+        customTagInput.value = '';
+        updateSelectedTags();
+      }
+    });
+
+    customTagInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addCustomBtn.click();
+      }
+    });
+
+    updateSelectedTags();
+    formEl.addEventListener('submit', updateSelectedTags);
+  </script>
+{% endblock %}

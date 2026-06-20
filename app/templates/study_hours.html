@@ -1,0 +1,301 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Study Hours — LOREVIA{% endblock %}
+
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/study_hours.css') }}">
+{% endblock %}
+
+{% block topbar_title %}Study Hours{% endblock %}
+
+{% block content %}
+<section class="sh-page">
+  <a class="sh-back" href="{{ url_for('home.dashboard') }}">
+    <i class="fa-solid fa-arrow-left"></i> Back to dashboard
+  </a>
+
+  <header class="sh-hero">
+    <div class="sh-hero-text">
+      <span class="sh-hero-badge"><i class="fa-solid fa-stopwatch"></i> Study Hours</span>
+      <h1 class="sh-hero-title">Your study time, visualised</h1>
+      <p class="sh-hero-sub">Log sessions and watch your hours add up over time.</p>
+    </div>
+  </header>
+
+  <!-- Stat tiles -->
+  <div class="sh-stats">
+    <div class="sh-stat">
+      <i class="fa-solid fa-hourglass-half"></i>
+      <strong>{{ study_stats.total_hours if study_stats else 0 }}</strong>
+      <span>Total hours</span>
+    </div>
+    <div class="sh-stat">
+      <i class="fa-solid fa-calendar-week"></i>
+      <strong>{{ study_stats.weekly_hours if study_stats else 0 }}</strong>
+      <span>This week</span>
+    </div>
+    <div class="sh-stat">
+      <i class="fa-solid fa-calendar-days"></i>
+      <strong>{{ study_stats.monthly_hours if study_stats else 0 }}</strong>
+      <span>This month</span>
+    </div>
+    <div class="sh-stat">
+      <i class="fa-solid fa-chart-simple"></i>
+      <strong>{{ study_stats.avg_hours if study_stats else 0 }}</strong>
+      <span>Avg / active day</span>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="sh-charts">
+    <article class="sh-card">
+      <div class="sh-card-head">
+        <span class="sh-card-title"><i class="fa-solid fa-chart-column"></i> This week</span>
+        <span class="sh-card-note">Hours per day (Mon–Sun)</span>
+      </div>
+      <div class="sh-activity">
+        <div class="sh-activity-chart" id="weeklyActivity"></div>
+        <div class="sh-activity-legend">
+          <span class="sh-leg sh-leg-best"><i></i> Your best day</span>
+          <span class="sh-leg sh-leg-level"><i></i> Hours studied</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="sh-card">
+      <div class="sh-card-head">
+        <span class="sh-card-title"><i class="fa-solid fa-chart-line"></i> Last 30 days</span>
+        <span class="sh-card-note">Daily study trend</span>
+      </div>
+      <div class="sh-chart-box"><canvas id="trendChart"></canvas></div>
+    </article>
+  </div>
+
+  <div class="sh-lower">
+    <!-- Log a session -->
+    <article class="sh-card sh-log-card">
+      <div class="sh-card-head">
+        <span class="sh-card-title"><i class="fa-solid fa-circle-plus"></i> Log a session</span>
+        <span class="sh-card-note" id="shTodayText">Today</span>
+      </div>
+      <form action="{{ url_for('home.study_hours_create') }}" method="POST" class="sh-log-form">
+        <input type="number" name="duration_minutes" min="1" placeholder="Minutes studied" required class="sh-input">
+        <input type="text" name="notes" placeholder="What did you study? (optional)" class="sh-input sh-input-notes">
+        <button type="submit" class="sh-submit"><i class="fa-solid fa-circle-plus"></i> Save</button>
+      </form>
+    </article>
+
+    <!-- Recent sessions -->
+    <article class="sh-card sh-recent-card">
+      <div class="sh-card-head">
+        <span class="sh-card-title"><i class="fa-solid fa-clock-rotate-left"></i> Recent sessions</span>
+      </div>
+      {% if study_stats and study_stats.recent_sessions and study_stats.recent_sessions|length > 0 %}
+        <ul class="sh-recent-list">
+          {% for s in study_stats.recent_sessions %}
+            <li class="sh-recent-item">
+              <div class="sh-recent-main">
+                <span class="sh-recent-date"><i class="fa-regular fa-calendar"></i> {{ s.session_date }}</span>
+                <span class="sh-recent-duration">{{ s.duration_minutes }} min</span>
+              </div>
+              {% if s.notes %}<span class="sh-recent-notes">{{ s.notes }}</span>{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="sh-empty">No study sessions recorded yet. Log one to get started.</p>
+      {% endif %}
+    </article>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script id="studyDaysData" type="application/json">{{ (study_stats.study_days if study_stats else [])|tojson }}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    if (typeof Chart === 'undefined') return;
+
+    const ACCENT = '#48528e';                       // brand slate-blue
+    const ACCENT_SOFT = 'rgba(72, 82, 142, 0.15)';
+    const GRID = 'rgba(72, 82, 142, 0.12)';
+    const TEXT = '#776B75';                          // mauve-grey
+
+    function loadHistory() {
+      try {
+        const raw = document.getElementById('studyDaysData');
+        const parsed = raw ? JSON.parse(raw.textContent || '[]') : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) { return []; }
+    }
+
+    function localDateString(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    const history = loadHistory();
+    const minutesByDate = {};
+    history.forEach((item) => {
+      minutesByDate[item.date] = (minutesByDate[item.date] || 0) + (item.minutes || 0);
+    });
+
+    const todayText = document.getElementById('shTodayText');
+    if (todayText) {
+      todayText.textContent = new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
+
+    Chart.defaults.font.family = "'Poppins', sans-serif";
+    Chart.defaults.color = TEXT;
+
+    // ---- Weekly bar chart (Mon–Sun of current week) ----
+    const now = new Date();
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(now); monday.setDate(diff); monday.setHours(0, 0, 0, 0);
+
+    const weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const weekData = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      weekData.push(((minutesByDate[localDateString(d)] || 0) / 60).toFixed(2));
+    }
+
+    // ---- Custom weekly "activity" chart (rounded pills + spline) ----
+    function smoothPath(points) {
+      // Catmull-Rom -> cubic bezier for a smooth curve through the points.
+      if (points.length < 2) return '';
+      let d = `M ${points[0].x} ${points[0].y}`;
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[i - 1] || points[i];
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const p3 = points[i + 2] || p2;
+        const c1x = p1.x + (p2.x - p0.x) / 6;
+        const c1y = p1.y + (p2.y - p0.y) / 6;
+        const c2x = p2.x - (p3.x - p1.x) / 6;
+        const c2y = p2.y - (p3.y - p1.y) / 6;
+        d += ` C ${c1x} ${c1y} ${c2x} ${c2y} ${p2.x} ${p2.y}`;
+      }
+      return d;
+    }
+
+    function renderActivity(values, labels) {
+      const host = document.getElementById('weeklyActivity');
+      if (!host) return;
+
+      const W = 700, H = 300;
+      const padTop = 64;      // room for the floating badge + nodes
+      const padBottom = 40;   // room for day labels
+      const padX = 24;
+      const plotH = H - padTop - padBottom;
+      const slotW = (W - padX * 2) / values.length;
+      const barW = Math.min(56, slotW * 0.62);
+
+      const max = Math.max(...values, 0.5);
+      const peak = values.indexOf(Math.max(...values));
+      const hasData = values.some((v) => v > 0);
+
+      // Slate-blue tints cycled across the non-peak bars (light -> deep brand blue).
+      const slate = ['#dde0f1', '#c3c8e6', '#a3abd6', '#828dc6', '#5d68a8', '#dde0f1', '#c3c8e6'];
+
+      const cx = (i) => padX + slotW * i + slotW / 2;
+      const barH = (v) => Math.max(8, (v / max) * plotH);
+      const topY = (v) => padTop + (plotH - barH(v));
+
+      const tops = values.map((v, i) => ({ x: cx(i), y: topY(v) }));
+
+      let bars = '';
+      values.forEach((v, i) => {
+        const isPeak = hasData && i === peak;
+        const w = isPeak ? barW + 6 : barW;
+        const x = cx(i) - w / 2;
+        const y = topY(v);
+        const h = H - padBottom - y;
+        const r = w / 2;
+        const fill = isPeak ? 'url(#shBarPeak)' : slate[i % slate.length];
+        bars += `<rect class="sh-bar${isPeak ? ' is-peak' : ''}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" `
+          + `width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${r.toFixed(1)}" fill="${fill}">`
+          + `<title>${labels[i]}: ${v} h</title></rect>`;
+      });
+
+      // Spline over the bar tops + node dots.
+      const path = `<path class="sh-spline" d="${smoothPath(tops)}" fill="none"/>`;
+      let nodes = '';
+      tops.forEach((p, i) => {
+        const isPeak = hasData && i === peak;
+        nodes += `<circle class="sh-node${isPeak ? ' is-peak' : ''}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isPeak ? 6 : 4.5}"/>`;
+      });
+
+      // Floating value badge on the peak bar.
+      let badge = '';
+      if (hasData) {
+        const p = tops[peak];
+        const bw = 52, bh = 26;
+        const bx = p.x - bw / 2;
+        const by = p.y - bh - 14;
+        badge = `<g class="sh-badge">`
+          + `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw}" height="${bh}" rx="${bh / 2}"/>`
+          + `<text x="${p.x.toFixed(1)}" y="${(by + bh / 2 + 4).toFixed(1)}" text-anchor="middle">${values[peak]}h</text>`
+          + `</g>`;
+      }
+
+      // Day labels under the baseline.
+      let xlabels = '';
+      labels.forEach((lab, i) => {
+        const isPeak = hasData && i === peak;
+        xlabels += `<text class="sh-xlabel${isPeak ? ' is-peak' : ''}" x="${cx(i).toFixed(1)}" y="${H - 14}" `
+          + `text-anchor="middle">${lab}</text>`;
+      });
+
+      host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Hours studied per day this week">`
+        + `<defs><linearGradient id="shBarPeak" x1="0" y1="0" x2="0" y2="1">`
+        + `<stop offset="0%" stop-color="#5b63b3"/><stop offset="100%" stop-color="#48528e"/>`
+        + `</linearGradient></defs>`
+        + bars + path + nodes + badge + xlabels
+        + `</svg>`;
+    }
+
+    renderActivity(weekData.map(Number), weekLabels);
+
+    // ---- 30-day trend line chart ----
+    const trendLabels = [];
+    const trendData = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
+      trendLabels.push(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+      trendData.push(((minutesByDate[localDateString(d)] || 0) / 60).toFixed(2));
+    }
+
+    const trendCtx = document.getElementById('trendChart');
+    if (trendCtx) {
+      new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: trendLabels,
+          datasets: [{
+            label: 'Hours',
+            data: trendData,
+            borderColor: ACCENT,
+            backgroundColor: ACCENT_SOFT,
+            fill: true, tension: 0.35,
+            pointRadius: 2, pointHoverRadius: 5, borderWidth: 2.5,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false },
+            tooltip: { callbacks: { label: (c) => `${c.parsed.y} h` } } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: GRID } },
+            x: { grid: { display: false }, ticks: { maxTicksLimit: 8, autoSkip: true } },
+          },
+        },
+      });
+    }
+  })();
+</script>
+{% endblock %}

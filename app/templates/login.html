@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LOREVIA Auth</title>
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/nav_bar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+
+  <nav class="navbar">
+
+    <div class="logo-section">
+      <div class="logo">
+        <a href="/"><img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="LOREVIA logo"></a>
+      </div>
+      <h1>LOREVIA</h1>
+    </div>
+
+    <ul class="nav-links">
+      <li><a href="#">Home</a></li>
+      <li><a href="#">Features</a></li>
+      <li><a href="#">About</a></li>
+    </ul>
+
+    <button class="nav-btn">Get Started</button>
+
+  </nav>
+
+  <!-- AUTH CONTAINER -->
+
+  <div class="container {% if active_form == 'sign-up' %}sign-up-mode{% endif %}">
+
+    <div class="forms-container">
+
+      <div class="signin-signup">
+
+        <!-- LOGIN -->
+
+        <form class="sign-in-form" method="post" action="{{ url_for('auth.login') }}">
+
+          <h2 class="title">Sign in</h2>
+
+          {% if login_error %}
+          <div class="auth-error">{{ login_error }}</div>
+          {% endif %}
+
+          {% if login_notice %}
+          <div class="auth-notice" style="background:#e7f6ec;color:#1c6b3a;border:1px solid #b7e0c4;padding:10px 14px;border-radius:10px;margin-bottom:12px;font-size:.9rem;">{{ login_notice }}</div>
+          {% endif %}
+
+          <div class="input-field">
+            <span>📧</span>
+            <input type="text" name="identifier" placeholder="Email or Username" required>
+          </div>
+
+          <div class="input-field">
+            <span>🔒</span>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="button" class="toggle-password" aria-label="Show password" aria-pressed="false">
+              <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3.5 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                <line x1="2" x2="22" y1="2" y2="22"/>
+              </svg>
+            </button>
+          </div>
+
+          <a class="forgot-password" href="{{ url_for('auth.reset_password') }}">Forgot your password?</a>
+
+          <button class="btn" type="submit">Login</button>
+
+        </form>
+
+        <!-- SIGNUP -->
+
+        <form class="sign-up-form" method="post" action="{{ url_for('auth.register') }}">
+
+          <h2 class="title">Sign up</h2>
+
+          {% if register_error %}
+          <div class="auth-error">{{ register_error }}</div>
+          {% endif %}
+
+          <div class="input-field">
+            <span>👤</span>
+            <input type="text" name="username" placeholder="Username" required>
+          </div>
+
+          <div class="input-field">
+            <span>📧</span>
+            <input type="email" name="email" placeholder="Email" required>
+          </div>
+
+          <div class="input-field">
+            <span>🔒</span>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="button" class="toggle-password" aria-label="Show password" aria-pressed="false">
+              <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3.5 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                <line x1="2" x2="22" y1="2" y2="22"/>
+              </svg>
+            </button>
+          </div>
+
+          <button class="btn" type="submit">Sign Up</button>
+
+        </form>
+
+      </div>
+
+    </div>
+
+    <!-- PANELS -->
+
+    <div class="panels-container">
+
+      <div class="panel left-panel">
+
+        <div class="content">
+
+          <h3>New here?</h3>
+
+          <p>
+            Join Lorevia and collaborate with students through study rooms and realtime discussions.
+          </p>
+
+          <button class="btn transparent" id="sign-up-btn">
+            SIGN UP
+          </button>
+
+        </div>
+
+      </div>
+
+      <div class="panel right-panel">
+
+        <div class="content">
+
+          <h3>Welcome Back</h3>
+
+          <p>
+            Continue learning with your friends and access your study rooms instantly.
+          </p>
+
+          <button class="btn transparent" id="sign-in-btn">
+            SIGN IN
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+
+    const signUpBtn = document.getElementById("sign-up-btn");
+    const signInBtn = document.getElementById("sign-in-btn");
+    const container = document.querySelector(".container");
+
+    signUpBtn.addEventListener("click", () => {
+      container.classList.add("sign-up-mode");
+    });
+
+    signInBtn.addEventListener("click", () => {
+      container.classList.remove("sign-up-mode");
+    });
+
+    document.querySelectorAll('.input-field').forEach(field => {
+
+      field.addEventListener('click', (e) => {
+
+        if (e.target.tagName.toLowerCase() === 'input') return;
+
+        if (e.target.closest('.toggle-password')) return;
+
+        const input = field.querySelector('input');
+
+        if (input) input.focus();
+
+      });
+
+    });
+
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+
+      btn.addEventListener('click', () => {
+
+        const input = btn.closest('.input-field').querySelector('input');
+
+        if (!input) return;
+
+        const show = input.type === 'password';
+
+        input.type = show ? 'text' : 'password';
+
+        btn.classList.toggle('revealed', show);
+
+        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+
+        btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+
+      });
+
+    });
+
+  </script>
+
+</body>
+</html>
