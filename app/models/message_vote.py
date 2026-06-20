@@ -24,7 +24,7 @@ class MessageVote(BaseModel):
             "INDEX idx_message_vote_user (user_id)"
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
         )
-
+# Note: The above method uses raw SQL and a direct database connection for simplicity, as it's a single create table operation.
     def create_or_update_vote(self, message_id, user_id, vote_type):
         self.ensure_table_exists()
         return self.execute(
