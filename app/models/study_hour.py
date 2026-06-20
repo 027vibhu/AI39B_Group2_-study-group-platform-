@@ -56,7 +56,7 @@ class StudyHour(BaseModel):
         """Insert a study session record and return the new row id."""
         cls.ensure_table_exists()
         from app.models.database import Database
-
+# Note: This method uses raw SQL and a direct database connection for simplicity, as it's a single insert operation.
         db = Database()
         try:
             return db.execute(
