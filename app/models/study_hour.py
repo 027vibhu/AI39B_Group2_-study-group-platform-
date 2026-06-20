@@ -66,7 +66,7 @@ class StudyHour(BaseModel):
             )
         finally:
             db.close()
-
+# Note: The above functions are simple wrappers around the StudyHour class methods, and can be used directly in the application code.
     @classmethod
     def find_for_user(cls, user_id: int, limit: int = 50):
         """Return recent study sessions for a user."""
