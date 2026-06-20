@@ -299,3 +299,4 @@
   })();
 </script>
 {% endblock %}
+# Note: The above template uses Jinja2 syntax and includes embedded JavaScript for rendering the charts. The data for the charts is passed from the Flask view as `study_stats`, which should contain the necessary fields for total hours, weekly hours, monthly hours, average hours, and recent sessions. The JavaScript processes this data to create a weekly activity chart and a 30-day trend line chart using Chart.js and custom SVG for the weekly bars.
