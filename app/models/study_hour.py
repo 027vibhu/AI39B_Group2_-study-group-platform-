@@ -81,3 +81,4 @@ class StudyHour(BaseModel):
             )
         finally:
             db.close()
+# Note: The above functions are simple wrappers around the StudyHour class methods, and can be used directly in the application code.
