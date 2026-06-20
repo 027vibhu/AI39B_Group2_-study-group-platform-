@@ -49,7 +49,7 @@ class SharedFileModel(BaseModel):
 
 _shared_file_model = SharedFileModel()
 
-
+# The following functions are simple wrappers around the SharedFileModel methods, and can be used directly in the application code.
 def create_shared_files_table():
     return _shared_file_model.create_table()
 
