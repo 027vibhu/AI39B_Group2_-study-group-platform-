@@ -37,6 +37,7 @@ def create_study_hours_table():
 
 
 class StudyHour(BaseModel):
+
     """Model for tracking study sessions.
 
     This model uses raw SQL for all database interactions and provides a
@@ -56,7 +57,7 @@ class StudyHour(BaseModel):
         """Insert a study session record and return the new row id."""
         cls.ensure_table_exists()
         from app.models.database import Database
-# Note: This method uses raw SQL and a direct database connection for simplicity, as it's a single insert operation.
+
         db = Database()
         try:
             return db.execute(
@@ -71,7 +72,7 @@ class StudyHour(BaseModel):
         """Return recent study sessions for a user."""
         cls.ensure_table_exists()
         from app.models.database import Database
-
+# Note: The above functions are simple wrappers around the StudyHour class methods, and can be used directly in the application code.
         db = Database()
         try:
             return db.fetch_all(
