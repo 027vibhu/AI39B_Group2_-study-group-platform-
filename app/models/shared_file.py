@@ -63,4 +63,5 @@ def get_shared_file_by_id(file_id):
 
 
 def get_shared_files_for_room(room_id):
-    return _shared_file_model.get_shared_files_for_room(room_id)
+    return _shared_file_model.get_shared_files_for_room(room_id) 
+# Note: The above functions are simple wrappers around the SharedFileModel methods, and can be used directly in the application code.
