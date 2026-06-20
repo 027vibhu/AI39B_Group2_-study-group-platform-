@@ -6,7 +6,7 @@ class MessageVote(BaseModel):
     @property
     def table(self):
         return 'message_vote'
-
+# Note: This model uses raw SQL for all database interactions and provides a helper to ensure its table exists before writes/reads.
     @classmethod
     def ensure_table_exists(cls):
         ensure_database_exists()
