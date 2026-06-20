@@ -57,7 +57,7 @@ def create_shared_files_table():
 def create_shared_file(room_id, uploader_username, original_filename, stored_filename, mime_type, file_size):
     return _shared_file_model.create_shared_file(room_id, uploader_username, original_filename, stored_filename, mime_type, file_size)
 
-
+# Note: The above function is a simple wrapper around the SharedFileModel method, and can be used directly in the application code.
 def get_shared_file_by_id(file_id):
     return _shared_file_model.get_shared_file_by_id(file_id)
 
