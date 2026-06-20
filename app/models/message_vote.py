@@ -1,6 +1,6 @@
 from app.models.base_model import BaseModel
 from app.models.database import ensure_database_exists
-
+# Note: This model uses raw SQL for all database interactions and provides a helper to ensure its table exists before writes/reads.
 
 class MessageVote(BaseModel):
     @property
