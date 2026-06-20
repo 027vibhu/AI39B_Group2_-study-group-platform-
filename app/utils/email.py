@@ -78,3 +78,21 @@ def send_reset_code(to, code):
         </div>
     """
     return send_email(to, subject, html)
+
+
+def send_reactivation_code(to, code):
+    """Send a verification code for reactivating a deactivated account."""
+    subject = "Your Lorevia account reactivation code"
+    html = f"""
+        <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;">
+          <h2 style="color:#222;">Reactivate your account</h2>
+          <p>Welcome back! Use the verification code below to reactivate your
+             Lorevia account. It expires in 10 minutes.</p>
+          <p style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#4a3aff;
+                    background:#f4f3ff;padding:16px 24px;border-radius:12px;text-align:center;">
+            {code}
+          </p>
+          <p style="color:#888;font-size:13px;">If you didn't try to sign in, you can safely ignore this email — your account stays deactivated.</p>
+        </div>
+    """
+    return send_email(to, subject, html)
