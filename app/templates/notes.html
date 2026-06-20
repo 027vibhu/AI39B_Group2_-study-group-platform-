@@ -208,12 +208,35 @@
       const dropzone = document.getElementById('dropzone');
       const fileInput = document.getElementById('pdf');
       const filename = document.getElementById('dzFilename');
+      const titleInput = document.getElementById('title');
+
+      // Turn a filename like "lecture_03-final.pdf" into "Lecture 03 Final".
+      const titleFromFilename = (name) =>
+        name
+          .replace(/\.pdf$/i, '')        // drop the extension
+          .replace(/[_-]+/g, ' ')        // underscores / hyphens -> spaces
+          .replace(/\s+/g, ' ')          // collapse whitespace
+          .trim()
+          .replace(/\b\w/g, (c) => c.toUpperCase());  // title-case words
+
+      // Only auto-fill while the user hasn't typed their own title. Once they
+      // edit the field manually we back off and never overwrite it.
+      let titleTouched = false;
+      if (titleInput) {
+        titleInput.addEventListener('input', () => {
+          titleTouched = titleInput.value.trim() !== '';
+        });
+      }
 
       if (dropzone && fileInput) {
         const showFile = () => {
           if (fileInput.files.length) {
-            filename.textContent = fileInput.files[0].name;
+            const name = fileInput.files[0].name;
+            filename.textContent = name;
             dropzone.classList.add('has-file');
+            if (titleInput && !titleTouched) {
+              titleInput.value = titleFromFilename(name);
+            }
           } else {
             dropzone.classList.remove('has-file');
           }

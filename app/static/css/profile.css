@@ -29,12 +29,12 @@
 
 .profile-card{
   width:100%;
-  background:white;
-  border-radius:24px;
+  background:hsl(var(--card));
+  border-radius:calc(var(--radius) + 8px);
   overflow:hidden;
   display:flex;
-  border:1px solid rgba(24,32,56,0.08);
-  box-shadow:0 30px 60px rgba(24,32,56,0.12);
+  border:1px solid hsl(var(--border));
+  box-shadow:var(--shadow-lg);
   position:relative;
   z-index:1;
 }
@@ -203,13 +203,13 @@
 
 .right-panel h1{
   font-size:38px;
-  color:#2b2f3a;
+  color:hsl(var(--foreground));
   margin-bottom:6px;
   letter-spacing:-0.5px;
 }
 
 .right-panel h1 + .right-subtitle{
-  color:#7a7f95;
+  color:hsl(var(--muted-foreground));
   font-size:15px;
   margin-bottom:28px;
 }
@@ -219,7 +219,7 @@
   align-items:center;
   gap:10px;
   padding:14px 16px;
-  border-radius:14px;
+  border-radius:var(--radius);
   margin-bottom:18px;
   font-size:14px;
   font-weight:600;
@@ -252,27 +252,28 @@
 .input-group label{
   margin-bottom:8px;
   font-weight:600;
-  color:#454a5a;
+  color:hsl(var(--foreground));
   font-size:13px;
   letter-spacing:0.02em;
 }
 
 .input-group input,
 .input-group textarea{
-  border:1px solid transparent;
-  background:#f4f5f9;
-  padding:16px 18px;
-  border-radius:16px;
+  border:1px solid hsl(var(--input));
+  background:hsl(var(--card));
+  padding:14px 16px;
+  border-radius:var(--radius);
   font-size:14px;
+  color:hsl(var(--foreground));
   outline:none;
-  transition:0.3s;
+  transition:border-color .15s ease, box-shadow .15s ease;
 }
 
 .input-group input:focus,
 .input-group textarea:focus{
-  background:#ffffff;
-  border-color:rgba(75,79,120,0.35);
-  box-shadow:0 0 0 3px rgba(75,79,120,0.12);
+  background:hsl(var(--card));
+  border-color:hsl(var(--ring));
+  box-shadow:0 0 0 3px hsl(var(--ring) / 0.18);
 }
 
 .bio{
@@ -287,26 +288,39 @@ textarea{
 .save-btn{
   align-self:flex-start;
   margin-top:35px;
-  background:linear-gradient(135deg,#565b8c,#4b4f78);
-  color:white;
+  background:hsl(var(--primary));
+  color:hsl(var(--primary-foreground));
   border:none;
-  padding:16px 42px;
-  border-radius:16px;
+  padding:14px 38px;
+  border-radius:var(--radius);
   font-size:15px;
   font-weight:600;
   cursor:pointer;
-  transition:transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+  transition:background-color .15s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .save-btn:hover{
+  background:hsl(var(--primary-hover));
   transform:translateY(-2px);
   box-shadow:0 12px 24px rgba(75,79,120,0.3);
-  filter:brightness(1.05);
 }
 
 .save-btn:active{
   transform:translateY(0);
   box-shadow:0 6px 12px rgba(75,79,120,0.25);
+}
+
+/* Soft destructive trigger on the dark left panel ("danger zone") —
+   opaque light surface so it stays legible against the gradient. */
+.deactivate-trigger{
+  background:hsl(0 60% 96%);
+  color:hsl(var(--destructive));
+  border:1px solid hsl(0 50% 87%);
+}
+.deactivate-trigger:hover{
+  background:hsl(var(--destructive));
+  color:hsl(var(--destructive-foreground));
+  border-color:hsl(var(--destructive));
 }
 
 .notes-wrapper{

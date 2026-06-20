@@ -20,7 +20,7 @@
   margin-bottom:6px;
 }
 
-.admin-bar-text h2 i{ color:#4b4f78; margin-right:8px; }
+.admin-bar-text h2 i{ color:hsl(var(--primary)); margin-right:8px; }
 
 .admin-bar-text p{ color:#7a7f95; font-size:14px; }
 
@@ -47,8 +47,8 @@
   display:inline-flex;
   align-items:center;
   gap:8px;
-  background:#eef0f8;
-  color:#4b4f78;
+  background:hsl(var(--accent));
+  color:hsl(var(--primary));
   border:none;
   padding:11px 18px;
   border-radius:12px;
@@ -58,7 +58,7 @@
   transition:background .15s,color .15s;
 }
 .admin-tab:hover{ background:#e2e5f3; }
-.admin-tab.active{ background:#4b4f78; color:#fff; }
+.admin-tab.active{ background:hsl(var(--primary)); color:#fff; }
 .admin-tab .pill,
 .msg-group-title .pill{
   background:rgba(0,0,0,0.12);
@@ -101,11 +101,11 @@
 .admin-table tbody tr:last-child td{ border-bottom:none; }
 .admin-table tbody tr:hover{ background:#fafbff; }
 .admin-table code{
-  background:#eef0f8;
+  background:hsl(var(--accent));
   padding:2px 8px;
   border-radius:6px;
   font-size:13px;
-  color:#4b4f78;
+  color:hsl(var(--primary));
 }
 
 .msg-content{
@@ -122,8 +122,8 @@
   border-radius:999px;
   font-size:12px;
   font-weight:600;
-  background:#eef0f8;
-  color:#4b4f78;
+  background:hsl(var(--accent));
+  color:hsl(var(--primary));
 }
 .tag-private{ background:#fdeaea; color:#b3261e; }
 .tag-public{ background:#e6f6ed; color:#1d7a45; }
@@ -151,7 +151,7 @@
   text-decoration:none;
   transition:background .15s,color .15s;
 }
-.link-btn{ background:#eef0f8; color:#4b4f78; }
+.link-btn{ background:hsl(var(--accent)); color:hsl(var(--primary)); }
 .link-btn:hover{ background:#e2e5f3; }
 .del-btn{ background:#fdeaea; color:#b3261e; }
 .del-btn:hover{ background:#b3261e; color:#fff; }

@@ -117,10 +117,10 @@
   (function () {
     if (typeof Chart === 'undefined') return;
 
-    const ACCENT = '#53161D';
-    const ACCENT_SOFT = 'rgba(83, 22, 29, 0.15)';
-    const GRID = 'rgba(83, 22, 29, 0.12)';
-    const TEXT = '#9b7d80';
+    const ACCENT = '#48528e';                       // brand slate-blue
+    const ACCENT_SOFT = 'rgba(72, 82, 142, 0.15)';
+    const GRID = 'rgba(72, 82, 142, 0.12)';
+    const TEXT = '#776B75';                          // mauve-grey
 
     function loadHistory() {
       try {
@@ -199,8 +199,8 @@
       const peak = values.indexOf(Math.max(...values));
       const hasData = values.some((v) => v > 0);
 
-      // Burgundy tints cycled across the non-peak bars (light rose -> deep maroon).
-      const slate = ['#ecd2d4', '#ddb3b6', '#cb8f94', '#b16a71', '#8a3b44', '#ecd2d4', '#ddb3b6'];
+      // Slate-blue tints cycled across the non-peak bars (light -> deep brand blue).
+      const slate = ['#dde0f1', '#c3c8e6', '#a3abd6', '#828dc6', '#5d68a8', '#dde0f1', '#c3c8e6'];
 
       const cx = (i) => padX + slotW * i + slotW / 2;
       const barH = (v) => Math.max(8, (v / max) * plotH);
@@ -253,7 +253,7 @@
 
       host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Hours studied per day this week">`
         + `<defs><linearGradient id="shBarPeak" x1="0" y1="0" x2="0" y2="1">`
-        + `<stop offset="0%" stop-color="#7e2730"/><stop offset="100%" stop-color="#53161D"/>`
+        + `<stop offset="0%" stop-color="#5b63b3"/><stop offset="100%" stop-color="#48528e"/>`
         + `</linearGradient></defs>`
         + bars + path + nodes + badge + xlabels
         + `</svg>`;

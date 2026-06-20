@@ -72,13 +72,13 @@
 }
 
 .sched-new-btn {
-  background: #111827;
-  color: #ffffff;
-  border: 1px solid #111827;
-  box-shadow: 0 4px 10px rgba(17, 24, 39, 0.18);
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: 1px solid hsl(var(--primary));
+  box-shadow: 0 4px 10px hsl(var(--primary) / 0.22);
 }
 
-.sched-new-btn:hover { background: #1f2937; }
+.sched-new-btn:hover { background: hsl(var(--primary-hover)); border-color: hsl(var(--primary-hover)); }
 
 .sched-ghost-btn {
   background: #ffffff;
@@ -531,8 +531,8 @@
 .sched-field input:focus,
 .sched-field textarea:focus,
 .sched-field select:focus {
-  border-color: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25);
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.18);
 }
 
 .sched-field-row {
@@ -568,12 +568,12 @@
 .sched-btn-ghost:hover { background: #f1f5f9; color: var(--ink); }
 
 .sched-btn-primary {
-  background: #111827;
-  color: #ffffff;
-  border: 1px solid #111827;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: 1px solid hsl(var(--primary));
 }
 
-.sched-btn-primary:hover { background: #1f2937; }
+.sched-btn-primary:hover { background: hsl(var(--primary-hover)); border-color: hsl(var(--primary-hover)); }
 
 /* ===================== CONTEXT MENU ===================== */
 .sched-ctx {

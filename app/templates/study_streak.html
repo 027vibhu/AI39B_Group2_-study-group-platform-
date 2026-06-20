@@ -199,7 +199,7 @@
     // Days-studied-per-month bar chart (last 6 months)
     if (typeof Chart !== 'undefined') {
       Chart.defaults.font.family = "'Poppins', sans-serif";
-      Chart.defaults.color = '#9aa0b8';
+      Chart.defaults.color = '#776B75';
 
       const monthLabels = [];
       const monthKeys = [];
@@ -222,7 +222,7 @@
             datasets: [{
               label: 'Days studied',
               data: counts,
-              backgroundColor: '#5b63b3',
+              backgroundColor: '#48528e',
               borderRadius: 8,
               maxBarThickness: 46,
             }],
@@ -232,7 +232,7 @@
             plugins: { legend: { display: false },
               tooltip: { callbacks: { label: (c) => `${c.parsed.y} days` } } },
             scales: {
-              y: { beginAtZero: true, grid: { color: 'rgba(125,134,199,0.14)' }, ticks: { precision: 0 } },
+              y: { beginAtZero: true, grid: { color: 'rgba(72,82,142,0.14)' }, ticks: { precision: 0 } },
               x: { grid: { display: false } },
             },
           },

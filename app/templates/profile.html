@@ -50,15 +50,7 @@
         </div>
 
         {% if user.role != 'admin' %}
-        <button type="button" id="deactivateBtn"
-                style="margin-top:auto;width:100%;cursor:pointer;
-                       background:#fdecec;color:#b3261e;border:1px solid #f0c2c2;
-                       border-radius:12px;padding:12px 16px;
-                       display:flex;align-items:center;justify-content:center;gap:8px;
-                       font-size:.9rem;font-weight:700;transition:.18s;
-                       box-shadow:0 2px 8px rgba(179,38,30,.08);"
-                onmouseover="this.style.background='#b3261e';this.style.color='#fff';this.style.borderColor='#b3261e';"
-                onmouseout="this.style.background='#fdecec';this.style.color='#b3261e';this.style.borderColor='#f0c2c2';">
+        <button type="button" id="deactivateBtn" class="btn btn-block deactivate-trigger" style="margin-top:auto;">
           <i class="fa-solid fa-triangle-exclamation"></i> Deactivate account
         </button>
         {% endif %}
@@ -128,14 +120,8 @@
                        placeholder="Enter your password" autocomplete="current-password">
               </div>
               <div style="display:flex;gap:10px;justify-content:flex-end;">
-                <button type="button" id="deactivateCancel" class="save-btn"
-                        style="background:#eef0f8;color:#2b2f3a;border-color:#d9ddee;">
-                  Cancel
-                </button>
-                <button type="submit" class="save-btn"
-                        style="background:#b3261e;border-color:#b3261e;">
-                  Deactivate
-                </button>
+                <button type="button" id="deactivateCancel" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-destructive">Deactivate</button>
               </div>
             </form>
           </div>

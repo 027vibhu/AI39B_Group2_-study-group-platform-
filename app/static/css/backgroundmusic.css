@@ -8,10 +8,10 @@
 
 :root {
   /* MD3 color roles mapped to the LOREVIA dashboard palette */
-  --md-primary:              #4b527b;
-  --md-primary-dark:         #3b425f;
-  --md-on-primary:           #ffffff;
-  --md-primary-container:    #eef1ff;
+  --md-primary:              hsl(var(--primary));
+  --md-primary-dark:         hsl(var(--primary-hover));
+  --md-on-primary:           hsl(var(--primary-foreground));
+  --md-primary-container:    hsl(var(--accent));
   --md-primary-container-2:  #f6f7ff;
   --md-on-primary-container: #3f4670;
   --md-background:           #f6f4ef;
@@ -29,7 +29,7 @@
 
   --sidebar-w: 100px;   /* matches the collapsed LOREVIA sidebar (.main margin) */
   --player-h:  92px;
-  --radius:    16px;    /* MD3 medium shape */
+  --md-radius:    16px;    /* MD3 medium shape */
 }
 
 .music-page *, .music-page *::before, .music-page *::after { box-sizing: border-box; }
@@ -98,7 +98,7 @@
 
 .track-card {
   background: var(--md-surface);
-  border-radius: var(--radius);
+  border-radius: var(--md-radius);
   padding: 20px;
   cursor: pointer;
   border: 1px solid var(--md-outline-soft);

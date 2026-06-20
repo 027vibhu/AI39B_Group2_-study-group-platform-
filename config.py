@@ -26,5 +26,5 @@ class Config:
     # on startup and is the only user allowed into the admin panel.
     ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME') or 'admin'
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'admin@lorevia.local'
-    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'mingmasherpa'
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin123'
 

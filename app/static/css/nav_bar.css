@@ -1,5 +1,5 @@
 :root{
-  --primary:#4C5372;
+  --nav-primary:#4C5372;
 }
 
 /* Utility: visually hide text but keep it for screen readers */
@@ -57,7 +57,7 @@
 }
 
 .navbar .logo-section h1{
-  color:var(--primary);
+  color:var(--nav-primary);
   letter-spacing:2px;
   font-size:1.7rem;
   font-weight:700;
@@ -79,7 +79,7 @@
 
 .nav-links a:hover,
 .nav-links a.active{
-  color:var(--primary);
+  color:var(--nav-primary);
 }
 
 .nav-links a::after{
@@ -89,7 +89,7 @@
   bottom:-6px;
   width:0%;
   height:2px;
-  background:var(--primary);
+  background:var(--nav-primary);
   transition:0.3s;
 }
 
@@ -106,7 +106,7 @@
   justify-content:center;
   border:none;
   border-radius:14px;
-  background:var(--primary);
+  background:var(--nav-primary);
   color:#fff;
   text-decoration:none;
   font-size:15px;

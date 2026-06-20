@@ -318,8 +318,8 @@ body{
 
 .input:focus{
   background:white;
-  border-color:#7d86c7;
-  box-shadow:0 0 0 4px rgba(125,134,199,0.14);
+  border-color:hsl(var(--ring));
+  box-shadow:0 0 0 3px hsl(var(--ring) / 0.18);
 }
 
 /* Room code */
